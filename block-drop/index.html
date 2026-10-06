@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Block Drop</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <h1>Block Drop</h1>
+  <div class="layout">
+    <div id="board-wrap">
+      <canvas id="board" width="300" height="600"></canvas>
+      <div id="overlay" class="overlay hidden">
+        <p id="overlay-text"></p>
+      </div>
+    </div>
+    <aside class="panel">
+      <div class="next-block">
+        <p class="label">Next</p>
+        <canvas id="next" width="120" height="120"></canvas>
+      </div>
+      <p class="stat"><span class="label">Score</span> <span id="score">0</span></p>
+      <p class="stat"><span class="label">Level</span> <span id="level">1</span></p>
+      <p class="stat"><span class="label">Lines</span> <span id="lines">0</span></p>
+      <div class="actions">
+        <button id="pause" type="button">Pause</button>
+        <button id="restart" type="button">Restart</button>
+      </div>
+      <ul class="keys">
+        <li>Left/Right move</li>
+        <li>Up rotate</li>
+        <li>Down soft drop</li>
+        <li>Space hard drop</li>
+        <li>P pause</li>
+        <li>R restart</li>
+      </ul>
+    </aside>
+  </div>
+  <script src="js/pieces.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
