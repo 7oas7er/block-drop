@@ -1,5 +1,6 @@
 import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
+import * as acm from 'aws-cdk-lib/aws-certificatemanager';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as iam from 'aws-cdk-lib/aws-iam';
@@ -12,6 +13,13 @@ import { Construct } from 'constructs';
 // claim includes the owner id (2952810) and repository id (1407099747).
 const githubActionsSubject =
   'repo:7oas7er@2952810/block-drop@1407099747:ref:refs/heads/main';
+
+const siteDomainName = 'blockdrop.7oas7er.com';
+
+// CloudFront only accepts certificates from us-east-1. This certificate was
+// issued there and is already attached to the distribution.
+const siteCertificateArn =
+  'arn:aws:acm:us-east-1:877710816497:certificate/5662db01-9020-4cc4-957a-91876b13e427';
 
 export class BlockDropStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -26,8 +34,17 @@ export class BlockDropStack extends cdk.Stack {
       autoDeleteObjects: true,
     });
 
+    const siteCertificate = acm.Certificate.fromCertificateArn(
+      this,
+      'SiteCertificate',
+      siteCertificateArn,
+    );
+
     const distribution = new cloudfront.Distribution(this, 'Distribution', {
       comment: 'Block Drop static site',
+      domainNames: [siteDomainName],
+      certificate: siteCertificate,
+      minimumProtocolVersion: cloudfront.SecurityPolicyProtocol.TLS_V1_3_2025,
       defaultRootObject: 'index.html',
       priceClass: cloudfront.PriceClass.PRICE_CLASS_100,
       httpVersion: cloudfront.HttpVersion.HTTP2_AND_3,
@@ -142,7 +159,7 @@ export class BlockDropStack extends cdk.Stack {
     });
 
     new cdk.CfnOutput(this, 'SiteUrl', {
-      value: `https://${distribution.distributionDomainName}`,
+      value: `https://${siteDomainName}`,
       description: 'HTTPS URL for Block Drop',
     });
 
