@@ -2,9 +2,15 @@ import * as path from 'path';
 import * as cdk from 'aws-cdk-lib';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
+import * as iam from 'aws-cdk-lib/aws-iam';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
+
+// This repository was created after GitHub made OIDC subjects immutable, so the
+// claim includes the owner id (2952810) and repository id (1407099747).
+const githubActionsSubject =
+  'repo:7oas7er@2952810/block-drop@1407099747:ref:refs/heads/main';
 
 export class BlockDropStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
@@ -42,6 +48,54 @@ export class BlockDropStack extends cdk.Stack {
       destinationBucket: siteBucket,
       distribution,
       distributionPaths: ['/*'],
+    });
+
+    const githubOidc = new iam.OpenIdConnectProvider(this, 'GitHubOidc', {
+      url: 'https://token.actions.githubusercontent.com',
+      clientIds: ['sts.amazonaws.com'],
+    });
+
+    const deployRole = new iam.Role(this, 'GitHubDeployRole', {
+      roleName: 'block-drop-github-deploy',
+      description: 'GitHub Actions on main publishes Block Drop and invalidates CloudFront.',
+      assumedBy: new iam.SessionTagsPrincipal(
+        new iam.OpenIdConnectPrincipal(githubOidc, {
+          StringEquals: {
+            'token.actions.githubusercontent.com:aud': 'sts.amazonaws.com',
+            'token.actions.githubusercontent.com:sub': githubActionsSubject,
+          },
+        }),
+      ),
+    });
+
+    deployRole.addToPolicy(new iam.PolicyStatement({
+      sid: 'LocateAndListSiteBucket',
+      actions: ['s3:GetBucketLocation', 's3:ListBucket'],
+      resources: [siteBucket.bucketArn],
+    }));
+
+    deployRole.addToPolicy(new iam.PolicyStatement({
+      sid: 'SyncSiteObjects',
+      actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject'],
+      resources: [siteBucket.arnForObjects('*')],
+    }));
+
+    distribution.grantCreateInvalidation(deployRole);
+
+    deployRole.addToPolicy(new iam.PolicyStatement({
+      sid: 'ReadSiteStackOutputs',
+      actions: ['cloudformation:DescribeStacks'],
+      resources: [this.stackId],
+    }));
+
+    new cdk.CfnOutput(this, 'GitHubDeployRoleArn', {
+      value: deployRole.roleArn,
+      description: 'Store this in the GitHub repository variable AWS_DEPLOY_ROLE_ARN.',
+    });
+
+    new cdk.CfnOutput(this, 'DeployRegion', {
+      value: this.region,
+      description: 'Store this in the GitHub repository variable AWS_REGION.',
     });
 
     new cdk.CfnOutput(this, 'SiteUrl', {

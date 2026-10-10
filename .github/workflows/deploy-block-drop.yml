@@ -1,0 +1,83 @@
+name: Deploy Block Drop
+
+# Merging a pull request updates main. This workflow publishes the game when
+# that update changes block-drop/, then clears the CloudFront cache.
+# The deploy role trusts only this repository's main branch, so a pull request
+# workflow cannot assume it.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "block-drop/**"
+      - ".github/workflows/deploy-block-drop.yml"
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: deploy-block-drop
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Publish to S3
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check repository variables
+        run: |
+          if [ -z "${{ vars.AWS_DEPLOY_ROLE_ARN }}" ]; then
+            echo "Set the AWS_DEPLOY_ROLE_ARN repository variable to the GitHubDeployRoleArn stack output."
+            exit 1
+          fi
+          if [ -z "${{ vars.AWS_REGION }}" ]; then
+            echo "Set the AWS_REGION repository variable to the DeployRegion stack output."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: ${{ vars.AWS_REGION }}
+          role-session-name: block-drop-${{ github.run_id }}
+
+      - name: Read site location
+        id: site
+        run: |
+          set -euo pipefail
+          outputs=$(aws cloudformation describe-stacks \
+            --stack-name BlockDropStack \
+            --query "Stacks[0].Outputs" \
+            --output json)
+          bucket=$(jq -r '.[] | select(.OutputKey=="BucketName") | .OutputValue' <<<"$outputs")
+          distribution=$(jq -r '.[] | select(.OutputKey=="DistributionId") | .OutputValue' <<<"$outputs")
+          if [ -z "$bucket" ] || [ "$bucket" = "null" ] || [ -z "$distribution" ] || [ "$distribution" = "null" ]; then
+            echo "BlockDropStack is missing the BucketName or DistributionId output."
+            exit 1
+          fi
+          echo "bucket=${bucket}" >> "$GITHUB_OUTPUT"
+          echo "distribution=${distribution}" >> "$GITHUB_OUTPUT"
+
+      - name: Sync the game to S3
+        run: |
+          set -euo pipefail
+          aws s3 sync block-drop "s3://${{ steps.site.outputs.bucket }}" \
+            --delete \
+            --exclude "README.md" \
+            --exclude ".DS_Store" \
+            --exclude "*/.DS_Store"
+
+      - name: Invalidate CloudFront
+        run: |
+          set -euo pipefail
+          aws cloudfront create-invalidation \
+            --distribution-id "${{ steps.site.outputs.distribution }}" \
+            --paths "/*"
