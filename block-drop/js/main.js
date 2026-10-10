@@ -17,10 +17,14 @@ var pauseButton = document.getElementById("pause");
 
 var lastFrameTime = null;
 var accumulator = 0;
-var scores = BlockDropScores.load();
+var scores = [];
+var scoresReady = false;
 var sawGameOver = false;
 var enteringName = false;
 var latestIndex = -1;
+var savePromise = null;
+var statusNode = document.getElementById("high-score-status");
+var saveButton = highScoreForm.querySelector("button");
 
 function blockColor(type) {
   return BlockDrop.COLORS[type];
@@ -189,6 +193,10 @@ function writeHighScores() {
   }
 }
 
+function setStatus(message) {
+  statusNode.textContent = message;
+}
+
 function beginNameEntry() {
   enteringName = true;
   highScoreForm.classList.remove("hidden");
@@ -197,25 +205,50 @@ function beginNameEntry() {
 }
 
 function commitPendingScore() {
-  var saved;
-  if (!enteringName) {
-    return;
+  var name;
+  var score;
+  if (savePromise) {
+    return savePromise;
   }
-  saved = BlockDropScores.insert(scores, nameInput.value, state.score);
-  scores = saved.list;
-  latestIndex = saved.index;
+  if (!enteringName) {
+    return Promise.resolve(true);
+  }
+  name = nameInput.value;
+  score = state.score;
   enteringName = false;
+  saveButton.disabled = true;
+  saveButton.textContent = "Saving...";
   highScoreForm.classList.add("hidden");
-  writeHighScores();
+  savePromise = BlockDropScores.save(name, score).then(function (result) {
+    scores = result.list;
+    latestIndex = result.saved ? result.index : -1;
+    writeHighScores();
+    setStatus(result.saved ? "" : "That score did not make the table.");
+    return true;
+  }).catch(function () {
+    enteringName = true;
+    nameInput.value = name;
+    highScoreForm.classList.remove("hidden");
+    setStatus("Could not save this score.");
+    nameInput.focus();
+    return false;
+  }).finally(function () {
+    savePromise = null;
+    saveButton.disabled = false;
+    saveButton.textContent = "Save";
+  });
+  return savePromise;
 }
 
 function writeOverlay() {
   if (state.gameOver && !sawGameOver) {
-    sawGameOver = true;
     overlayScoreNode.textContent = "Score " + state.score;
     overlayScoreNode.classList.remove("hidden");
-    if (BlockDropScores.qualifies(scores, state.score)) {
-      beginNameEntry();
+    if (scoresReady) {
+      sawGameOver = true;
+      if (BlockDropScores.qualifies(scores, state.score)) {
+        beginNameEntry();
+      }
     }
   }
   if (!state.gameOver) {
@@ -278,9 +311,14 @@ function blocksRepeat(code) {
 }
 
 function restartGame() {
-  commitPendingScore();
-  BlockDrop.restart(state);
-  accumulator = 0;
+  commitPendingScore().then(function (saved) {
+    if (!saved) {
+      return;
+    }
+    setStatus("");
+    BlockDrop.restart(state);
+    accumulator = 0;
+  });
 }
 
 function onKeyDown(event) {
@@ -330,4 +368,12 @@ highScoreForm.addEventListener("submit", function (event) {
 
 document.addEventListener("keydown", onKeyDown);
 writeHighScores();
+BlockDropScores.load().then(function (list) {
+  scores = list;
+  scoresReady = true;
+  writeHighScores();
+}).catch(function () {
+  scoresReady = true;
+  setStatus("Could not load high scores.");
+});
 requestAnimationFrame(onFrame);

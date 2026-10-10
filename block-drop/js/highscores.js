@@ -1,45 +1,9 @@
 var BlockDropScores = window.BlockDropScores || {};
 
 (function () {
-  var STORAGE_KEY = "block-drop-high-scores";
   var MAX_SCORES = 10;
   var NAME_LENGTH = 3;
-
-  function emptyList() {
-    return [];
-  }
-
-  function load() {
-    var raw;
-    var parsed;
-    try {
-      raw = window.localStorage.getItem(STORAGE_KEY);
-    } catch (error) {
-      return emptyList();
-    }
-    if (!raw) {
-      return emptyList();
-    }
-    try {
-      parsed = JSON.parse(raw);
-    } catch (error) {
-      return emptyList();
-    }
-    if (!Array.isArray(parsed)) {
-      return emptyList();
-    }
-    return parsed.filter(function (entry) {
-      return entry && typeof entry.name === "string" && typeof entry.score === "number";
-    }).slice(0, MAX_SCORES);
-  }
-
-  function persist(list) {
-    try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
-    } catch (error) {
-      return;
-    }
-  }
+  var SCORES_URL = "/api/scores";
 
   function qualifies(list, score) {
     if (score <= 0) {
@@ -59,43 +23,71 @@ var BlockDropScores = window.BlockDropScores || {};
     return cleaned.slice(0, NAME_LENGTH);
   }
 
-  function insert(list, name, score) {
-    var next = list.slice();
-    var entry = {
-      name: normalizeName(name),
-      score: score
-    };
-    var index = 0;
-    next.push(entry);
-    next.sort(function (a, b) {
-      if (b.score !== a.score) {
-        return b.score - a.score;
-      }
-      if (a === entry) {
-        return -1;
-      }
-      if (b === entry) {
-        return 1;
-      }
-      return 0;
-    });
-    next = next.slice(0, MAX_SCORES);
-    for (index = 0; index < next.length; index += 1) {
-      if (next[index] === entry) {
-        break;
-      }
+  function readScores(payload) {
+    if (!payload || !Array.isArray(payload.scores)) {
+      return [];
     }
-    persist(next);
-    return {
-      list: next,
-      index: index
-    };
+    return payload.scores;
+  }
+
+  function load() {
+    return fetch(SCORES_URL, { cache: "no-store" }).then(function (response) {
+      if (!response.ok) {
+        throw new Error("Could not load high scores.");
+      }
+      return response.json();
+    }).then(readScores);
+  }
+
+  function sha256Hex(text) {
+    var bytes = new TextEncoder().encode(text);
+    return crypto.subtle.digest("SHA-256", bytes).then(function (buffer) {
+      var view = new Uint8Array(buffer);
+      var hex = "";
+      var index;
+      var piece;
+      for (index = 0; index < view.length; index += 1) {
+        piece = view[index].toString(16);
+        hex += piece.length === 1 ? "0" + piece : piece;
+      }
+      return hex;
+    });
+  }
+
+  function save(name, score) {
+    var body = JSON.stringify({
+      name: name,
+      score: score
+    });
+    // CloudFront signs a POST only when the viewer sends the body hash.
+    return sha256Hex(body).then(function (hash) {
+      return fetch(SCORES_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-amz-content-sha256": hash
+        },
+        cache: "no-store",
+        body: body
+      });
+    }).then(function (response) {
+      if (!response.ok) {
+        throw new Error("Could not save high scores.");
+      }
+      return response.json();
+    }).then(function (payload) {
+      return {
+        list: readScores(payload),
+        index: typeof payload.index === "number" ? payload.index : -1,
+        saved: payload.saved === true
+      };
+    });
   }
 
   BlockDropScores.MAX_SCORES = MAX_SCORES;
   BlockDropScores.NAME_LENGTH = NAME_LENGTH;
-  BlockDropScores.load = load;
   BlockDropScores.qualifies = qualifies;
   BlockDropScores.normalizeName = normalizeName;
-  BlockDropScores.insert = insert;
+  BlockDropScores.load = load;
+  BlockDropScores.save = save;
 })();
