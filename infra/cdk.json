@@ -1,5 +1,6 @@
 {
   "app": "npx tsx bin/block-drop.ts",
+  "profile": "7oas7er",
   "watch": {
     "include": ["**"],
     "exclude": [
