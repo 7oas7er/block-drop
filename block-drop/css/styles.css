@@ -159,6 +159,47 @@ button:focus-visible {
   line-height: 1.5;
 }
 
+.site-footer {
+  margin-top: auto;
+  padding-top: 1.5rem;
+  font-size: 0.85rem;
+}
+
+.site-footer a,
+.imprint a {
+  color: #c8c8dc;
+}
+
+.site-footer a:hover,
+.imprint a:hover {
+  color: #e8e8ef;
+}
+
+.site-footer a:focus-visible,
+.imprint a:focus-visible {
+  outline: 2px solid #e8e8ef;
+  outline-offset: 3px;
+}
+
+.imprint {
+  width: 100%;
+  max-width: 36rem;
+  line-height: 1.5;
+}
+
+.imprint h1 {
+  margin-bottom: 1.25rem;
+}
+
+.imprint h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.05rem;
+}
+
+.imprint p {
+  margin: 0.5rem 0;
+}
+
 @media (max-width: 640px) {
   .layout {
     flex-direction: column;
