@@ -183,6 +183,16 @@ h1 {
   color: #f2d15a;
 }
 
+.high-score-status {
+  margin: 0.6rem 0 0;
+  font-size: 0.8rem;
+  color: #f0a0a0;
+}
+
+.high-score-status:empty {
+  display: none;
+}
+
 .panel {
   width: 200px;
   display: flex;

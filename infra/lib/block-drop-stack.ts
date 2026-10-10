@@ -3,6 +3,7 @@ import * as cdk from 'aws-cdk-lib';
 import * as cloudfront from 'aws-cdk-lib/aws-cloudfront';
 import * as origins from 'aws-cdk-lib/aws-cloudfront-origins';
 import * as iam from 'aws-cdk-lib/aws-iam';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as s3deploy from 'aws-cdk-lib/aws-s3-deployment';
 import { Construct } from 'constructs';
@@ -37,6 +38,48 @@ export class BlockDropStack extends cdk.Stack {
         responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
         compress: true,
       },
+    });
+
+    // The site publish deletes objects that are not part of the game files,
+    // so the table has its own bucket.
+    const highScoreBucket = new s3.Bucket(this, 'HighScoreBucket', {
+      blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+      encryption: s3.BucketEncryption.S3_MANAGED,
+      enforceSSL: true,
+      objectOwnership: s3.ObjectOwnership.BUCKET_OWNER_ENFORCED,
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
+    });
+
+    const highScoreFunction = new lambda.Function(this, 'HighScoreFunction', {
+      description: 'Reads and writes the Block Drop high score table.',
+      runtime: lambda.Runtime.NODEJS_22_X,
+      architecture: lambda.Architecture.ARM_64,
+      handler: 'high-scores.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda'), {
+        exclude: ['*.test.js'],
+      }),
+      timeout: cdk.Duration.seconds(8),
+      memorySize: 128,
+      environment: {
+        SCORES_BUCKET: highScoreBucket.bucketName,
+        SCORES_KEY: 'high-scores.json',
+      },
+    });
+
+    highScoreBucket.grantRead(highScoreFunction);
+    highScoreBucket.grantPut(highScoreFunction);
+
+    const highScoreUrl = highScoreFunction.addFunctionUrl({
+      authType: lambda.FunctionUrlAuthType.AWS_IAM,
+    });
+
+    distribution.addBehavior('/api/scores', origins.FunctionUrlOrigin.withOriginAccessControl(highScoreUrl), {
+      viewerProtocolPolicy: cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+      allowedMethods: cloudfront.AllowedMethods.ALLOW_ALL,
+      cachePolicy: cloudfront.CachePolicy.CACHING_DISABLED,
+      originRequestPolicy: cloudfront.OriginRequestPolicy.ALL_VIEWER_EXCEPT_HOST_HEADER,
+      responseHeadersPolicy: cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
+      compress: true,
     });
 
     new s3deploy.BucketDeployment(this, 'DeploySite', {
@@ -106,6 +149,11 @@ export class BlockDropStack extends cdk.Stack {
     new cdk.CfnOutput(this, 'BucketName', {
       value: siteBucket.bucketName,
       description: 'Private bucket that stores the site files',
+    });
+
+    new cdk.CfnOutput(this, 'HighScoreBucketName', {
+      value: highScoreBucket.bucketName,
+      description: 'Private bucket that stores the high score table',
     });
 
     new cdk.CfnOutput(this, 'DistributionId', {
