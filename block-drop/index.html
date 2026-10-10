@@ -10,10 +10,21 @@
   <p class="score-corner"><span class="label">Score</span> <span id="score">0</span></p>
   <h1>Block Drop</h1>
   <div class="layout">
+    <aside class="high-scores" aria-label="High scores">
+      <p class="label">High scores</p>
+      <ol id="high-score-list"></ol>
+    </aside>
     <div id="board-wrap">
       <canvas id="board" width="300" height="600"></canvas>
       <div id="overlay" class="overlay hidden">
         <p id="overlay-text"></p>
+        <p id="overlay-score" class="overlay-score hidden"></p>
+        <form id="high-score-form" class="high-score-form hidden">
+          <p>New high score</p>
+          <label for="player-name">Name</label>
+          <input id="player-name" name="player-name" type="text" maxlength="3" autocomplete="off" spellcheck="false" autocapitalize="characters">
+          <button type="submit">Save</button>
+        </form>
       </div>
     </div>
     <aside class="panel">
@@ -42,6 +53,7 @@
   </footer>
   <script src="js/pieces.js"></script>
   <script src="js/game.js"></script>
+  <script src="js/highscores.js"></script>
   <script src="js/main.js"></script>
 </body>
 </html>

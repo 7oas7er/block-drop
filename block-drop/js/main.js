@@ -9,10 +9,18 @@ var levelNode = document.getElementById("level");
 var linesNode = document.getElementById("lines");
 var overlayNode = document.getElementById("overlay");
 var overlayTextNode = document.getElementById("overlay-text");
+var overlayScoreNode = document.getElementById("overlay-score");
+var highScoreForm = document.getElementById("high-score-form");
+var nameInput = document.getElementById("player-name");
+var highScoreList = document.getElementById("high-score-list");
 var pauseButton = document.getElementById("pause");
 
 var lastFrameTime = null;
 var accumulator = 0;
+var scores = BlockDropScores.load();
+var sawGameOver = false;
+var enteringName = false;
+var latestIndex = -1;
 
 function blockColor(type) {
   return BlockDrop.COLORS[type];
@@ -146,7 +154,76 @@ function writeStats() {
   linesNode.textContent = String(state.lines);
 }
 
+function writeHighScores() {
+  var rows = [];
+  var index;
+  var entry;
+  var item;
+  var rank;
+  var name;
+  var points;
+
+  highScoreList.textContent = "";
+  for (index = 0; index < BlockDropScores.MAX_SCORES; index += 1) {
+    entry = scores[index];
+    item = document.createElement("li");
+    if (index === latestIndex) {
+      item.className = "latest";
+    }
+    rank = document.createElement("span");
+    rank.className = "rank";
+    rank.textContent = String(index + 1);
+    name = document.createElement("span");
+    name.className = "name";
+    name.textContent = entry ? entry.name : "---";
+    points = document.createElement("span");
+    points.className = "points";
+    points.textContent = entry ? String(entry.score) : "0";
+    item.appendChild(rank);
+    item.appendChild(name);
+    item.appendChild(points);
+    rows.push(item);
+  }
+  for (index = 0; index < rows.length; index += 1) {
+    highScoreList.appendChild(rows[index]);
+  }
+}
+
+function beginNameEntry() {
+  enteringName = true;
+  highScoreForm.classList.remove("hidden");
+  nameInput.value = "";
+  nameInput.focus();
+}
+
+function commitPendingScore() {
+  var saved;
+  if (!enteringName) {
+    return;
+  }
+  saved = BlockDropScores.insert(scores, nameInput.value, state.score);
+  scores = saved.list;
+  latestIndex = saved.index;
+  enteringName = false;
+  highScoreForm.classList.add("hidden");
+  writeHighScores();
+}
+
 function writeOverlay() {
+  if (state.gameOver && !sawGameOver) {
+    sawGameOver = true;
+    overlayScoreNode.textContent = "Score " + state.score;
+    overlayScoreNode.classList.remove("hidden");
+    if (BlockDropScores.qualifies(scores, state.score)) {
+      beginNameEntry();
+    }
+  }
+  if (!state.gameOver) {
+    sawGameOver = false;
+    enteringName = false;
+    highScoreForm.classList.add("hidden");
+    overlayScoreNode.classList.add("hidden");
+  }
   if (state.gameOver) {
     overlayNode.classList.remove("hidden");
     overlayTextNode.textContent = "Game over";
@@ -200,9 +277,18 @@ function blocksRepeat(code) {
   return code === "ArrowUp" || code === "Space" || code === "KeyP" || code === "KeyR";
 }
 
+function restartGame() {
+  commitPendingScore();
+  BlockDrop.restart(state);
+  accumulator = 0;
+}
+
 function onKeyDown(event) {
   var code = event.code;
 
+  if (event.target === nameInput) {
+    return;
+  }
   if (code === "ArrowLeft" || code === "ArrowRight" || code === "ArrowUp" || code === "ArrowDown" || code === "Space") {
     event.preventDefault();
   }
@@ -222,8 +308,7 @@ function onKeyDown(event) {
   } else if (code === "KeyP") {
     BlockDrop.togglePause(state);
   } else if (code === "KeyR") {
-    BlockDrop.restart(state);
-    accumulator = 0;
+    restartGame();
   }
 }
 
@@ -231,10 +316,18 @@ pauseButton.addEventListener("click", function () {
   BlockDrop.togglePause(state);
 });
 
-document.getElementById("restart").addEventListener("click", function () {
-  BlockDrop.restart(state);
-  accumulator = 0;
+document.getElementById("restart").addEventListener("click", restartGame);
+
+nameInput.addEventListener("input", function () {
+  var cleaned = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+  nameInput.value = cleaned.slice(0, BlockDropScores.NAME_LENGTH);
+});
+
+highScoreForm.addEventListener("submit", function (event) {
+  event.preventDefault();
+  commitPendingScore();
 });
 
 document.addEventListener("keydown", onKeyDown);
+writeHighScores();
 requestAnimationFrame(onFrame);

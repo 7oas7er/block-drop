@@ -53,7 +53,7 @@ h1 {
   justify-content: center;
   gap: 1.25rem;
   width: 100%;
-  max-width: 560px;
+  max-width: 760px;
 }
 
 #board-wrap {
@@ -74,11 +74,55 @@ h1 {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 0.75rem;
   padding: 1rem;
   background: rgba(8, 8, 16, 0.75);
   text-align: center;
+}
+
+.overlay-score {
+  margin: 0;
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.high-score-form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.high-score-form.hidden {
+  display: none;
+}
+
+.high-score-form p,
+.high-score-form label {
+  margin: 0;
+  font-weight: 700;
+}
+
+#player-name {
+  width: 5.5rem;
+  font: inherit;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  text-align: center;
+  text-transform: uppercase;
+  color: #e8e8ef;
+  background: #1a1a2e;
+  border: 1px solid #3d3d5c;
+  padding: 0.35rem 0.4rem;
+}
+
+#player-name:focus-visible {
+  outline: 2px solid #e8e8ef;
+  outline-offset: 3px;
 }
 
 .hidden {
@@ -91,11 +135,56 @@ h1 {
   font-weight: 700;
 }
 
+.high-scores,
 .panel {
-  width: 200px;
   flex-shrink: 0;
   padding: 1rem 1rem 1.15rem;
   background: #16213e;
+}
+
+.high-scores {
+  width: 11.5rem;
+}
+
+.high-scores ol {
+  list-style: none;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.9rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.high-scores li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.45rem;
+}
+
+.high-scores .rank {
+  width: 1.25rem;
+  color: #9a9ab4;
+}
+
+.high-scores .name {
+  width: 3.4ch;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.high-scores .points {
+  margin-left: auto;
+}
+
+.high-scores li.latest .name,
+.high-scores li.latest .points {
+  color: #f2d15a;
+}
+
+.panel {
+  width: 200px;
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
@@ -159,54 +248,23 @@ button:focus-visible {
   line-height: 1.5;
 }
 
-.site-footer {
-  margin-top: auto;
-  padding-top: 1.5rem;
-  font-size: 0.85rem;
-}
-
-.site-footer a,
-.imprint a {
-  color: #c8c8dc;
-}
-
-.site-footer a:hover,
-.imprint a:hover {
-  color: #e8e8ef;
-}
-
-.site-footer a:focus-visible,
-.imprint a:focus-visible {
-  outline: 2px solid #e8e8ef;
-  outline-offset: 3px;
-}
-
-.imprint {
-  width: 100%;
-  max-width: 36rem;
-  line-height: 1.5;
-}
-
-.imprint h1 {
-  margin-bottom: 1.25rem;
-}
-
-.imprint h2 {
-  margin: 1.5rem 0 0.5rem;
-  font-size: 1.05rem;
-}
-
-.imprint p {
-  margin: 0.5rem 0;
-}
-
-@media (max-width: 640px) {
+@media (max-width: 760px) {
   .layout {
     flex-direction: column;
     align-items: center;
   }
 
-  .panel {
+  #board-wrap {
+    order: 1;
+  }
+
+  .panel,
+  .high-scores {
+    order: 2;
     width: 300px;
+  }
+
+  .high-scores {
+    order: 3;
   }
 }
