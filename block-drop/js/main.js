@@ -152,10 +152,16 @@ function drawNext() {
   }
 }
 
+function setText(node, value) {
+  if (node.textContent !== value) {
+    node.textContent = value;
+  }
+}
+
 function writeStats() {
-  scoreNode.textContent = String(state.score);
-  levelNode.textContent = String(state.level);
-  linesNode.textContent = String(state.lines);
+  setText(scoreNode, String(state.score));
+  setText(levelNode, String(state.level));
+  setText(linesNode, String(state.lines));
 }
 
 function writeHighScores() {
@@ -259,14 +265,14 @@ function writeOverlay() {
   }
   if (state.gameOver) {
     overlayNode.classList.remove("hidden");
-    overlayTextNode.textContent = "Game over";
+    setText(overlayTextNode, "Game over");
   } else if (state.paused) {
     overlayNode.classList.remove("hidden");
-    overlayTextNode.textContent = "Paused";
+    setText(overlayTextNode, "Paused");
   } else {
     overlayNode.classList.add("hidden");
   }
-  pauseButton.textContent = state.paused ? "Resume" : "Pause";
+  setText(pauseButton, state.paused ? "Resume" : "Pause");
 }
 
 function render() {
@@ -321,6 +327,29 @@ function restartGame() {
   });
 }
 
+function bindPress(button, action) {
+  var suppressClick = false;
+
+  button.addEventListener("pointerdown", function (event) {
+    if (!event.isPrimary || event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    suppressClick = true;
+    action();
+    requestAnimationFrame(function () {
+      suppressClick = false;
+    });
+  });
+
+  button.addEventListener("click", function () {
+    if (suppressClick) {
+      return;
+    }
+    action();
+  });
+}
+
 function onKeyDown(event) {
   var code = event.code;
 
@@ -350,11 +379,11 @@ function onKeyDown(event) {
   }
 }
 
-pauseButton.addEventListener("click", function () {
+bindPress(pauseButton, function () {
   BlockDrop.togglePause(state);
 });
 
-document.getElementById("restart").addEventListener("click", restartGame);
+bindPress(document.getElementById("restart"), restartGame);
 
 nameInput.addEventListener("input", function () {
   var cleaned = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
