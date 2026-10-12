@@ -177,7 +177,7 @@ var BlockDrop = window.BlockDrop || {};
     var moved;
     var next;
     if (!canPlay(state)) {
-      return;
+      return -1;
     }
     moved = 0;
     while (true) {
@@ -194,9 +194,10 @@ var BlockDrop = window.BlockDrop || {};
       moved += 1;
     }
     state.score += moved * 2;
-    BlockDrop.lock(state);
+    return BlockDrop.lock(state);
   };
 
+  // Returns the number of cleared rows, or -1 when nothing locked.
   BlockDrop.lock = function (state) {
     var piece;
     var value;
@@ -205,7 +206,7 @@ var BlockDrop = window.BlockDrop || {};
     var cell;
     var cleared;
     if (!state.piece) {
-      return;
+      return -1;
     }
     piece = state.piece;
     value = typeValue(piece.type);
@@ -223,13 +224,15 @@ var BlockDrop = window.BlockDrop || {};
     state.lines += cleared;
     state.level = 1 + Math.floor(state.lines / 10);
     spawnPiece(state);
+    return cleared;
   };
 
   // Gravity. Unlike move(), a successful step does not add soft-drop points.
+  // Returns cleared rows when a piece locks, otherwise -1.
   BlockDrop.tick = function (state) {
     var next;
     if (!canPlay(state)) {
-      return;
+      return -1;
     }
     next = {
       type: state.piece.type,
@@ -238,10 +241,10 @@ var BlockDrop = window.BlockDrop || {};
       y: state.piece.y + 1
     };
     if (BlockDrop.collides(state, next)) {
-      BlockDrop.lock(state);
-      return;
+      return BlockDrop.lock(state);
     }
     state.piece.y += 1;
+    return -1;
   };
 
   BlockDrop.createState = function () {
@@ -261,9 +264,10 @@ var BlockDrop = window.BlockDrop || {};
 
   BlockDrop.togglePause = function (state) {
     if (state.gameOver) {
-      return;
+      return false;
     }
     state.paused = !state.paused;
+    return true;
   };
 
   BlockDrop.restart = function (state) {

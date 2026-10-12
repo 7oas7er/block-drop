@@ -14,9 +14,11 @@ var highScoreForm = document.getElementById("high-score-form");
 var nameInput = document.getElementById("player-name");
 var highScoreList = document.getElementById("high-score-list");
 var pauseButton = document.getElementById("pause");
+var muteButton = document.getElementById("mute");
 
 var lastFrameTime = null;
 var accumulator = 0;
+var wasGameOver = false;
 var scores = [];
 var scoresReady = false;
 var sawGameOver = false;
@@ -280,10 +282,74 @@ function render() {
   drawNext();
   writeStats();
   writeOverlay();
+  if (state.gameOver && !wasGameOver) {
+    BlockDropAudio.gameOver();
+    BlockDropAudio.pauseMusic();
+  }
+  if (!state.gameOver && wasGameOver) {
+    syncMusicToState();
+  }
+  wasGameOver = state.gameOver;
+}
+
+function playLock(cleared, hard) {
+  if (cleared < 0) {
+    return;
+  }
+  if (hard) {
+    BlockDropAudio.hardDrop();
+  } else {
+    BlockDropAudio.lock();
+  }
+  if (cleared > 0) {
+    BlockDropAudio.lineClear(cleared);
+  }
+}
+
+function tryMove(dx, dy) {
+  ensureAudio();
+  if (!BlockDrop.move(state, dx, dy)) {
+    return;
+  }
+  if (dy > 0) {
+    BlockDropAudio.softDrop();
+  } else {
+    BlockDropAudio.move();
+  }
+}
+
+function tryRotate() {
+  ensureAudio();
+  if (BlockDrop.rotate(state)) {
+    BlockDropAudio.rotate();
+  }
+}
+
+function ensureAudio() {
+  BlockDropAudio.unlock().then(function () {
+    if (!state.paused && !state.gameOver && !BlockDropAudio.isMuted()) {
+      BlockDropAudio.startMusic();
+    }
+  });
+}
+
+function writeMuteLabel() {
+  var muted = BlockDropAudio.isMuted();
+  setText(muteButton, muted ? "Sound off" : "Sound on");
+  muteButton.setAttribute("aria-pressed", muted ? "true" : "false");
+}
+
+function syncMusicToState() {
+  if (state.paused || state.gameOver || BlockDropAudio.isMuted()) {
+    BlockDropAudio.pauseMusic();
+    return;
+  }
+  BlockDropAudio.startMusic();
 }
 
 function applyGravity(elapsed) {
   var interval;
+  var cleared;
 
   if (state.paused || state.gameOver) {
     return;
@@ -292,7 +358,8 @@ function applyGravity(elapsed) {
   interval = BlockDrop.dropInterval(state.level);
   while (accumulator >= interval) {
     accumulator -= interval;
-    BlockDrop.tick(state);
+    cleared = BlockDrop.tick(state);
+    playLock(cleared);
     if (state.paused || state.gameOver) {
       break;
     }
@@ -324,6 +391,9 @@ function restartGame() {
     setStatus("");
     BlockDrop.restart(state);
     accumulator = 0;
+    wasGameOver = false;
+    ensureAudio();
+    syncMusicToState();
   });
 }
 
@@ -417,46 +487,61 @@ function onKeyDown(event) {
     return;
   }
   if (code === "ArrowLeft") {
-    BlockDrop.move(state, -1, 0);
+    tryMove(-1, 0);
   } else if (code === "ArrowRight") {
-    BlockDrop.move(state, 1, 0);
+    tryMove(1, 0);
   } else if (code === "ArrowUp") {
-    BlockDrop.rotate(state);
+    tryRotate();
   } else if (code === "ArrowDown") {
-    BlockDrop.move(state, 0, 1);
+    tryMove(0, 1);
   } else if (code === "Space") {
-    BlockDrop.hardDrop(state);
+    ensureAudio();
+    playLock(BlockDrop.hardDrop(state), true);
   } else if (code === "KeyP") {
-    BlockDrop.togglePause(state);
+    ensureAudio();
+    if (BlockDrop.togglePause(state)) {
+      syncMusicToState();
+    }
   } else if (code === "KeyR") {
     restartGame();
   }
 }
 
 bindPress(pauseButton, function () {
-  BlockDrop.togglePause(state);
+  ensureAudio();
+  if (BlockDrop.togglePause(state)) {
+    syncMusicToState();
+  }
 });
 
 bindPress(document.getElementById("restart"), restartGame);
 
+bindPress(muteButton, function () {
+  ensureAudio();
+  BlockDropAudio.toggleMute();
+  writeMuteLabel();
+  syncMusicToState();
+});
+
 bindHold(document.getElementById("move-left"), function () {
-  BlockDrop.move(state, -1, 0);
+  tryMove(-1, 0);
 });
 bindHold(document.getElementById("soft-drop"), function () {
-  BlockDrop.move(state, 0, 1);
+  tryMove(0, 1);
 });
 bindHold(document.getElementById("move-right"), function () {
-  BlockDrop.move(state, 1, 0);
+  tryMove(1, 0);
 });
-bindPress(document.getElementById("rotate"), function () {
-  BlockDrop.rotate(state);
-});
+bindPress(document.getElementById("rotate"), tryRotate);
 bindPress(document.getElementById("hard-drop"), function () {
-  BlockDrop.hardDrop(state);
+  ensureAudio();
+  playLock(BlockDrop.hardDrop(state), true);
 });
 document.querySelector(".touch-pad").addEventListener("contextmenu", function (event) {
   event.preventDefault();
 });
+document.addEventListener("pointerdown", ensureAudio, { once: true });
+writeMuteLabel();
 
 nameInput.addEventListener("input", function () {
   var cleaned = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
