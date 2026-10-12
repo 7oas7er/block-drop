@@ -321,6 +321,73 @@ function restartGame() {
   });
 }
 
+function bindTap(button, action) {
+  var suppressClick = false;
+
+  button.addEventListener("pointerdown", function (event) {
+    if (!event.isPrimary || event.button !== 0) {
+      return;
+    }
+    event.preventDefault();
+    suppressClick = true;
+    action();
+    requestAnimationFrame(function () {
+      suppressClick = false;
+    });
+  });
+
+  button.addEventListener("click", function () {
+    if (suppressClick) {
+      return;
+    }
+    action();
+  });
+}
+
+function bindHold(button, action) {
+  var pointerId = null;
+  var delayTimer = 0;
+  var repeatTimer = 0;
+
+  function stop(event) {
+    if (pointerId === null) {
+      return;
+    }
+    if (event && event.pointerId !== pointerId) {
+      return;
+    }
+    window.clearTimeout(delayTimer);
+    window.clearInterval(repeatTimer);
+    delayTimer = 0;
+    repeatTimer = 0;
+    if (button.hasPointerCapture(pointerId)) {
+      button.releasePointerCapture(pointerId);
+    }
+    pointerId = null;
+  }
+
+  button.addEventListener("pointerdown", function (event) {
+    if (!event.isPrimary || event.button !== 0 || pointerId !== null) {
+      return;
+    }
+    event.preventDefault();
+    pointerId = event.pointerId;
+    try {
+      button.setPointerCapture(pointerId);
+    } catch (error) {
+      // A pointer the browser will not capture can still repeat until pointerup.
+    }
+    action();
+    delayTimer = window.setTimeout(function () {
+      repeatTimer = window.setInterval(action, 50);
+    }, 170);
+  });
+
+  button.addEventListener("pointerup", stop);
+  button.addEventListener("pointercancel", stop);
+  button.addEventListener("lostpointercapture", stop);
+}
+
 function onKeyDown(event) {
   var code = event.code;
 
@@ -355,6 +422,25 @@ pauseButton.addEventListener("click", function () {
 });
 
 document.getElementById("restart").addEventListener("click", restartGame);
+
+bindHold(document.getElementById("move-left"), function () {
+  BlockDrop.move(state, -1, 0);
+});
+bindHold(document.getElementById("soft-drop"), function () {
+  BlockDrop.move(state, 0, 1);
+});
+bindHold(document.getElementById("move-right"), function () {
+  BlockDrop.move(state, 1, 0);
+});
+bindTap(document.getElementById("rotate"), function () {
+  BlockDrop.rotate(state);
+});
+bindTap(document.getElementById("hard-drop"), function () {
+  BlockDrop.hardDrop(state);
+});
+document.querySelector(".touch-pad").addEventListener("contextmenu", function (event) {
+  event.preventDefault();
+});
 
 nameInput.addEventListener("input", function () {
   var cleaned = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");

@@ -15,17 +15,30 @@
       <ol id="high-score-list"></ol>
       <p id="high-score-status" class="high-score-status" role="status"></p>
     </aside>
-    <div id="board-wrap">
-      <canvas id="board" width="300" height="600"></canvas>
-      <div id="overlay" class="overlay hidden">
-        <p id="overlay-text"></p>
-        <p id="overlay-score" class="overlay-score hidden"></p>
-        <form id="high-score-form" class="high-score-form hidden">
-          <p>New high score</p>
-          <label for="player-name">Name</label>
-          <input id="player-name" name="player-name" type="text" maxlength="3" autocomplete="off" spellcheck="false" autocapitalize="characters">
-          <button type="submit">Save</button>
-        </form>
+    <div class="playfield">
+      <div id="board-wrap">
+        <canvas id="board" width="300" height="600"></canvas>
+        <div id="overlay" class="overlay hidden">
+          <p id="overlay-text"></p>
+          <p id="overlay-score" class="overlay-score hidden"></p>
+          <form id="high-score-form" class="high-score-form hidden">
+            <p>New high score</p>
+            <label for="player-name">Name</label>
+            <input id="player-name" name="player-name" type="text" maxlength="3" autocomplete="off" spellcheck="false" autocapitalize="characters">
+            <button type="submit">Save</button>
+          </form>
+        </div>
+      </div>
+      <div class="touch-pad">
+        <div class="touch-move">
+          <button type="button" id="move-left" aria-label="Move left">←</button>
+          <button type="button" id="soft-drop" aria-label="Soft drop">↓</button>
+          <button type="button" id="move-right" aria-label="Move right">→</button>
+        </div>
+        <div class="touch-actions">
+          <button type="button" id="rotate" aria-label="Rotate clockwise">Rotate</button>
+          <button type="button" id="hard-drop" aria-label="Hard drop">Drop</button>
+        </div>
       </div>
     </div>
     <aside class="panel">
