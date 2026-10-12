@@ -350,6 +350,50 @@ function bindPress(button, action) {
   });
 }
 
+function bindHold(button, action) {
+  var pointerId = null;
+  var delayTimer = 0;
+  var repeatTimer = 0;
+
+  function stop(event) {
+    if (pointerId === null) {
+      return;
+    }
+    if (event && event.pointerId !== pointerId) {
+      return;
+    }
+    window.clearTimeout(delayTimer);
+    window.clearInterval(repeatTimer);
+    delayTimer = 0;
+    repeatTimer = 0;
+    if (button.hasPointerCapture(pointerId)) {
+      button.releasePointerCapture(pointerId);
+    }
+    pointerId = null;
+  }
+
+  button.addEventListener("pointerdown", function (event) {
+    if (!event.isPrimary || event.button !== 0 || pointerId !== null) {
+      return;
+    }
+    event.preventDefault();
+    pointerId = event.pointerId;
+    try {
+      button.setPointerCapture(pointerId);
+    } catch (error) {
+      // A pointer the browser will not capture can still repeat until pointerup.
+    }
+    action();
+    delayTimer = window.setTimeout(function () {
+      repeatTimer = window.setInterval(action, 50);
+    }, 170);
+  });
+
+  button.addEventListener("pointerup", stop);
+  button.addEventListener("pointercancel", stop);
+  button.addEventListener("lostpointercapture", stop);
+}
+
 function onKeyDown(event) {
   var code = event.code;
 
@@ -394,10 +438,10 @@ bindHold(document.getElementById("soft-drop"), function () {
 bindHold(document.getElementById("move-right"), function () {
   BlockDrop.move(state, 1, 0);
 });
-bindTap(document.getElementById("rotate"), function () {
+bindPress(document.getElementById("rotate"), function () {
   BlockDrop.rotate(state);
 });
-bindTap(document.getElementById("hard-drop"), function () {
+bindPress(document.getElementById("hard-drop"), function () {
   BlockDrop.hardDrop(state);
 });
 document.querySelector(".touch-pad").addEventListener("contextmenu", function (event) {
