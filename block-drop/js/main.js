@@ -152,10 +152,16 @@ function drawNext() {
   }
 }
 
+function setText(node, value) {
+  if (node.textContent !== value) {
+    node.textContent = value;
+  }
+}
+
 function writeStats() {
-  scoreNode.textContent = String(state.score);
-  levelNode.textContent = String(state.level);
-  linesNode.textContent = String(state.lines);
+  setText(scoreNode, String(state.score));
+  setText(levelNode, String(state.level));
+  setText(linesNode, String(state.lines));
 }
 
 function writeHighScores() {
@@ -259,14 +265,14 @@ function writeOverlay() {
   }
   if (state.gameOver) {
     overlayNode.classList.remove("hidden");
-    overlayTextNode.textContent = "Game over";
+    setText(overlayTextNode, "Game over");
   } else if (state.paused) {
     overlayNode.classList.remove("hidden");
-    overlayTextNode.textContent = "Paused";
+    setText(overlayTextNode, "Paused");
   } else {
     overlayNode.classList.add("hidden");
   }
-  pauseButton.textContent = state.paused ? "Resume" : "Pause";
+  setText(pauseButton, state.paused ? "Resume" : "Pause");
 }
 
 function render() {
@@ -321,7 +327,7 @@ function restartGame() {
   });
 }
 
-function bindTap(button, action) {
+function bindPress(button, action) {
   var suppressClick = false;
 
   button.addEventListener("pointerdown", function (event) {
@@ -342,50 +348,6 @@ function bindTap(button, action) {
     }
     action();
   });
-}
-
-function bindHold(button, action) {
-  var pointerId = null;
-  var delayTimer = 0;
-  var repeatTimer = 0;
-
-  function stop(event) {
-    if (pointerId === null) {
-      return;
-    }
-    if (event && event.pointerId !== pointerId) {
-      return;
-    }
-    window.clearTimeout(delayTimer);
-    window.clearInterval(repeatTimer);
-    delayTimer = 0;
-    repeatTimer = 0;
-    if (button.hasPointerCapture(pointerId)) {
-      button.releasePointerCapture(pointerId);
-    }
-    pointerId = null;
-  }
-
-  button.addEventListener("pointerdown", function (event) {
-    if (!event.isPrimary || event.button !== 0 || pointerId !== null) {
-      return;
-    }
-    event.preventDefault();
-    pointerId = event.pointerId;
-    try {
-      button.setPointerCapture(pointerId);
-    } catch (error) {
-      // A pointer the browser will not capture can still repeat until pointerup.
-    }
-    action();
-    delayTimer = window.setTimeout(function () {
-      repeatTimer = window.setInterval(action, 50);
-    }, 170);
-  });
-
-  button.addEventListener("pointerup", stop);
-  button.addEventListener("pointercancel", stop);
-  button.addEventListener("lostpointercapture", stop);
 }
 
 function onKeyDown(event) {
@@ -417,11 +379,11 @@ function onKeyDown(event) {
   }
 }
 
-pauseButton.addEventListener("click", function () {
+bindPress(pauseButton, function () {
   BlockDrop.togglePause(state);
 });
 
-document.getElementById("restart").addEventListener("click", restartGame);
+bindPress(document.getElementById("restart"), restartGame);
 
 bindHold(document.getElementById("move-left"), function () {
   BlockDrop.move(state, -1, 0);
