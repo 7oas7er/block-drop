@@ -385,6 +385,25 @@ bindPress(pauseButton, function () {
 
 bindPress(document.getElementById("restart"), restartGame);
 
+bindHold(document.getElementById("move-left"), function () {
+  BlockDrop.move(state, -1, 0);
+});
+bindHold(document.getElementById("soft-drop"), function () {
+  BlockDrop.move(state, 0, 1);
+});
+bindHold(document.getElementById("move-right"), function () {
+  BlockDrop.move(state, 1, 0);
+});
+bindTap(document.getElementById("rotate"), function () {
+  BlockDrop.rotate(state);
+});
+bindTap(document.getElementById("hard-drop"), function () {
+  BlockDrop.hardDrop(state);
+});
+document.querySelector(".touch-pad").addEventListener("contextmenu", function (event) {
+  event.preventDefault();
+});
+
 nameInput.addEventListener("input", function () {
   var cleaned = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
   nameInput.value = cleaned.slice(0, BlockDropScores.NAME_LENGTH);
