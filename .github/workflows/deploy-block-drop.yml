@@ -69,11 +69,14 @@ jobs:
       - name: Sync the game to S3
         run: |
           set -euo pipefail
+          # Short max-age so Cloudflare, which caches .js and .css at the edge,
+          # picks up a publish without waiting on its default four-hour TTL.
           aws s3 sync block-drop "s3://${{ steps.site.outputs.bucket }}" \
             --delete \
             --exclude "README.md" \
             --exclude ".DS_Store" \
-            --exclude "*/.DS_Store"
+            --exclude "*/.DS_Store" \
+            --cache-control "public, max-age=60, must-revalidate"
 
       - name: Invalidate CloudFront
         run: |
