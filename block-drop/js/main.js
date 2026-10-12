@@ -329,21 +329,31 @@ function restartGame() {
 
 function bindPress(button, action) {
   var suppressClick = false;
+  var clearTimer = 0;
+
+  function clearSuppress() {
+    suppressClick = false;
+    window.clearTimeout(clearTimer);
+    clearTimer = 0;
+  }
 
   button.addEventListener("pointerdown", function (event) {
     if (!event.isPrimary || event.button !== 0) {
       return;
     }
     event.preventDefault();
+    // iPhone Safari fires click a few hundred ms after pointerdown. Keep the
+    // guard up until that click arrives so Rotate and Drop only run once.
     suppressClick = true;
+    window.clearTimeout(clearTimer);
+    clearTimer = window.setTimeout(clearSuppress, 500);
     action();
-    requestAnimationFrame(function () {
-      suppressClick = false;
-    });
   });
 
-  button.addEventListener("click", function () {
+  button.addEventListener("click", function (event) {
     if (suppressClick) {
+      event.preventDefault();
+      clearSuppress();
       return;
     }
     action();
