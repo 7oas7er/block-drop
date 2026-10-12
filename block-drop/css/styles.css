@@ -72,7 +72,7 @@ h1 {
 }
 
 .touch-pad {
-  display: none;
+  display: flex;
   justify-content: space-between;
   align-items: stretch;
   gap: 0.75rem;
@@ -80,6 +80,14 @@ h1 {
   touch-action: none;
   user-select: none;
   -webkit-user-select: none;
+}
+
+/* Hide the pad only for a clear desktop mouse layout. Phones, tablets, and
+   narrow windows keep it so the controls cannot disappear behind a media-query miss. */
+@media (min-width: 761px) and (hover: hover) and (pointer: fine) {
+  .touch-pad {
+    display: none;
+  }
 }
 
 .touch-move,
@@ -309,7 +317,7 @@ button:focus-visible {
   line-height: 1.5;
 }
 
-@media (max-width: 760px), (hover: none) and (pointer: coarse) {
+@media (max-width: 760px), (hover: none), (pointer: coarse) {
   h1 {
     align-self: flex-start;
     margin-right: 7.5rem;
@@ -325,8 +333,10 @@ button:focus-visible {
     width: min(300px, 100%);
   }
 
+  /* Keep width and height inside the small viewport so the pad stays on screen.
+     Cap at 300px, but also shrink when the phone is short. */
   #board-wrap {
-    width: min(100%, calc((100svh - 9.5rem) / 2));
+    width: min(100%, 300px, calc((100svh - 13rem) / 2));
     height: auto;
     aspect-ratio: 1 / 2;
   }
@@ -340,6 +350,13 @@ button:focus-visible {
 
   .touch-pad {
     display: flex;
+    position: sticky;
+    bottom: 0;
+    z-index: 3;
+    box-sizing: border-box;
+    background: #0f0f17;
+    padding-top: 0.35rem;
+    padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
   }
 
   .panel,
