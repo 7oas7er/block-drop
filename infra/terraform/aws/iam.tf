@@ -74,12 +74,6 @@ resource "aws_iam_role_policy" "github_deploy" {
         Action   = "cloudfront:CreateInvalidation"
         Resource = aws_cloudfront_distribution.site.arn
       },
-      {
-        Sid      = "ReadSiteStackOutputs"
-        Effect   = "Allow"
-        Action   = "cloudformation:DescribeStacks"
-        Resource = "arn:aws:cloudformation:${var.aws_region}:${var.aws_account_id}:stack/${var.cloudformation_stack_name}/*"
-      },
     ]
   })
 }
