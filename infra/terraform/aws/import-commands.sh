@@ -20,19 +20,14 @@ aws_cli() {
 
 discover() {
   echo "Reading CloudFormation stack ${STACK} in ${REGION} (profile ${PROFILE})..."
-  mapfile -t rows < <(aws_cli cloudformation list-stack-resources \
-    --stack-name "$STACK" \
-    --query "StackResourceSummaries[].[LogicalResourceId,ResourceType,PhysicalResourceId]" \
-    --output text)
 
+  # Avoid mapfile / Bash 4 features so this runs on macOS /bin/bash 3.2.
   local site_bucket="" high_bucket="" dist_id="" fn_name="" fn_role=""
+  local logical type physical
   local s3_oac_name="BlockDropStackDistributionOrigin1S3OriginAccessControlF9C59925"
   local lambda_oac_name="BlockDropStackDistributionOrnctionUrlOriginAccessControl13B0BA06"
 
-  for row in "${rows[@]}"; do
-    logical=$(awk '{print $1}' <<<"$row")
-    type=$(awk '{print $2}' <<<"$row")
-    physical=$(awk '{print $3}' <<<"$row")
+  while IFS=$'\t' read -r logical type physical; do
     case "$logical" in
       SiteBucket*) site_bucket="$physical" ;;
       HighScoreBucket9AA5F4D8) high_bucket="$physical" ;;
@@ -40,7 +35,10 @@ discover() {
       HighScoreFunctionD50DBF7C) fn_name="$physical" ;;
       HighScoreFunctionServiceRoleA0EDDA67) fn_role="$physical" ;;
     esac
-  done
+  done < <(aws_cli cloudformation list-stack-resources \
+    --stack-name "$STACK" \
+    --query "StackResourceSummaries[].[LogicalResourceId,ResourceType,PhysicalResourceId]" \
+    --output text)
 
   local s3_oac_id lambda_oac_id
   s3_oac_id=$(aws --profile "$PROFILE" cloudfront list-origin-access-controls \
