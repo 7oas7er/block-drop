@@ -31,11 +31,19 @@ jobs:
       - name: Check repository variables
         run: |
           if [ -z "${{ vars.AWS_DEPLOY_ROLE_ARN }}" ]; then
-            echo "Set the AWS_DEPLOY_ROLE_ARN repository variable to the GitHubDeployRoleArn stack output."
+            echo "Set the AWS_DEPLOY_ROLE_ARN repository variable to the Terraform github_deploy_role_arn output."
             exit 1
           fi
           if [ -z "${{ vars.AWS_REGION }}" ]; then
-            echo "Set the AWS_REGION repository variable to the DeployRegion stack output."
+            echo "Set the AWS_REGION repository variable to the Terraform deploy_region output."
+            exit 1
+          fi
+          if [ -z "${{ vars.AWS_SITE_BUCKET }}" ]; then
+            echo "Set the AWS_SITE_BUCKET repository variable to the Terraform bucket_name output."
+            exit 1
+          fi
+          if [ -z "${{ vars.AWS_DISTRIBUTION_ID }}" ]; then
+            echo "Set the AWS_DISTRIBUTION_ID repository variable to the Terraform distribution_id output."
             exit 1
           fi
 
@@ -49,29 +57,12 @@ jobs:
           aws-region: ${{ vars.AWS_REGION }}
           role-session-name: block-drop-${{ github.run_id }}
 
-      - name: Read site location
-        id: site
-        run: |
-          set -euo pipefail
-          outputs=$(aws cloudformation describe-stacks \
-            --stack-name BlockDropStack \
-            --query "Stacks[0].Outputs" \
-            --output json)
-          bucket=$(jq -r '.[] | select(.OutputKey=="BucketName") | .OutputValue' <<<"$outputs")
-          distribution=$(jq -r '.[] | select(.OutputKey=="DistributionId") | .OutputValue' <<<"$outputs")
-          if [ -z "$bucket" ] || [ "$bucket" = "null" ] || [ -z "$distribution" ] || [ "$distribution" = "null" ]; then
-            echo "BlockDropStack is missing the BucketName or DistributionId output."
-            exit 1
-          fi
-          echo "bucket=${bucket}" >> "$GITHUB_OUTPUT"
-          echo "distribution=${distribution}" >> "$GITHUB_OUTPUT"
-
       - name: Sync the game to S3
         run: |
           set -euo pipefail
           # Short max-age so Cloudflare, which caches .js and .css at the edge,
           # picks up a publish without waiting on its default four-hour TTL.
-          aws s3 sync block-drop "s3://${{ steps.site.outputs.bucket }}" \
+          aws s3 sync block-drop "s3://${{ vars.AWS_SITE_BUCKET }}" \
             --delete \
             --exclude "README.md" \
             --exclude ".DS_Store" \
@@ -82,5 +73,5 @@ jobs:
         run: |
           set -euo pipefail
           aws cloudfront create-invalidation \
-            --distribution-id "${{ steps.site.outputs.distribution }}" \
+            --distribution-id "${{ vars.AWS_DISTRIBUTION_ID }}" \
             --paths "/*"

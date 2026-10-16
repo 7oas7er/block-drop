@@ -70,9 +70,3 @@ variable "github_actions_subject" {
   type        = string
   default     = "repo:7oas7er@2952810/block-drop@1407099747:ref:refs/heads/main"
 }
-
-variable "cloudformation_stack_name" {
-  description = "Legacy CloudFormation stack still queried by the GitHub deploy workflow."
-  type        = string
-  default     = "BlockDropStack"
-}

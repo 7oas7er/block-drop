@@ -14,7 +14,7 @@ output "site_url" {
 }
 
 output "bucket_name" {
-  description = "Private bucket that stores the site files."
+  description = "Store this in the GitHub repository variable AWS_SITE_BUCKET."
   value       = aws_s3_bucket.site.bucket
 }
 
@@ -24,7 +24,7 @@ output "high_score_bucket_name" {
 }
 
 output "distribution_id" {
-  description = "CloudFront distribution that serves the site."
+  description = "Store this in the GitHub repository variable AWS_DISTRIBUTION_ID."
   value       = aws_cloudfront_distribution.site.id
 }
 
