@@ -15,6 +15,15 @@ terraform {
       version = "~> 4.0"
     }
   }
+
+  backend "s3" {
+    bucket         = "shared-block-drop-terraform-state-bucket"
+    key            = "envs/stg/terraform.tfstate"
+    region         = "eu-north-1"
+    dynamodb_table = "shared-block-drop-terraform-lock-table"
+    encrypt        = true
+    profile        = "7oas7er"
+  }
 }
 
 provider "aws" {

@@ -1,0 +1,30 @@
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = ">= 5.100.0, < 7.0.0"
+    }
+  }
+
+  backend "s3" {
+    bucket         = "shared-block-drop-terraform-state-bucket"
+    key            = "bootstrap/terraform.tfstate"
+    region         = "eu-north-1"
+    dynamodb_table = "shared-block-drop-terraform-lock-table"
+    encrypt        = true
+    profile        = "7oas7er"
+  }
+}
+
+provider "aws" {
+  region  = var.aws_region
+  profile = var.aws_profile
+
+  default_tags {
+    tags = {
+      Environment = "shared"
+    }
+  }
+}
