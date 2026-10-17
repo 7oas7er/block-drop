@@ -88,7 +88,7 @@ resource "aws_cloudfront_distribution" "site" {
     minimum_protocol_version = "TLSv1.3_2025"
   }
 
-  lifecycle {
-    ignore_changes = [tags, tags_all]
+  tags = {
+    Name = "${var.environment}-site-cloudfront-distribution"
   }
 }

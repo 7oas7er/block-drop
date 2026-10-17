@@ -8,67 +8,6 @@ data "archive_file" "high_scores" {
   }
 }
 
-resource "aws_iam_role" "high_scores" {
-  name = var.high_score_function_role_name
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = "sts:AssumeRole"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
-      },
-    ]
-  })
-
-  lifecycle {
-    ignore_changes = [tags, tags_all]
-  }
-}
-
-resource "aws_iam_role_policy_attachment" "high_scores_basic" {
-  role       = aws_iam_role.high_scores.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-}
-
-resource "aws_iam_role_policy" "high_scores" {
-  name = "HighScoreFunctionServiceRoleDefaultPolicy635C5AB0"
-  role = aws_iam_role.high_scores.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject*",
-          "s3:GetBucket*",
-          "s3:List*",
-        ]
-        Resource = [
-          aws_s3_bucket.high_scores.arn,
-          "${aws_s3_bucket.high_scores.arn}/*",
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "s3:PutObject",
-          "s3:PutObjectLegalHold",
-          "s3:PutObjectRetention",
-          "s3:PutObjectTagging",
-          "s3:PutObjectVersionTagging",
-          "s3:Abort*",
-        ]
-        Resource = "${aws_s3_bucket.high_scores.arn}/*"
-      },
-    ]
-  })
-}
-
 resource "aws_lambda_function" "high_scores" {
   function_name    = var.high_score_function_name
   description      = "Reads and writes the Block Drop high score table."
@@ -93,8 +32,8 @@ resource "aws_lambda_function" "high_scores" {
     aws_iam_role_policy_attachment.high_scores_basic,
   ]
 
-  lifecycle {
-    ignore_changes = [tags, tags_all]
+  tags = {
+    Name = "${var.environment}-high-scores-function"
   }
 }
 

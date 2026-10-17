@@ -1,9 +1,8 @@
 resource "aws_s3_bucket" "site" {
   bucket = var.site_bucket_name
 
-  # CDK tagged this bucket for auto-delete; Terraform does not recreate that custom resource.
-  lifecycle {
-    ignore_changes = [tags, tags_all]
+  tags = {
+    Name = "${var.environment}-site-bucket"
   }
 }
 
@@ -36,47 +35,19 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "site" {
 
 resource "aws_s3_bucket_policy" "site" {
   bucket = aws_s3_bucket.site.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "DenyInsecureTransport"
-        Effect    = "Deny"
-        Principal = { AWS = "*" }
-        Action    = "s3:*"
-        Resource = [
-          aws_s3_bucket.site.arn,
-          "${aws_s3_bucket.site.arn}/*",
-        ]
-        Condition = {
-          Bool = {
-            "aws:SecureTransport" = "false"
-          }
-        }
-      },
-      {
-        Sid       = "AllowCloudFrontRead"
-        Effect    = "Allow"
-        Principal = { Service = "cloudfront.amazonaws.com" }
-        Action    = "s3:GetObject"
-        Resource  = "${aws_s3_bucket.site.arn}/*"
-        Condition = {
-          StringEquals = {
-            "AWS:SourceArn" = aws_cloudfront_distribution.site.arn
-          }
-        }
-      },
-    ]
-  })
+  policy = data.aws_iam_policy_document.site_bucket.json
 }
 
 resource "aws_s3_bucket" "high_scores" {
   bucket        = var.high_score_bucket_name
   force_destroy = false
 
+  tags = {
+    Name = "${var.environment}-high-scores-bucket"
+  }
+
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [tags, tags_all]
   }
 }
 
@@ -109,24 +80,5 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "high_scores" {
 
 resource "aws_s3_bucket_policy" "high_scores" {
   bucket = aws_s3_bucket.high_scores.id
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid       = "DenyInsecureTransport"
-        Effect    = "Deny"
-        Principal = { AWS = "*" }
-        Action    = "s3:*"
-        Resource = [
-          aws_s3_bucket.high_scores.arn,
-          "${aws_s3_bucket.high_scores.arn}/*",
-        ]
-        Condition = {
-          Bool = {
-            "aws:SecureTransport" = "false"
-          }
-        }
-      },
-    ]
-  })
+  policy = data.aws_iam_policy_document.high_scores_bucket.json
 }
