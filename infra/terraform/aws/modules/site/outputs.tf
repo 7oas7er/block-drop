@@ -1,20 +1,15 @@
 output "github_deploy_role_arn" {
-  description = "Store this in the GitHub repository variable AWS_DEPLOY_ROLE_ARN."
+  description = "IAM role assumed by GitHub Actions to publish this environment."
   value       = aws_iam_role.github_deploy.arn
 }
 
-output "deploy_region" {
-  description = "Store this in the GitHub repository variable AWS_REGION."
-  value       = var.aws_region
-}
-
 output "site_url" {
-  description = "HTTPS URL for Block Drop."
+  description = "HTTPS URL for this environment."
   value       = "https://${var.site_domain_name}"
 }
 
 output "bucket_name" {
-  description = "Store this in the GitHub repository variable AWS_SITE_BUCKET."
+  description = "Private bucket that stores the site files."
   value       = aws_s3_bucket.site.bucket
 }
 
@@ -24,7 +19,7 @@ output "high_score_bucket_name" {
 }
 
 output "distribution_id" {
-  description = "Store this in the GitHub repository variable AWS_DISTRIBUTION_ID."
+  description = "CloudFront distribution id."
   value       = aws_cloudfront_distribution.site.id
 }
 

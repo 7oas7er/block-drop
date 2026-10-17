@@ -6,7 +6,16 @@ resource "cloudflare_dns_record" "blockdrop" {
   zone_id = one(data.cloudflare_zones.site.result).id
   name    = "blockdrop.7oas7er.com"
   type    = "CNAME"
-  content = var.cloudfront_domain_name
+  content = var.prod_cloudfront_domain_name
+  proxied = true
+  ttl     = 1
+}
+
+resource "cloudflare_dns_record" "blockdrop_stg" {
+  zone_id = one(data.cloudflare_zones.site.result).id
+  name    = "blockdrop-stg.7oas7er.com"
+  type    = "CNAME"
+  content = var.stg_cloudfront_domain_name
   proxied = true
   ttl     = 1
 }
@@ -28,4 +37,3 @@ resource "cloudflare_dns_record" "root" {
   proxied = true
   ttl     = 1
 }
-

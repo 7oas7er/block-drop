@@ -7,7 +7,7 @@ data "aws_iam_policy_document" "github_deploy_assume_role" {
 
     principals {
       type        = "Federated"
-      identifiers = [aws_iam_openid_connect_provider.github.arn]
+      identifiers = [var.github_oidc_provider_arn]
     }
 
     condition {
