@@ -1,0 +1,5 @@
+aws_region  = "eu-north-1"
+aws_profile = "7oas7er"
+
+# ACM certificate in us-east-1 for blockdrop-stg.7oas7er.com.
+site_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"

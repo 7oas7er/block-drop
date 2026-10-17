@@ -9,7 +9,7 @@ data "archive_file" "high_scores" {
 }
 
 resource "aws_lambda_function" "high_scores" {
-  function_name    = var.high_score_function_name
+  function_name    = local.high_scores_function_name
   description      = "Reads and writes the Block Drop high score table."
   role             = aws_iam_role.high_scores.arn
   handler          = "high-scores.handler"
@@ -33,7 +33,7 @@ resource "aws_lambda_function" "high_scores" {
   ]
 
   tags = {
-    Name = "${var.environment}-high-scores-function"
+    Name = local.high_scores_function_name
   }
 }
 
@@ -49,11 +49,6 @@ resource "aws_lambda_permission" "high_scores_invoke_url_from_cloudfront" {
   principal              = "cloudfront.amazonaws.com"
   source_arn             = aws_cloudfront_distribution.site.arn
   function_url_auth_type = "AWS_IAM"
-
-  lifecycle {
-    # Staging still uses CDK-imported statement ids.
-    ignore_changes = [statement_id]
-  }
 }
 
 resource "aws_lambda_permission" "high_scores_invoke_from_cloudfront" {
@@ -63,8 +58,4 @@ resource "aws_lambda_permission" "high_scores_invoke_from_cloudfront" {
   principal                = "cloudfront.amazonaws.com"
   source_arn               = aws_cloudfront_distribution.site.arn
   invoked_via_function_url = true
-
-  lifecycle {
-    ignore_changes = [statement_id]
-  }
 }

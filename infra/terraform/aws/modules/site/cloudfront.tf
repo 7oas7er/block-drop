@@ -1,20 +1,12 @@
-locals {
-  cache_policy_caching_optimized        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
-  cache_policy_caching_disabled         = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
-  origin_request_all_viewer_except_host = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
-  response_headers_security_headers     = "67f7725c-6f97-4210-82d7-5512b31e9d03"
-  lambda_function_url_hostname          = trimsuffix(replace(aws_lambda_function_url.high_scores.function_url, "https://", ""), "/")
-}
-
 resource "aws_cloudfront_origin_access_control" "site" {
-  name                              = var.site_oac_name
+  name                              = local.site_oac_name
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
 }
 
 resource "aws_cloudfront_origin_access_control" "high_scores" {
-  name                              = var.high_scores_oac_name
+  name                              = local.high_scores_oac_name
   origin_access_control_origin_type = "lambda"
   signing_behavior                  = "always"
   signing_protocol                  = "sigv4"
@@ -23,7 +15,7 @@ resource "aws_cloudfront_origin_access_control" "high_scores" {
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
-  comment             = var.cloudfront_comment
+  comment             = local.site_distribution_name
   default_root_object = "index.html"
   price_class         = "PriceClass_100"
   http_version        = "http2and3"
@@ -31,13 +23,13 @@ resource "aws_cloudfront_distribution" "site" {
 
   origin {
     domain_name              = aws_s3_bucket.site.bucket_regional_domain_name
-    origin_id                = var.s3_origin_id
+    origin_id                = local.site_origin_id
     origin_access_control_id = aws_cloudfront_origin_access_control.site.id
   }
 
   origin {
     domain_name              = local.lambda_function_url_hostname
-    origin_id                = var.lambda_origin_id
+    origin_id                = local.high_scores_origin_id
     origin_access_control_id = aws_cloudfront_origin_access_control.high_scores.id
 
     custom_origin_config {
@@ -49,7 +41,7 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   default_cache_behavior {
-    target_origin_id           = var.s3_origin_id
+    target_origin_id           = local.site_origin_id
     viewer_protocol_policy     = "redirect-to-https"
     allowed_methods            = ["GET", "HEAD"]
     cached_methods             = ["GET", "HEAD"]
@@ -60,7 +52,7 @@ resource "aws_cloudfront_distribution" "site" {
 
   ordered_cache_behavior {
     path_pattern               = "/api/scores"
-    target_origin_id           = var.lambda_origin_id
+    target_origin_id           = local.high_scores_origin_id
     viewer_protocol_policy     = "redirect-to-https"
     allowed_methods            = ["GET", "HEAD", "OPTIONS", "PUT", "PATCH", "POST", "DELETE"]
     cached_methods             = ["GET", "HEAD"]
@@ -83,6 +75,6 @@ resource "aws_cloudfront_distribution" "site" {
   }
 
   tags = {
-    Name = "${var.environment}-site-cloudfront-distribution"
+    Name = local.site_distribution_name
   }
 }

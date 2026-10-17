@@ -1,8 +1,8 @@
 resource "aws_s3_bucket" "site" {
-  bucket = var.site_bucket_name
+  bucket = local.site_bucket_name
 
   tags = {
-    Name = "${var.environment}-site-bucket"
+    Name = local.site_bucket_name
   }
 }
 
@@ -39,15 +39,11 @@ resource "aws_s3_bucket_policy" "site" {
 }
 
 resource "aws_s3_bucket" "high_scores" {
-  bucket        = var.high_score_bucket_name
+  bucket        = local.high_scores_bucket_name
   force_destroy = false
 
   tags = {
-    Name = "${var.environment}-high-scores-bucket"
-  }
-
-  lifecycle {
-    prevent_destroy = true
+    Name = local.high_scores_bucket_name
   }
 }
 
