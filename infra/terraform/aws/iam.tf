@@ -8,72 +8,46 @@ resource "aws_iam_openid_connect_provider" "github" {
   thumbprint_list = [data.tls_certificate.github.certificates[0].sha1_fingerprint]
 
   lifecycle {
-    ignore_changes = [thumbprint_list, tags, tags_all]
+    ignore_changes = [thumbprint_list]
+  }
+
+  tags = {
+    Name = "${var.environment}-github-provider"
   }
 }
 
 resource "aws_iam_role" "github_deploy" {
-  name        = "block-drop-github-deploy"
-  description = "GitHub Actions on main publishes Block Drop and invalidates CloudFront."
+  name               = "block-drop-github-deploy"
+  description        = "GitHub Actions on main publishes Block Drop and invalidates CloudFront."
+  assume_role_policy = data.aws_iam_policy_document.github_deploy_assume_role.json
 
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "sts:AssumeRoleWithWebIdentity",
-          "sts:TagSession",
-        ]
-        Principal = {
-          Federated = aws_iam_openid_connect_provider.github.arn
-        }
-        Condition = {
-          StringEquals = {
-            "token.actions.githubusercontent.com:aud" = "sts.amazonaws.com"
-            "token.actions.githubusercontent.com:sub" = var.github_actions_subject
-          }
-        }
-      },
-    ]
-  })
-
-  lifecycle {
-    ignore_changes = [tags, tags_all]
+  tags = {
+    Name = "${var.environment}-github-deploy-role"
   }
 }
 
 resource "aws_iam_role_policy" "github_deploy" {
-  name = "GitHubDeployRoleDefaultPolicy26C27B56"
-  role = aws_iam_role.github_deploy.id
+  name   = "GitHubDeployRoleDefaultPolicy26C27B56"
+  role   = aws_iam_role.github_deploy.id
+  policy = data.aws_iam_policy_document.github_deploy.json
+}
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "LocateAndListSiteBucket"
-        Effect = "Allow"
-        Action = [
-          "s3:GetBucketLocation",
-          "s3:ListBucket",
-        ]
-        Resource = aws_s3_bucket.site.arn
-      },
-      {
-        Sid    = "SyncSiteObjects"
-        Effect = "Allow"
-        Action = [
-          "s3:GetObject",
-          "s3:PutObject",
-          "s3:DeleteObject",
-        ]
-        Resource = "${aws_s3_bucket.site.arn}/*"
-      },
-      {
-        Effect   = "Allow"
-        Action   = "cloudfront:CreateInvalidation"
-        Resource = aws_cloudfront_distribution.site.arn
-      },
-    ]
-  })
+resource "aws_iam_role" "high_scores" {
+  name               = var.high_score_function_role_name
+  assume_role_policy = data.aws_iam_policy_document.high_scores_assume_role.json
+
+  tags = {
+    Name = "${var.environment}-high-scores-function-role"
+  }
+}
+
+resource "aws_iam_role_policy_attachment" "high_scores_basic" {
+  role       = aws_iam_role.high_scores.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "high_scores" {
+  name   = "HighScoreFunctionServiceRoleDefaultPolicy635C5AB0"
+  role   = aws_iam_role.high_scores.id
+  policy = data.aws_iam_policy_document.high_scores.json
 }
