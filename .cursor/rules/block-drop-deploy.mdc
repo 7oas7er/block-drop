@@ -1,0 +1,14 @@
+---
+description: GitHub Actions deploy conventions for Block Drop
+globs: .github/workflows/**
+alwaysApply: false
+---
+
+# Block Drop — deploy
+
+- Workflow: `.github/workflows/deploy-block-drop.yml` publishes from `main` when `block-drop/**` changes (or manual dispatch).
+- Auth: GitHub OIDC → IAM deploy role. No long-lived AWS access keys in GitHub secrets.
+- Repo variables (currently aimed at **prod**): `AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`.
+- Sync `block-drop/` to the site bucket (exclude README / `.DS_Store`), short `Cache-Control`, then CloudFront `/*` invalidation.
+- After renaming deploy role or buckets in Terraform, update those GitHub variables before the next deploy.
+- Do not point the deploy role at CloudFormation stack outputs; use Terraform outputs / variables only.

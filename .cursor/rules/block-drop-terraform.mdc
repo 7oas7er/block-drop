@@ -1,0 +1,45 @@
+---
+description: AWS and Cloudflare Terraform conventions for Block Drop
+globs: infra/terraform/**/*
+alwaysApply: false
+---
+
+# Block Drop — Terraform
+
+## Layout
+
+- AWS site module: `infra/terraform/aws/modules/site`
+- Env roots: `infra/terraform/aws/envs/stg`, `envs/prod`
+- Shared state bootstrap: `infra/terraform/aws/bootstrap`
+- Cloudflare DNS: `infra/terraform/cloudflare` (own root, same S3 backend)
+
+## Naming
+
+AWS names: `[environment]-block-drop-[purpose]-[resource-type]`
+
+Examples: `stg-block-drop-site-bucket`, `prod-block-drop-github-deploy-role`, `shared-block-drop-terraform-state-bucket`.
+
+Derive names in module locals from `var.environment`; do not scatter hard-coded legacy CDK names.
+
+## State
+
+- Remote state only: bucket `shared-block-drop-terraform-state-bucket`, lock table `shared-block-drop-terraform-lock-table`.
+- Keys: `bootstrap/`, `envs/stg/`, `envs/prod/`, `cloudflare/` under that bucket.
+- Never commit `*.tfstate` or `terraform.tfvars`.
+
+## Regions
+
+- Regional resources default to **`eu-north-1`** (see `block-drop-aws-regions` rule).
+- ACM for CloudFront aliases stays in **`us-east-1`**.
+
+## Environments
+
+| Env | Domain |
+|-----|--------|
+| stg | `blockdrop-stg.7oas7er.com` |
+| prod | `blockdrop.7oas7er.com` |
+
+- GitHub OIDC provider is managed in **stg** only; prod looks it up via data source.
+- Prefer `aws_iam_policy_document` over raw `jsonencode` for IAM/S3 policies.
+- High-score buckets keep `prevent_destroy`; renaming forces replace — migrate objects first.
+- Empty site buckets after replace cause CloudFront AccessDenied; sync `block-drop/` and invalidate.
