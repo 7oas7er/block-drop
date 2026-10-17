@@ -12,6 +12,6 @@ resource "aws_iam_openid_connect_provider" "github" {
   }
 
   tags = {
-    Name = "${var.environment}-github-provider"
+    Name = "${var.environment}-block-drop-github-oidc-provider"
   }
 }

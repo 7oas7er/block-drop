@@ -1,5 +1,5 @@
 variable "environment" {
-  description = "Short environment name used in resource tags."
+  description = "Short environment name used in resource names and tags."
   type        = string
   default     = "stg"
 }
@@ -27,34 +27,8 @@ variable "site_certificate_arn" {
   type        = string
 }
 
-variable "site_bucket_name" {
-  description = "Existing private site bucket name."
-  type        = string
-}
-
-variable "high_score_bucket_name" {
-  description = "Existing private high-score bucket name."
-  type        = string
-}
-
-variable "high_score_function_name" {
-  description = "Existing high-score Lambda function name."
-  type        = string
-}
-
-variable "high_score_function_role_name" {
-  description = "Existing IAM role name for the high-score Lambda."
-  type        = string
-}
-
 variable "github_actions_subject" {
   description = "Immutable GitHub Actions OIDC subject allowed to assume the deploy role."
   type        = string
   default     = "repo:7oas7er@2952810/block-drop@1407099747:ref:refs/heads/main"
-}
-
-variable "github_deploy_role_name" {
-  description = "Existing GitHub deploy role name."
-  type        = string
-  default     = "block-drop-github-deploy"
 }

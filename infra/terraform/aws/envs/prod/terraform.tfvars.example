@@ -1,0 +1,5 @@
+aws_region  = "eu-north-1"
+aws_profile = "7oas7er"
+
+# Optional overrides; defaults already target production.
+# site_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
