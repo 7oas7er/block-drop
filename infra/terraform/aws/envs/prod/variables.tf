@@ -1,7 +1,7 @@
 variable "environment" {
-  description = "Short environment name used in resource tags (for example stg or prod)."
+  description = "Short environment name used in resource tags."
   type        = string
-  default     = "stg"
+  default     = "prod"
 }
 
 variable "aws_region" {
@@ -23,34 +23,43 @@ variable "site_domain_name" {
 }
 
 variable "site_certificate_arn" {
-  description = "ACM certificate in us-east-1 used by CloudFront."
+  description = "ACM certificate in us-east-1 for the production hostname."
   type        = string
   default     = "arn:aws:acm:us-east-1:877710816497:certificate/5662db01-9020-4cc4-957a-91876b13e427"
 }
 
 variable "site_bucket_name" {
-  description = "Existing private site bucket name (CDK-generated)."
+  description = "Private S3 bucket that stores the production site files."
   type        = string
-  default     = "blockdropstack-sitebucket397a1860-fldg9ahi4wil"
+  default     = "block-drop-prod-site-877710816497"
 }
 
 variable "high_score_bucket_name" {
-  description = "Existing private high-score bucket name (CDK-generated). Fill before import."
+  description = "Private S3 bucket that stores the production high score table."
   type        = string
+  default     = "block-drop-prod-high-scores-877710816497"
 }
 
 variable "high_score_function_name" {
-  description = "Existing high-score Lambda function name. Fill before import."
+  description = "Lambda function name for /api/scores."
   type        = string
+  default     = "block-drop-prod-high-scores"
 }
 
 variable "high_score_function_role_name" {
-  description = "Existing IAM role name for the high-score Lambda. Fill before import."
+  description = "IAM role name for the high-score Lambda."
   type        = string
+  default     = "block-drop-prod-high-scores"
 }
 
 variable "github_actions_subject" {
-  description = "Immutable GitHub Actions OIDC subject allowed to assume the deploy role."
+  description = "Immutable GitHub Actions OIDC subject allowed to assume the prod deploy role."
   type        = string
   default     = "repo:7oas7er@2952810/block-drop@1407099747:ref:refs/heads/main"
+}
+
+variable "github_deploy_role_name" {
+  description = "IAM role name assumed by GitHub Actions for production publishes."
+  type        = string
+  default     = "block-drop-prod-github-deploy"
 }

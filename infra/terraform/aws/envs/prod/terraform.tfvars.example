@@ -1,0 +1,5 @@
+aws_region  = "eu-north-1"
+aws_profile = "7oas7er"
+
+# Defaults in variables.tf already match the intended production names and certificate.
+# Override here only when you need different values.

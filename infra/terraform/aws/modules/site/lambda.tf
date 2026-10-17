@@ -3,7 +3,7 @@ data "archive_file" "high_scores" {
   output_path = "${path.module}/build/high-scores.zip"
 
   source {
-    content  = file("${path.module}/../../lambda/high-scores.js")
+    content  = file("${path.module}/../../../../lambda/high-scores.js")
     filename = "high-scores.js"
   }
 }
@@ -51,7 +51,7 @@ resource "aws_lambda_permission" "high_scores_invoke_url_from_cloudfront" {
   function_url_auth_type = "AWS_IAM"
 
   lifecycle {
-    # CDK generated its own statement ids; keep the imported values.
+    # Staging still uses CDK-imported statement ids.
     ignore_changes = [statement_id]
   }
 }

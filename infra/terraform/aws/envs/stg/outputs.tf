@@ -1,0 +1,49 @@
+output "github_deploy_role_arn" {
+  description = "Store this in the GitHub repository variable AWS_DEPLOY_ROLE_ARN until prod cutover."
+  value       = module.site.github_deploy_role_arn
+}
+
+output "deploy_region" {
+  description = "Store this in the GitHub repository variable AWS_REGION."
+  value       = var.aws_region
+}
+
+output "site_url" {
+  description = "HTTPS URL for staging."
+  value       = module.site.site_url
+}
+
+output "bucket_name" {
+  description = "Store this in the GitHub repository variable AWS_SITE_BUCKET until prod cutover."
+  value       = module.site.bucket_name
+}
+
+output "high_score_bucket_name" {
+  description = "Private bucket that stores the staging high score table."
+  value       = module.site.high_score_bucket_name
+}
+
+output "distribution_id" {
+  description = "Store this in the GitHub repository variable AWS_DISTRIBUTION_ID until prod cutover."
+  value       = module.site.distribution_id
+}
+
+output "distribution_domain_name" {
+  description = "CloudFront domain name for the Cloudflare staging CNAME."
+  value       = module.site.distribution_domain_name
+}
+
+output "high_score_function_name" {
+  description = "Lambda function that serves /api/scores in staging."
+  value       = module.site.high_score_function_name
+}
+
+output "high_score_function_url" {
+  description = "Function URL origin behind staging CloudFront."
+  value       = module.site.high_score_function_url
+}
+
+output "github_oidc_provider_arn" {
+  description = "Account-wide GitHub OIDC provider ARN (referenced by prod)."
+  value       = aws_iam_openid_connect_provider.github.arn
+}
