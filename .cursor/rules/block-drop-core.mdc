@@ -1,0 +1,13 @@
+---
+description: Core Block Drop product and infrastructure decisions
+alwaysApply: true
+---
+
+# Block Drop — core decisions
+
+- **Product**: private falling-block puzzle game; keep the experience simple and fast.
+- **Game delivery**: static site only under `block-drop/` — HTML, CSS, plain JS. No framework, bundler, package manager, or build step for the game.
+- **Hosting**: AWS in **one account**, two environments (`stg` and `prod`). Terraform is the source of truth. Do **not** reintroduce CDK or manage app resources with CloudFormation.
+- **DNS**: Cloudflare (separate Terraform root) fronts CloudFront custom domains.
+- **Secrets**: never commit `.tfstate`, `terraform.tfvars`, API tokens, or AWS keys. Cloudflare uses `CLOUDFLARE_API_TOKEN`; AWS CLI/Terraform use profile `7oas7er` locally; GitHub Actions uses OIDC.
+- **Prefer small diffs**: match existing patterns; avoid drive-by refactors outside the task.
