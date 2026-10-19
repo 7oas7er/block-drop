@@ -5,6 +5,7 @@ locals {
   site_bucket_name                      = "${local.name_prefix}-site-bucket"
   access_logs_bucket_name               = "${local.name_prefix}-access-logs-bucket"
   high_scores_bucket_name               = "${local.name_prefix}-high-scores-bucket"
+  high_scores_object_key                = "high-scores.json"
   cloudfront_log_delivery_name          = "${local.name_prefix}-cloudfront-access-logs"
   high_scores_function_name             = "${local.name_prefix}-high-scores-function"
   high_scores_role_name                 = "${local.name_prefix}-high-scores-role"

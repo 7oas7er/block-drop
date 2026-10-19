@@ -43,6 +43,7 @@ Derive names in module locals from `var.environment`; do not scatter hard-coded 
 
 - GitHub OIDC provider is managed in **stg** only; prod looks it up via data source.
 - **IAM**: define policies with `aws_iam_policy_document` data sources in `data.tf` (not inline `jsonencode` / heredoc JSON on the policy resource). Attach those documents from roles/policies elsewhere.
+- **High-scores Lambda S3**: grant only `s3:GetObject` / `s3:PutObject` on `{bucket}/high-scores.json` (`local.high_scores_object_key`) — not bucket-wide `/*` or List/GetBucket wildcards.
 - High-score buckets keep `prevent_destroy`; renaming forces replace — migrate objects first.
 - Empty site buckets after replace cause CloudFront AccessDenied; sync `block-drop/` and invalidate.
 - **Origin gate (Block Drop)**: CloudFront requires Cloudflare-injected `X-Origin-Verify`; keep AWS `origin_verify_secret` in sync with Cloudflare `stg_`/`prod_origin_verify_secret`. Apply Cloudflare before tightening CloudFront. See core rule *Cloudflare-only traffic* for the broader principle.

@@ -63,27 +63,12 @@ data "aws_iam_policy_document" "high_scores_assume_role" {
 
 data "aws_iam_policy_document" "high_scores" {
   statement {
+    sid = "ReadWriteHighScoresObject"
     actions = [
-      "s3:GetObject*",
-      "s3:GetBucket*",
-      "s3:List*",
-    ]
-    resources = [
-      aws_s3_bucket.high_scores.arn,
-      "${aws_s3_bucket.high_scores.arn}/*",
-    ]
-  }
-
-  statement {
-    actions = [
+      "s3:GetObject",
       "s3:PutObject",
-      "s3:PutObjectLegalHold",
-      "s3:PutObjectRetention",
-      "s3:PutObjectTagging",
-      "s3:PutObjectVersionTagging",
-      "s3:Abort*",
     ]
-    resources = ["${aws_s3_bucket.high_scores.arn}/*"]
+    resources = ["${aws_s3_bucket.high_scores.arn}/${local.high_scores_object_key}"]
   }
 }
 
