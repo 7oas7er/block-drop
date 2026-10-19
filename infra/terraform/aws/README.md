@@ -43,6 +43,7 @@ Examples for `stg`:
 - `stg-block-drop-access-logs-bucket`
 - `stg-block-drop-high-scores-bucket`
 - `stg-block-drop-high-scores-function`
+- `stg-block-drop-high-scores-errors-alarm` / `…-throttles-alarm` / `…-site-5xx-alarm`
 - `stg-block-drop-high-scores-role`
 - `stg-block-drop-github-deploy-role`
 - `stg-block-drop-site-oac`
@@ -69,6 +70,14 @@ Each env module creates a private `{env}-block-drop-access-logs-bucket` (SSE-S3,
 
 - **CloudFront** standard logging **v2** (CloudWatch Logs delivery → S3 prefix `cloudfront/`; delivery APIs in `us-east-1`, bucket in `eu-north-1`). Uses JSON output (not Parquet) to avoid conversion charges.
 - **S3 site bucket** server access logs → prefix `s3-site/`.
+
+## Lambda logs and CloudWatch alarms
+
+- High-scores Lambda log group `/aws/lambda/{env}-block-drop-high-scores-function` is managed in Terraform with **14-day** retention (override via `lambda_log_retention_days`).
+- Metric alarms (no SNS yet — visible in the CloudWatch console; Grafana remains the primary external monitor):
+  - Lambda **Errors** and **Throttles** (eu-north-1)
+  - CloudFront **5xxErrorRate** > 5% (us-east-1, Global dimension)
+- Existing log groups are adopted via `import` blocks in `envs/stg/imports.tf` and `envs/prod/imports.tf`. After the first successful apply you can delete those blocks if you prefer; leaving them is harmless once the resource is in state.
 
 ## Cloudflare origin verify
 
