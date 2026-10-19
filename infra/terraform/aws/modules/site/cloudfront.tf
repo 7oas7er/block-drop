@@ -12,6 +12,15 @@ resource "aws_cloudfront_origin_access_control" "high_scores" {
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_function" "origin_verify" {
+  name    = local.origin_verify_function_name
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  code = templatefile("${path.module}/origin_verify.js.tftpl", {
+    origin_verify_secret = var.origin_verify_secret
+  })
+}
+
 resource "aws_cloudfront_distribution" "site" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -48,6 +57,11 @@ resource "aws_cloudfront_distribution" "site" {
     compress                   = true
     cache_policy_id            = local.cache_policy_caching_optimized
     response_headers_policy_id = local.response_headers_security_headers
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.origin_verify.arn
+    }
   }
 
   ordered_cache_behavior {
@@ -60,6 +74,11 @@ resource "aws_cloudfront_distribution" "site" {
     cache_policy_id            = local.cache_policy_caching_disabled
     origin_request_policy_id   = local.origin_request_all_viewer_except_host
     response_headers_policy_id = local.response_headers_security_headers
+
+    function_association {
+      event_type   = "viewer-request"
+      function_arn = aws_cloudfront_function.origin_verify.arn
+    }
   }
 
   restrictions {

@@ -33,3 +33,9 @@ variable "github_actions_subject" {
   type        = string
   default     = "repo:7oas7er@2952810/block-drop@1407099747:ref:refs/heads/main"
 }
+
+variable "origin_verify_secret" {
+  description = "Shared secret Cloudflare injects as X-Origin-Verify for production; must match Cloudflare prod_origin_verify_secret."
+  type        = string
+  sensitive   = true
+}

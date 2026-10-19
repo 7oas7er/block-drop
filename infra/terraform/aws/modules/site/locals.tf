@@ -14,6 +14,7 @@ locals {
   site_origin_id                        = "${local.name_prefix}-site-origin"
   high_scores_origin_id                 = "${local.name_prefix}-high-scores-origin"
   site_distribution_name                = "${local.name_prefix}-site-distribution"
+  origin_verify_function_name           = "${local.name_prefix}-origin-verify-function"
   cache_policy_caching_optimized        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
   cache_policy_caching_disabled         = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
   origin_request_all_viewer_except_host = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
