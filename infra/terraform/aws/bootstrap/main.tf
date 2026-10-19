@@ -78,6 +78,9 @@ resource "aws_s3_bucket_policy" "terraform_state" {
   policy = data.aws_iam_policy_document.terraform_state.json
 }
 
+# Legacy DynamoDB lock table (Terraform S3 backend used dynamodb_table).
+# All roots now lock via S3 use_lockfile; this table is unused but kept
+# with prevent_destroy until we deliberately remove it in a follow-up.
 resource "aws_dynamodb_table" "terraform_lock" {
   name         = local.lock_table_name
   billing_mode = "PAY_PER_REQUEST"
