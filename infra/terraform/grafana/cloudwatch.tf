@@ -1,7 +1,14 @@
+# Parked while Grafana Cloud Provider cannot assume the IAM role
+# (401 aws_authentication_error, no AssumeRole in CloudTrail). Set
+# enable_cloudwatch_scrape = true once Grafana confirms the link works.
 resource "grafana_cloud_provider_aws_account" "block_drop" {
-  provider = grafana.cloud
+  count    = var.enable_cloudwatch_scrape ? 1 : 0
+  provider = grafana.cloud_provider
 
-  depends_on = [time_sleep.grafana_iam_propagation]
+  depends_on = [
+    time_sleep.grafana_iam_propagation,
+    aws_iam_role.grafana_cloudwatch,
+  ]
 
   stack_id = data.grafana_cloud_stack.block_drop.id
   role_arn = aws_iam_role.grafana_cloudwatch.arn
@@ -10,11 +17,12 @@ resource "grafana_cloud_provider_aws_account" "block_drop" {
 }
 
 resource "grafana_cloud_provider_aws_cloudwatch_scrape_job" "block_drop" {
-  provider = grafana.cloud
+  count    = var.enable_cloudwatch_scrape ? 1 : 0
+  provider = grafana.cloud_provider
 
   stack_id                = data.grafana_cloud_stack.block_drop.id
   name                    = "block-drop-cloudwatch"
-  aws_account_resource_id = grafana_cloud_provider_aws_account.block_drop.resource_id
+  aws_account_resource_id = grafana_cloud_provider_aws_account.block_drop[0].resource_id
   enabled                 = true
   export_tags             = true
 

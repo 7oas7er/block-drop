@@ -17,7 +17,13 @@ data "aws_iam_policy_document" "grafana_cloudwatch_assume_role" {
     condition {
       test     = "StringEquals"
       variable = "sts:ExternalId"
-      values   = [var.grafana_aws_external_id]
+      # Prefer UI "Add account" External ID when set; otherwise prometheus_user_id.
+      values = [
+        coalesce(
+          var.grafana_aws_external_id,
+          tostring(data.grafana_cloud_stack.block_drop.prometheus_user_id),
+        )
+      ]
     }
   }
 }

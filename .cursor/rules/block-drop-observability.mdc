@@ -1,14 +1,39 @@
 ---
-description: Grafana Cloud observability conventions for Block Drop
-globs: infra/terraform/grafana/**/*
-alwaysApply: false
+description: Prefer Grafana Cloud for app observability; Block Drop monitoring pattern
+alwaysApply: true
 ---
 
-# Block Drop — observability
+# Observability — Grafana first
 
-- Provider: **Grafana Cloud Free** only for external monitoring and AWS metric views.
-- Terraform root: `infra/terraform/grafana/` (S3 state key `grafana/`).
-- Synthetics: HTTP checks for prod/stg site URLs and `/api/scores`.
-- AWS: IAM role `shared-block-drop-grafana-cloudwatch-role` assumed by Grafana Labs (`008923505280`) with External ID; CloudWatch scrape for `AWS/Lambda` and `AWS/CloudFront`.
-- Tokens stay in gitignored `terraform.tfvars` or `GRAFANA_*` env vars — never commit them.
-- Do not introduce Checkly/Datadog/New Relic/etc. alongside Grafana without an explicit decision to replace it.
+- **Default platform**: Grafana Cloud Free for external monitoring and AWS metric views. Do **not** add Checkly, Datadog, New Relic, or similar unless explicitly asked to replace Grafana.
+- **IaC**: Terraform root `infra/terraform/grafana/` (S3 state key `grafana/`). Tokens only in gitignored `terraform.tfvars` or `GRAFANA_*` env vars.
+- **Cloudflare** stays DNS/edge only — no second monitoring SaaS there.
+
+## Pattern for a public web app (Block Drop reference)
+
+When adding or extending observability for a hosted web app, mirror this stack:
+
+1. **Synthetic Monitoring (HTTP)** — Terraform `grafana_synthetic_monitoring_check`
+   - Prod + stg **site** URLs (expect TLS + HTTP 200)
+   - Prod + stg critical **API** paths (Block Drop: `/api/scores`)
+   - Labels: `project`, `environment` (`prod`|`stg`), `kind` (`site`|`api`)
+   - Prefer a small set of EU probes; keep checks cheap (e.g. ~5m frequency on Free)
+
+2. **CloudWatch metric scrape** — Cloud Provider Observability (`grafana_cloud_provider_aws_*`)
+   - Shared IAM role trusted by Grafana Labs account `008923505280` with `sts:ExternalId` = stack `prometheus_user_id` (override from UI Add-account modal if needed)
+   - Scrape services that back the app (Block Drop: `AWS/Lambda`, `AWS/CloudFront`); regions `eu-north-1` + `us-east-1` when CloudFront is involved
+   - Tag AWS resources (`Name`, etc.) so scrape discovery works; use static label `project=<app>`
+   - Gate with `enable_cloudwatch_scrape` until account linking works (Grafana must actually AssumeRole)
+
+3. **One app dashboard** — folder + overview dashboard in the Grafana stack
+   - Synthetics: availability stats, success/duration, HTTP status/phase latency, failure logs (Loki)
+   - CloudWatch panels on the same board (may be empty until scrape is enabled)
+   - Publish via stack service account (`block-drop-terraform`); cloud token needs `stack-service-accounts:write`
+   - Reference: `infra/terraform/grafana/dashboards/block-drop.json`
+
+## Do / don’t
+
+- **Do** reuse labels (`project`, `environment`) so one dashboard can filter prod vs stg.
+- **Do** keep synthetics even if CloudWatch scrape is temporarily parked.
+- **Don’t** invent a second observability product or duplicate synthetics in another vendor.
+- **Don’t** commit Grafana tokens, SM tokens, or service-account keys.

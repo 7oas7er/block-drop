@@ -21,30 +21,45 @@ variable "cloud_access_policy_token" {
   sensitive   = true
 }
 
-variable "cloud_provider_url" {
-  description = "Grafana Cloud Provider API URL for the stack region (from stack details or Connections)."
-  type        = string
-}
-
 variable "cloud_provider_access_token" {
   description = "Access policy token with integration-management:read|write and stacks:read. Prefer GRAFANA_CLOUD_PROVIDER_ACCESS_TOKEN."
   type        = string
   sensitive   = true
 }
 
-variable "sm_url" {
-  description = "Synthetic Monitoring API URL for the stack region (Synthetics → Config)."
+variable "grafana_aws_external_id" {
+  description = <<-EOT
+    Optional override for the IAM trust sts:ExternalId.
+    Defaults to the stack prometheus_user_id. If Cloud Provider account
+    create returns aws_authentication_error with no AssumeRole in CloudTrail,
+    copy the External ID from Grafana → Cloud Provider → AWS → Add account
+    and set it here.
+  EOT
   type        = string
+  default     = null
+  nullable    = true
+}
+
+variable "enable_cloudwatch_scrape" {
+  description = <<-EOT
+    Create Grafana Cloud Provider AWS account + CloudWatch scrape job.
+    Keep false while Grafana returns aws_authentication_error without
+    calling STS (see README). IAM role is still managed so linking can
+    be re-enabled later.
+  EOT
+  type        = bool
+  default     = false
+}
+
+variable "sm_url" {
+  description = "Optional override for Synthetic Monitoring API URL. Defaults to the stack sm_url from Grafana Cloud."
+  type        = string
+  default     = null
+  nullable    = true
 }
 
 variable "sm_access_token" {
   description = "Synthetic Monitoring access token (Synthetics → Config). Prefer GRAFANA_SM_ACCESS_TOKEN."
-  type        = string
-  sensitive   = true
-}
-
-variable "grafana_aws_external_id" {
-  description = "External ID from Grafana Cloud AWS account setup (Prometheus details / Create AWS account). Required for the IAM trust policy."
   type        = string
   sensitive   = true
 }

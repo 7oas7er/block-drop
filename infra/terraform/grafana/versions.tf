@@ -31,17 +31,31 @@ provider "aws" {
   profile = var.aws_profile
 }
 
-# Cloud stack lookup + Cloud Provider scrape jobs.
+# Portal / stack lookup (no Cloud Provider URL required yet).
 provider "grafana" {
-  alias                       = "cloud"
+  alias                     = "cloud"
+  cloud_access_policy_token = var.cloud_access_policy_token
+}
+
+# Cloud Provider Observability API — URL must match the stack cluster
+# (often differs from region_slug; take it from the stack data source).
+provider "grafana" {
+  alias                       = "cloud_provider"
   cloud_access_policy_token   = var.cloud_access_policy_token
-  cloud_provider_url          = var.cloud_provider_url
+  cloud_provider_url          = data.grafana_cloud_stack.block_drop.cloud_provider_url
   cloud_provider_access_token = var.cloud_provider_access_token
 }
 
-# Synthetic Monitoring checks.
+# Synthetic Monitoring checks — prefer stack sm_url when not overridden.
 provider "grafana" {
   alias           = "sm"
-  sm_url          = var.sm_url
+  sm_url          = coalesce(var.sm_url, data.grafana_cloud_stack.block_drop.sm_url)
   sm_access_token = var.sm_access_token
+}
+
+# Grafana instance (dashboards, folders). Auth is the stack service account token.
+provider "grafana" {
+  alias = "stack"
+  url   = data.grafana_cloud_stack.block_drop.url
+  auth  = grafana_cloud_stack_service_account_token.terraform.key
 }
