@@ -9,7 +9,7 @@ Automated checks for the static game under `../block-drop/`. The game itself sta
 | `unit/` | Node.js test runner + coverage | Move, rotate, lock/clear, pause/restart, high-score helpers |
 | `e2e/` | Playwright (Chromium) | Page chrome, high-score list, keyboard move/rotate, pause |
 
-CI runs `npm test` before deploying when `staging` or `main` is updated (see `.github/workflows/deploy-block-drop.yml`).
+CI runs `npm test` when `staging` or `main` is updated (see `.github/workflows/deploy-block-drop.yml`). Deploy follows only if `block-drop/**` (or the workflow file) changed — not for `tests/**`-only pushes.
 
 ## Local
 
