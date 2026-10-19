@@ -17,7 +17,11 @@ resource "aws_cloudfront_function" "origin_verify" {
   runtime = "cloudfront-js-2.0"
   publish = true
   code = templatefile("${path.module}/origin_verify.js.tftpl", {
-    origin_verify_secret = var.origin_verify_secret
+    # Dual-accept during rotation: current + optional previous (see docs/origin-verify-secret-rotation.md).
+    origin_verify_secrets = compact([
+      var.origin_verify_secret,
+      var.origin_verify_secret_previous,
+    ])
   })
 }
 

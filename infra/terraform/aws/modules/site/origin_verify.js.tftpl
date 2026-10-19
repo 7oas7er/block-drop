@@ -1,9 +1,20 @@
 function handler(event) {
   var request = event.request;
   var headers = request.headers;
-  var expected = ${jsonencode(origin_verify_secret)};
+  var allowed = ${jsonencode(origin_verify_secrets)};
+  var provided = headers["x-origin-verify"] ? headers["x-origin-verify"].value : null;
+  var ok = false;
 
-  if (!headers["x-origin-verify"] || headers["x-origin-verify"].value !== expected) {
+  if (provided) {
+    for (var i = 0; i < allowed.length; i++) {
+      if (provided === allowed[i]) {
+        ok = true;
+        break;
+      }
+    }
+  }
+
+  if (!ok) {
     return {
       statusCode: 403,
       statusDescription: "Forbidden",

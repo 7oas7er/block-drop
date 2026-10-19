@@ -29,6 +29,14 @@ variable "origin_verify_secret" {
   sensitive   = true
 }
 
+variable "origin_verify_secret_previous" {
+  description = "Optional previous origin-verify secret accepted during rotation. Set null/omit when not rotating."
+  type        = string
+  sensitive   = true
+  default     = null
+  nullable    = true
+}
+
 variable "access_logs_retention_days" {
   description = "Days to retain CloudFront and S3 access log objects before lifecycle expiration."
   type        = number

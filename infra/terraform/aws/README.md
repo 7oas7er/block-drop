@@ -87,6 +87,7 @@ CloudFront rejects requests that lack a matching `X-Origin-Verify` header. Cloud
 - Set the same value in `envs/prod` `origin_verify_secret` and Cloudflare `prod_origin_verify_secret`.
 - Prefer distinct secrets per environment. Store them only in local `terraform.tfvars` (gitignored).
 - Apply Cloudflare **before** enabling/updating the CloudFront Function gate so legitimate traffic is never locked out.
+- **Rotation**: follow [origin-verify secret rotation](../docs/origin-verify-secret-rotation.md) (dual-accept via optional `origin_verify_secret_previous`, then switch Cloudflare, then drop the previous secret).
 - GitHub Actions S3 sync, CloudFront invalidation, and Cloudflare cache purge do not use the viewer path and are unaffected.
 - Cloudflare cache rules (`infra/terraform/cloudflare/cache.tf`) respect origin `Cache-Control` for Block Drop hosts and bypass `/api/*`.
 - Cloudflare rate limiting (`infra/terraform/cloudflare/rate_limit.tf`) blocks IPs that exceed ~20 requests / 10s to `/api/scores` (Free-plan limits: one rule, path-only expression, 10s windows).

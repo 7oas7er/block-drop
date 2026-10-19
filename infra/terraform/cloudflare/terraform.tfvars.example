@@ -3,6 +3,7 @@ prod_cloudfront_domain_name = "d111111abcdef8.cloudfront.net"
 stg_cloudfront_domain_name  = "d222222abcdef8.cloudfront.net"
 
 # Must match the matching AWS env origin_verify_secret (never commit real values).
+# Rotation: see infra/terraform/docs/origin-verify-secret-rotation.md
 stg_origin_verify_secret  = "replace-with-a-long-random-secret"
 prod_origin_verify_secret = "replace-with-a-different-long-random-secret"
 

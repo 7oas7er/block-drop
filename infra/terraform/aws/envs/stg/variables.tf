@@ -38,3 +38,11 @@ variable "origin_verify_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "origin_verify_secret_previous" {
+  description = "Optional previous staging origin-verify secret during rotation. See docs/origin-verify-secret-rotation.md."
+  type        = string
+  sensitive   = true
+  default     = null
+  nullable    = true
+}
