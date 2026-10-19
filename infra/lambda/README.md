@@ -13,7 +13,8 @@ npm ci --omit=dev
 ```
 
 `node_modules/` is gitignored (`infra/.gitignore`). Commit `package.json` and
-`package-lock.json` when changing dependencies.
+`package-lock.json` when changing dependencies. Dependabot opens weekly PRs against
+`staging` for `@aws-sdk/*` updates in this directory.
 
 ## Tests
 
