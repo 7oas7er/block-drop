@@ -154,12 +154,24 @@ jobs:
         run: |
           set -euo pipefail
           # Origin Cache-Control; Cloudflare cache rules respect this (see infra/terraform/cloudflare/cache.tf).
-          aws s3 sync block-drop "s3://${{ vars.AWS_SITE_BUCKET }}" \
+          # HTML stays short-lived so new ?v= asset URLs show up quickly after deploy.
+          # JS/CSS are versioned via ?v= in HTML — long immutable TTL is safe (bump ?v= when they change).
+          bucket="s3://${{ vars.AWS_SITE_BUCKET }}"
+          aws s3 sync block-drop "${bucket}" \
             --delete \
             --exclude "README.md" \
             --exclude ".DS_Store" \
             --exclude "*/.DS_Store" \
+            --exclude "*.js" \
+            --exclude "*.css" \
             --cache-control "public, max-age=60, must-revalidate"
+          aws s3 sync block-drop "${bucket}" \
+            --exclude "*" \
+            --include "*.js" \
+            --include "*.css" \
+            --exclude ".DS_Store" \
+            --exclude "*/.DS_Store" \
+            --cache-control "public, max-age=31536000, immutable"
 
       - name: Invalidate CloudFront
         run: |
@@ -176,25 +188,34 @@ jobs:
         run: |
           set -euo pipefail
           # Free plan supports purge-by-URL (not hostname). Include query-string variants used by the HTML.
+          # Keep bare paths + current ?v=; include prior ?v= once so old cached URLs clear after a bump.
           mapfile -t paths < <(printf '%s\n' \
             "/" \
             "/index.html" \
             "/imprint.html" \
             "/css/styles.css" \
+            "/css/styles.css?v=2" \
             "/css/styles.css?v=theme-1" \
             "/js/theme-boot.js" \
+            "/js/theme-boot.js?v=2" \
             "/js/theme-boot.js?v=theme-1" \
             "/js/theme.js" \
+            "/js/theme.js?v=2" \
             "/js/theme.js?v=theme-1" \
             "/js/pieces.js" \
+            "/js/pieces.js?v=2" \
             "/js/pieces.js?v=theme-1" \
             "/js/game.js" \
+            "/js/game.js?v=2" \
             "/js/game.js?v=theme-1" \
             "/js/audio.js" \
+            "/js/audio.js?v=2" \
             "/js/audio.js?v=theme-1" \
             "/js/highscores.js" \
+            "/js/highscores.js?v=2" \
             "/js/highscores.js?v=theme-1" \
             "/js/main.js" \
+            "/js/main.js?v=2" \
             "/js/main.js?v=theme-1")
           files_json='['
           first=1
