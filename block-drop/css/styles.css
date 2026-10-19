@@ -4,12 +4,42 @@
   box-sizing: border-box;
 }
 
+:root {
+  --bg: #0f0f17;
+  --fg: #e8e8ef;
+  --panel: #16213e;
+  --surface: #1a1a2e;
+  --border: #3d3d5c;
+  --button-hover: #24243a;
+  --muted: #9a9ab4;
+  --accent: #f2d15a;
+  --danger: #f0a0a0;
+  --overlay: rgba(8, 8, 16, 0.75);
+  --grid: rgba(255, 255, 255, 0.08);
+  --link: #9ec5ff;
+}
+
+[data-theme="light"] {
+  --bg: #eef1f7;
+  --fg: #1a1a2e;
+  --panel: #ffffff;
+  --surface: #e2e6f0;
+  --border: #b8bfd0;
+  --button-hover: #d5dae8;
+  --muted: #6b7288;
+  --accent: #9a6b00;
+  --danger: #b42318;
+  --overlay: rgba(255, 255, 255, 0.82);
+  --grid: rgba(26, 26, 46, 0.12);
+  --link: #1d4ed8;
+}
+
 body {
   margin: 0;
   min-height: 100vh;
   padding: 1.25rem 0.75rem 2rem;
-  background: #0f0f17;
-  color: #e8e8ef;
+  background: var(--bg);
+  color: var(--fg);
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   display: flex;
   flex-direction: column;
@@ -32,9 +62,9 @@ h1 {
   align-items: baseline;
   gap: 0.6rem;
   padding: 0.4rem 0.75rem;
-  background: #16213e;
-  border: 1px solid #3d3d5c;
-  color: #e8e8ef;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  color: var(--fg);
   font-size: 1.25rem;
   font-variant-numeric: tabular-nums;
   pointer-events: none;
@@ -68,7 +98,7 @@ h1 {
   width: 300px;
   height: 600px;
   flex-shrink: 0;
-  background: #1a1a2e;
+  background: var(--surface);
 }
 
 .touch-pad {
@@ -123,7 +153,7 @@ h1 {
 #board,
 #next {
   display: block;
-  background: #1a1a2e;
+  background: var(--surface);
 }
 
 .overlay {
@@ -135,7 +165,7 @@ h1 {
   justify-content: center;
   gap: 0.75rem;
   padding: 1rem;
-  background: rgba(8, 8, 16, 0.75);
+  background: var(--overlay);
   text-align: center;
 }
 
@@ -170,14 +200,14 @@ h1 {
   letter-spacing: 0.2em;
   text-align: center;
   text-transform: uppercase;
-  color: #e8e8ef;
-  background: #1a1a2e;
-  border: 1px solid #3d3d5c;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--border);
   padding: 0.35rem 0.4rem;
 }
 
 #player-name:focus-visible {
-  outline: 2px solid #e8e8ef;
+  outline: 2px solid var(--fg);
   outline-offset: 3px;
 }
 
@@ -195,7 +225,7 @@ h1 {
 .panel {
   flex-shrink: 0;
   padding: 1rem 1rem 1.15rem;
-  background: #16213e;
+  background: var(--panel);
 }
 
 .high-scores {
@@ -221,7 +251,7 @@ h1 {
 
 .high-scores .rank {
   width: 1.25rem;
-  color: #9a9ab4;
+  color: var(--muted);
 }
 
 .high-scores .name {
@@ -236,13 +266,13 @@ h1 {
 
 .high-scores li.latest .name,
 .high-scores li.latest .points {
-  color: #f2d15a;
+  color: var(--accent);
 }
 
 .high-score-status {
   margin: 0.6rem 0 0;
   font-size: 0.8rem;
-  color: #f0a0a0;
+  color: var(--danger);
 }
 
 .high-score-status:empty {
@@ -282,9 +312,9 @@ h1 {
 
 button {
   font: inherit;
-  color: #e8e8ef;
-  background: #1a1a2e;
-  border: 1px solid #3d3d5c;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--border);
   padding: 0.5rem 0.75rem;
   cursor: pointer;
   user-select: none;
@@ -293,11 +323,11 @@ button {
 }
 
 button:hover {
-  background: #24243a;
+  background: var(--button-hover);
 }
 
 button:focus {
-  outline: 2px solid #e8e8ef;
+  outline: 2px solid var(--fg);
   outline-offset: 3px;
 }
 
@@ -306,7 +336,7 @@ button:focus:not(:focus-visible) {
 }
 
 button:focus-visible {
-  outline: 2px solid #e8e8ef;
+  outline: 2px solid var(--fg);
   outline-offset: 3px;
 }
 
@@ -314,6 +344,30 @@ button:focus-visible {
   margin: 0.15rem 0 0;
   padding-left: 1.15rem;
   font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+a {
+  color: var(--link);
+}
+
+.site-footer {
+  margin-top: 1.5rem;
+  font-size: 0.9rem;
+}
+
+.imprint {
+  max-width: 40rem;
+  width: 100%;
+}
+
+.imprint h2 {
+  margin: 1.5rem 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.imprint p {
+  margin: 0 0 0.75rem;
   line-height: 1.5;
 }
 
@@ -354,7 +408,7 @@ button:focus-visible {
     bottom: 0;
     z-index: 3;
     box-sizing: border-box;
-    background: #0f0f17;
+    background: var(--bg);
     padding-top: 0.35rem;
     padding-bottom: calc(0.35rem + env(safe-area-inset-bottom, 0px));
   }
