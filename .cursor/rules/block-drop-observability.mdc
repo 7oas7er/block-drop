@@ -1,0 +1,14 @@
+---
+description: Grafana Cloud observability conventions for Block Drop
+globs: infra/terraform/grafana/**/*
+alwaysApply: false
+---
+
+# Block Drop — observability
+
+- Provider: **Grafana Cloud Free** only for external monitoring and AWS metric views.
+- Terraform root: `infra/terraform/grafana/` (S3 state key `grafana/`).
+- Synthetics: HTTP checks for prod/stg site URLs and `/api/scores`.
+- AWS: IAM role `shared-block-drop-grafana-cloudwatch-role` assumed by Grafana Labs (`008923505280`) with External ID; CloudWatch scrape for `AWS/Lambda` and `AWS/CloudFront`.
+- Tokens stay in gitignored `terraform.tfvars` or `GRAFANA_*` env vars — never commit them.
+- Do not introduce Checkly/Datadog/New Relic/etc. alongside Grafana without an explicit decision to replace it.

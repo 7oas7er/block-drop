@@ -1,0 +1,25 @@
+aws_region  = "eu-north-1"
+aws_profile = "7oas7er"
+
+# Grafana Cloud Free stack slug (portal → your stack).
+stack_slug = "your-stack-slug"
+
+# Cloud access policy token with at least stacks:read.
+# Or export GRAFANA_CLOUD_ACCESS_POLICY_TOKEN and omit this.
+cloud_access_policy_token = "glc_..."
+
+# From stack / Cloud Provider API details for your region.
+cloud_provider_url          = "https://cloud-provider-api-prod-eu-west-0.grafana.net"
+cloud_provider_access_token = "glc_..." # scopes: integration-management:read|write, stacks:read
+
+# Synthetics → Config in the Grafana Cloud stack.
+sm_url          = "https://synthetic-monitoring-api-eu-west-0.grafana.net"
+sm_access_token = "glsm_..."
+
+# External ID shown when linking AWS in Grafana Cloud Provider (or Prometheus details).
+grafana_aws_external_id = "your-external-id"
+
+# Optional overrides:
+# prod_site_url = "https://blockdrop.7oas7er.com"
+# stg_site_url  = "https://blockdrop-stg.7oas7er.com"
+# check_frequency_ms = 300000

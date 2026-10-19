@@ -10,6 +10,7 @@ alwaysApply: true
 - **Hosting**: AWS in **one account**, two environments (`stg` and `prod`). Terraform is the source of truth. Do **not** reintroduce CDK or manage app resources with CloudFormation.
 - **GitHub env separation**: feature work merges into `staging` (deploys AWS stg only). Promote to production only by merging `staging` → `main` (deploys AWS prod). Keep deploy config in GitHub Environments `staging` / `production`; do not point both envs at the same role, bucket, or distribution.
 - **DNS**: Cloudflare (separate Terraform root) fronts CloudFront custom domains.
+- **Observability**: Grafana Cloud Free — synthetics + CloudWatch metric scrape, Terraform under `infra/terraform/grafana/`. Do not add a second monitoring SaaS without an explicit reason. Cloudflare stays DNS/edge only.
 - **Cloudflare-only traffic**: every public web app must only accept traffic that came through Cloudflare. Direct origin access (CloudFront URL, ALB DNS, etc.) must be rejected. Prefer the fit for the stack (e.g. shared-secret header gate on CloudFront, Cloudflare IP allowlists on load balancer security groups) — the principle is what matters, not one mechanism.
-- **Secrets**: never commit `.tfstate`, `terraform.tfvars`, API tokens, or AWS keys. Cloudflare uses `CLOUDFLARE_API_TOKEN`; AWS CLI/Terraform use profile `7oas7er` locally; GitHub Actions uses OIDC.
+- **Secrets**: never commit `.tfstate`, `terraform.tfvars`, API tokens, or AWS keys. Cloudflare uses `CLOUDFLARE_API_TOKEN`; Grafana uses `GRAFANA_*` / gitignored tfvars; AWS CLI/Terraform use profile `7oas7er` locally; GitHub Actions uses OIDC.
 - **Prefer small diffs**: match existing patterns; avoid drive-by refactors outside the task.
