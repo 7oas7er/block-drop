@@ -27,7 +27,7 @@ resource "cloudflare_ruleset" "origin_verify" {
     {
       ref         = "prod_origin_verify"
       description = "Production Block Drop origin verify"
-      expression  = "http.host in {\"blockdrop.7oas7er.com\" \"www.7oas7er.com\" \"7oas7er.com\"}"
+      expression  = "http.host eq \"blockdrop.7oas7er.com\""
       action      = "rewrite"
       action_parameters = {
         headers = {

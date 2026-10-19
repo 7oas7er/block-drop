@@ -10,7 +10,8 @@ prod_origin_verify_secret = "replace-with-a-different-long-random-secret"
 # and add a CLOUDFLARE_API_TOKEN secret with Zone.Cache Purge (plus Zone.Read) for deploys.
 #
 # Terraform API token also needs Zone → Cache Rules → Edit, Zone → WAF → Edit
-# (rate limiting), Transform Rules, DNS, and Zone Settings as used by this root.
+# (rate limiting), Zone → Single Redirect → Edit (www/apex → blockdrop),
+# Transform Rules, DNS, and Zone Settings as used by this root.
 #
 # Optional Free-compatible /api/scores rate limit overrides (defaults: 20 req / 10s / IP):
 # api_rate_limit_period_seconds              = 10
