@@ -4,7 +4,7 @@ output "state_bucket_name" {
 }
 
 output "lock_table_name" {
-  description = "DynamoDB table used for Terraform state locking."
+  description = "Legacy DynamoDB lock table (unused; backends use S3 use_lockfile)."
   value       = aws_dynamodb_table.terraform_lock.name
 }
 

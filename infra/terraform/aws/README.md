@@ -9,7 +9,7 @@ One AWS account, two environments:
 
 Shared module: [`modules/site`](modules/site). The GitHub OIDC provider lives in **stg** only; prod looks it up with a data source.
 
-Bootstrap root: [`bootstrap`](bootstrap) creates the shared S3 state bucket and DynamoDB lock table.
+Bootstrap root: [`bootstrap`](bootstrap) creates the shared S3 state bucket (and a legacy DynamoDB lock table no longer referenced by backends).
 
 ## Remote state
 
@@ -24,7 +24,8 @@ State is stored in S3 (not git):
 | `../grafana` | `grafana/terraform.tfstate` |
 
 - Bucket: `shared-block-drop-terraform-state-bucket` (versioned, encrypted, private)
-- Lock table: `shared-block-drop-terraform-lock-table`
+- Locking: S3 native lock files (`use_lockfile = true`); requires Terraform **>= 1.10**
+- After changing backend lock settings, run `terraform init -reconfigure` in that root
 
 After cloning the repo on a new machine, run `terraform init` in each root (with AWS profile `7oas7er`). No local state copy is required.
 
