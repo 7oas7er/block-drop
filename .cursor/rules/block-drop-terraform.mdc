@@ -40,7 +40,7 @@ Derive names in module locals from `var.environment`; do not scatter hard-coded 
 | prod | `blockdrop.7oas7er.com` |
 
 - GitHub OIDC provider is managed in **stg** only; prod looks it up via data source.
-- Prefer `aws_iam_policy_document` over raw `jsonencode` for IAM/S3 policies.
+- **IAM**: define policies with `aws_iam_policy_document` data sources in `data.tf` (not inline `jsonencode` / heredoc JSON on the policy resource). Attach those documents from roles/policies elsewhere.
 - High-score buckets keep `prevent_destroy`; renaming forces replace — migrate objects first.
 - Empty site buckets after replace cause CloudFront AccessDenied; sync `block-drop/` and invalidate.
-- CloudFront requires Cloudflare-injected `X-Origin-Verify`; keep AWS `origin_verify_secret` in sync with Cloudflare `stg_`/`prod_origin_verify_secret`. Apply Cloudflare before tightening CloudFront.
+- **Origin gate (Block Drop)**: CloudFront requires Cloudflare-injected `X-Origin-Verify`; keep AWS `origin_verify_secret` in sync with Cloudflare `stg_`/`prod_origin_verify_secret`. Apply Cloudflare before tightening CloudFront. See core rule *Cloudflare-only traffic* for the broader principle.
