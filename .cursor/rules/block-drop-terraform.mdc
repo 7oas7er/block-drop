@@ -46,3 +46,4 @@ Derive names in module locals from `var.environment`; do not scatter hard-coded 
 - High-score buckets keep `prevent_destroy`; renaming forces replace — migrate objects first.
 - Empty site buckets after replace cause CloudFront AccessDenied; sync `block-drop/` and invalidate.
 - **Origin gate (Block Drop)**: CloudFront requires Cloudflare-injected `X-Origin-Verify`; keep AWS `origin_verify_secret` in sync with Cloudflare `stg_`/`prod_origin_verify_secret`. Apply Cloudflare before tightening CloudFront. See core rule *Cloudflare-only traffic* for the broader principle.
+- **Cloudflare rate limit (Block Drop)**: zone `http_ratelimit` ruleset on `/api/scores` (IP + colo). Free plan allows one rule, path-only match, and 10s period/mitigation — do not add a second rule or `http.host` filters without upgrading.

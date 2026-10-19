@@ -72,6 +72,7 @@ CloudFront rejects requests that lack a matching `X-Origin-Verify` header. Cloud
 - Apply Cloudflare **before** enabling/updating the CloudFront Function gate so legitimate traffic is never locked out.
 - GitHub Actions S3 sync, CloudFront invalidation, and Cloudflare cache purge do not use the viewer path and are unaffected.
 - Cloudflare cache rules (`infra/terraform/cloudflare/cache.tf`) respect origin `Cache-Control` for Block Drop hosts and bypass `/api/*`.
+- Cloudflare rate limiting (`infra/terraform/cloudflare/rate_limit.tf`) blocks IPs that exceed ~20 requests / 10s to `/api/scores` (Free-plan limits: one rule, path-only expression, 10s windows).
 
 ## Local commands
 
