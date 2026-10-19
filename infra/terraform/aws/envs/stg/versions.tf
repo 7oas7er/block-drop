@@ -1,5 +1,6 @@
 terraform {
-  required_version = ">= 1.5.0"
+  # use_lockfile (S3 native state locking) requires Terraform 1.10+.
+  required_version = ">= 1.10.0"
 
   required_providers {
     aws = {
@@ -17,12 +18,12 @@ terraform {
   }
 
   backend "s3" {
-    bucket         = "shared-block-drop-terraform-state-bucket"
-    key            = "envs/stg/terraform.tfstate"
-    region         = "eu-north-1"
-    dynamodb_table = "shared-block-drop-terraform-lock-table"
-    encrypt        = true
-    profile        = "7oas7er"
+    bucket       = "shared-block-drop-terraform-state-bucket"
+    key          = "envs/stg/terraform.tfstate"
+    region       = "eu-north-1"
+    use_lockfile = true
+    encrypt      = true
+    # No profile: local use AWS_PROFILE=7oas7er; CI uses OIDC default chain.
   }
 }
 

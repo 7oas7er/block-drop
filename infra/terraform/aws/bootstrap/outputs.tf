@@ -3,11 +3,6 @@ output "state_bucket_name" {
   value       = aws_s3_bucket.terraform_state.bucket
 }
 
-output "lock_table_name" {
-  description = "DynamoDB table used for Terraform state locking."
-  value       = aws_dynamodb_table.terraform_lock.name
-}
-
 output "state_bucket_arn" {
   description = "ARN of the Terraform state bucket."
   value       = aws_s3_bucket.terraform_state.arn

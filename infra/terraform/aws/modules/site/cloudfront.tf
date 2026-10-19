@@ -17,8 +17,52 @@ resource "aws_cloudfront_function" "origin_verify" {
   runtime = "cloudfront-js-2.0"
   publish = true
   code = templatefile("${path.module}/origin_verify.js.tftpl", {
-    origin_verify_secret = var.origin_verify_secret
+    # Dual-accept during rotation: current + optional previous (see docs/origin-verify-secret-rotation.md).
+    origin_verify_secrets = compact([
+      var.origin_verify_secret,
+      var.origin_verify_secret_previous,
+    ])
   })
+}
+
+# Custom policy: managed SecurityHeadersPolicy equivalents + CSP (managed policy has no CSP).
+resource "aws_cloudfront_response_headers_policy" "site" {
+  name    = local.site_response_headers_policy_name
+  comment = "Block Drop security headers including Content-Security-Policy"
+
+  security_headers_config {
+    content_security_policy {
+      content_security_policy = local.content_security_policy
+      override                = true
+    }
+
+    content_type_options {
+      override = true
+    }
+
+    frame_options {
+      frame_option = "SAMEORIGIN"
+      override     = true
+    }
+
+    referrer_policy {
+      referrer_policy = "strict-origin-when-cross-origin"
+      override        = true
+    }
+
+    strict_transport_security {
+      access_control_max_age_sec = 31536000
+      include_subdomains         = true
+      preload                    = false
+      override                   = true
+    }
+
+    xss_protection {
+      mode_block = true
+      protection = true
+      override   = true
+    }
+  }
 }
 
 resource "aws_cloudfront_distribution" "site" {
@@ -56,7 +100,7 @@ resource "aws_cloudfront_distribution" "site" {
     cached_methods             = ["GET", "HEAD"]
     compress                   = true
     cache_policy_id            = local.cache_policy_caching_optimized
-    response_headers_policy_id = local.response_headers_security_headers
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.site.id
 
     function_association {
       event_type   = "viewer-request"
@@ -73,7 +117,7 @@ resource "aws_cloudfront_distribution" "site" {
     compress                   = true
     cache_policy_id            = local.cache_policy_caching_disabled
     origin_request_policy_id   = local.origin_request_all_viewer_except_host
-    response_headers_policy_id = local.response_headers_security_headers
+    response_headers_policy_id = aws_cloudfront_response_headers_policy.site.id
 
     function_association {
       event_type   = "viewer-request"

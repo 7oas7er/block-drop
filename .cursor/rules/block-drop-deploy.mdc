@@ -7,10 +7,15 @@ alwaysApply: false
 # Block Drop — deploy
 
 - Workflow: `.github/workflows/deploy-block-drop.yml`.
+- **Dependabot**: `.github/dependabot.yml` — weekly PRs to `staging` for GitHub Actions, `tests/` npm (Playwright grouped), and `infra/lambda` npm (`@aws-sdk/*` grouped). Review CI / terraform-plan green before merge; after Lambda SDK bumps run `npm ci` locally before apply.
 - **Branches**: merge to `staging` → deploy staging AWS; merge `staging` → `main` → deploy production AWS.
+- **Tests gate deploy**: job `test` (unit + Playwright under `tests/`) must succeed before job `deploy` runs. PRs to `staging`/`main` run tests only (no deploy).
+- **Deploy path filter**: `deploy` runs only when `block-drop/**` or this workflow file changed (or on `workflow_dispatch`). Pushes that only touch `tests/**` still run tests, but skip S3 sync / invalidation / Cloudflare purge.
+- **PR concurrency**: `cancel-in-progress` is true only for `pull_request` events so newer PR pushes cancel older test runs; push/deploy concurrency stays non-cancelling.
 - Auth: GitHub OIDC → env-specific IAM deploy role. No long-lived AWS access keys in GitHub secrets.
-- GitHub Environments `staging` and `production` each hold: `AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`.
+- GitHub Environments `staging` and `production` each hold vars: `AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`, `SITE_HOST`, `CLOUDFLARE_ZONE_ID`. Put `CLOUDFLARE_API_TOKEN` in Environment **secrets** (not variables) with Zone Cache Purge.
 - OIDC trust: stg role → `…:environment:staging`; prod role → `…:environment:production` (GitHub sends environment subjects when the job sets `environment:`). Restrict which branches can use each Environment in GitHub deployment protection rules.
-- Sync `block-drop/` to the site bucket (exclude README / `.DS_Store`), short `Cache-Control`, then CloudFront `/*` invalidation.
+- Sync `block-drop/` to the site bucket (exclude README / `.DS_Store`): HTML gets short `Cache-Control` (`max-age=60`); JS/CSS get `max-age=31536000, immutable`. Version static assets with `?v=` in HTML (bump when JS/CSS change). Then CloudFront `/*` invalidation and Cloudflare URL purge for that env’s `SITE_HOST` (include current and previous `?v=` once after a bump).
+- Playwright browsers are cached under `~/.cache/ms-playwright` (keyed by `@playwright/test` version); OS deps still install on cache hit.
 - After renaming deploy role or buckets in Terraform, update the matching GitHub Environment variables before the next deploy.
 - Do not point the deploy role at CloudFormation stack outputs; use Terraform outputs / variables only.

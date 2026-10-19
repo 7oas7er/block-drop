@@ -45,6 +45,10 @@ resource "aws_s3_bucket" "high_scores" {
   tags = {
     Name = local.high_scores_bucket_name
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_ownership_controls" "high_scores" {
@@ -70,6 +74,32 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "high_scores" {
   rule {
     apply_server_side_encryption_by_default {
       sse_algorithm = "AES256"
+    }
+  }
+}
+
+# Versioning recovers high-scores.json after a bad write; site bucket stays unversioned (git is source of truth).
+resource "aws_s3_bucket_versioning" "high_scores" {
+  bucket = aws_s3_bucket.high_scores.id
+
+  versioning_configuration {
+    status = "Enabled"
+  }
+}
+
+resource "aws_s3_bucket_lifecycle_configuration" "high_scores" {
+  bucket = aws_s3_bucket.high_scores.id
+
+  depends_on = [aws_s3_bucket_versioning.high_scores]
+
+  rule {
+    id     = "expire-noncurrent-high-scores"
+    status = "Enabled"
+
+    filter {}
+
+    noncurrent_version_expiration {
+      noncurrent_days = var.high_scores_noncurrent_version_expiration_days
     }
   }
 }

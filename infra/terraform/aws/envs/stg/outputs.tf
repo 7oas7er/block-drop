@@ -18,6 +18,11 @@ output "bucket_name" {
   value       = module.site.bucket_name
 }
 
+output "access_logs_bucket_name" {
+  description = "Private bucket for staging CloudFront and S3 site access logs."
+  value       = module.site.access_logs_bucket_name
+}
+
 output "high_score_bucket_name" {
   description = "Private bucket that stores the staging high score table."
   value       = module.site.high_score_bucket_name
@@ -46,4 +51,9 @@ output "high_score_function_url" {
 output "github_oidc_provider_arn" {
   description = "Account-wide GitHub OIDC provider ARN (referenced by prod)."
   value       = aws_iam_openid_connect_provider.github.arn
+}
+
+output "github_terraform_plan_role_arn" {
+  description = "Store this in the GitHub Environment variable AWS_TERRAFORM_PLAN_ROLE_ARN on environment terraform."
+  value       = aws_iam_role.github_terraform_plan.arn
 }

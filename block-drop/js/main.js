@@ -586,3 +586,10 @@ BlockDropScores.load().then(function (list) {
   setStatus("Could not load high scores.");
 });
 requestAnimationFrame(onFrame);
+
+// Read-only handle for automated tests (Playwright). Not used by the game UI.
+window.BlockDropApp = {
+  getState: function () {
+    return state;
+  }
+};
