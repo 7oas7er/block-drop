@@ -21,6 +21,7 @@ State is stored in S3 (not git):
 | `envs/stg` | `envs/stg/terraform.tfstate` |
 | `envs/prod` | `envs/prod/terraform.tfstate` |
 | `../cloudflare` | `cloudflare/terraform.tfstate` |
+| `../grafana` | `grafana/terraform.tfstate` |
 
 - Bucket: `shared-block-drop-terraform-state-bucket` (versioned, encrypted, private)
 - Lock table: `shared-block-drop-terraform-lock-table`

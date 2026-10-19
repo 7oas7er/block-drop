@@ -12,6 +12,7 @@ alwaysApply: false
 - Env roots: `infra/terraform/aws/envs/stg`, `envs/prod`
 - Shared state bootstrap: `infra/terraform/aws/bootstrap`
 - Cloudflare DNS: `infra/terraform/cloudflare` (own root, same S3 backend)
+- Grafana Cloud observability: `infra/terraform/grafana` (own root, same S3 backend)
 
 ## Naming
 
@@ -24,7 +25,7 @@ Derive names in module locals from `var.environment`; do not scatter hard-coded 
 ## State
 
 - Remote state only: bucket `shared-block-drop-terraform-state-bucket`, lock table `shared-block-drop-terraform-lock-table`.
-- Keys: `bootstrap/`, `envs/stg/`, `envs/prod/`, `cloudflare/` under that bucket.
+- Keys: `bootstrap/`, `envs/stg/`, `envs/prod/`, `cloudflare/`, `grafana/` under that bucket.
 - Never commit `*.tfstate` or `terraform.tfvars`.
 
 ## Regions

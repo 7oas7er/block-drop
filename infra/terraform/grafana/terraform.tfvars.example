@@ -1,0 +1,31 @@
+aws_region  = "eu-north-1"
+aws_profile = "7oas7er"
+
+# Grafana Cloud Free stack slug (portal → your stack).
+stack_slug = "your-stack-slug"
+
+# Cloud access policy token with stacks:read, stack-service-accounts:write,
+# and (for Cloud Provider) integration-management:read|write.
+# Or export GRAFANA_CLOUD_ACCESS_POLICY_TOKEN and omit this.
+cloud_access_policy_token = "glc_..."
+
+# Cloud Provider API URL is taken from the stack (do not guess region_slug).
+cloud_provider_access_token = "glc_..." # scopes: integration-management:read|write, stacks:read
+
+# Synthetics → Config → Access tokens. sm_url defaults from the stack if omitted.
+sm_access_token = "glsm_..."
+# sm_url = "https://synthetic-monitoring-api-eu-west-2.grafana.net"
+
+# IAM External ID defaults to stack prometheus_user_id.
+# If account create returns aws_authentication_error, paste the value from
+# Grafana → Cloud Provider → AWS → Add account:
+# grafana_aws_external_id = "..."
+
+# Cloud Provider AWS account + CloudWatch scrape (default off while Grafana
+# returns aws_authentication_error without calling STS).
+# enable_cloudwatch_scrape = false
+
+# Optional overrides:
+# prod_site_url = "https://blockdrop.7oas7er.com"
+# stg_site_url  = "https://blockdrop-stg.7oas7er.com"
+# check_frequency_ms = 300000
