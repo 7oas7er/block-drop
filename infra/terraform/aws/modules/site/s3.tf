@@ -45,6 +45,10 @@ resource "aws_s3_bucket" "high_scores" {
   tags = {
     Name = local.high_scores_bucket_name
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_s3_bucket_ownership_controls" "high_scores" {
