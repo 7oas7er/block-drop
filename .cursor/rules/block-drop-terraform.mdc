@@ -32,7 +32,7 @@ Derive names in module locals from `var.environment`; do not scatter hard-coded 
 
 ## CI plan
 
-- Workflow `.github/workflows/terraform-plan.yml` (fmt, validate, plan) — not apply.
+- Workflow `.github/workflows/terraform-plan.yml` (fmt, validate, plan) — not apply. Triggered only on `infra/terraform/**` / `infra/lambda/**` / the workflow file; validate/plan skip unchanged roots.
 - Role `shared-block-drop-terraform-plan-role` (stg) + GitHub Environment `terraform`. Setup: `infra/terraform/docs/terraform-plan-ci.md`.
 
 ## Regions

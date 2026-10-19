@@ -1,6 +1,7 @@
 name: Terraform plan
 
-# Separate from game deploy. fmt/validate always; AWS plans use a read-only OIDC role.
+# Separate from game deploy. Only runs when infra/terraform, infra/lambda, or this workflow change.
+# Validate/plan are further scoped per Terraform root via paths-filter.
 on:
   push:
     branches:
@@ -23,6 +24,7 @@ on:
 permissions:
   id-token: write
   contents: read
+  pull-requests: read
 
 concurrency:
   group: terraform-plan-${{ github.workflow }}-${{ github.ref_name }}-${{ github.event_name }}
@@ -33,8 +35,107 @@ env:
   AWS_REGION: eu-north-1
 
 jobs:
+  changes:
+    name: Detect Terraform changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      any: ${{ steps.flags.outputs.any }}
+      validate_matrix: ${{ steps.flags.outputs.validate_matrix }}
+      plan_aws_matrix: ${{ steps.flags.outputs.plan_aws_matrix }}
+      plan_cloudflare: ${{ steps.flags.outputs.plan_cloudflare }}
+      plan_grafana: ${{ steps.flags.outputs.plan_grafana }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Filter paths
+        id: filter
+        uses: dorny/paths-filter@v4.0.3
+        with:
+          filters: |
+            workflow:
+              - '.github/workflows/terraform-plan.yml'
+            aws_bootstrap:
+              - 'infra/terraform/aws/bootstrap/**'
+            aws_stg:
+              - 'infra/terraform/aws/envs/stg/**'
+              - 'infra/terraform/aws/modules/**'
+              - 'infra/lambda/**'
+            aws_prod:
+              - 'infra/terraform/aws/envs/prod/**'
+              - 'infra/terraform/aws/modules/**'
+              - 'infra/lambda/**'
+            cloudflare:
+              - 'infra/terraform/cloudflare/**'
+            grafana:
+              - 'infra/terraform/grafana/**'
+            any:
+              - 'infra/terraform/**'
+              - 'infra/lambda/**'
+              - '.github/workflows/terraform-plan.yml'
+
+      - name: Build job matrices
+        id: flags
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Manual runs and workflow-file edits exercise every root.
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] || [ "${{ steps.filter.outputs.workflow }}" = "true" ]; then
+            aws_bootstrap=true
+            aws_stg=true
+            aws_prod=true
+            cloudflare=true
+            grafana=true
+            any=true
+          else
+            aws_bootstrap=${{ steps.filter.outputs.aws_bootstrap }}
+            aws_stg=${{ steps.filter.outputs.aws_stg }}
+            aws_prod=${{ steps.filter.outputs.aws_prod }}
+            cloudflare=${{ steps.filter.outputs.cloudflare }}
+            grafana=${{ steps.filter.outputs.grafana }}
+            any=${{ steps.filter.outputs.any }}
+          fi
+
+          validate='[]'
+          plan_aws='[]'
+          append() {
+            local -n arr=$1
+            local item=$2
+            arr=$(jq -c --argjson item "$item" '. + [$item]' <<<"$arr")
+          }
+
+          if [ "$aws_bootstrap" = "true" ]; then
+            append validate '{"root":"aws/bootstrap","path":"infra/terraform/aws/bootstrap"}'
+            append plan_aws '{"root":"bootstrap","path":"infra/terraform/aws/bootstrap"}'
+          fi
+          if [ "$aws_stg" = "true" ]; then
+            append validate '{"root":"aws/stg","path":"infra/terraform/aws/envs/stg"}'
+            append plan_aws '{"root":"stg","path":"infra/terraform/aws/envs/stg"}'
+          fi
+          if [ "$aws_prod" = "true" ]; then
+            append validate '{"root":"aws/prod","path":"infra/terraform/aws/envs/prod"}'
+            append plan_aws '{"root":"prod","path":"infra/terraform/aws/envs/prod"}'
+          fi
+          if [ "$cloudflare" = "true" ]; then
+            append validate '{"root":"cloudflare","path":"infra/terraform/cloudflare"}'
+          fi
+          if [ "$grafana" = "true" ]; then
+            append validate '{"root":"grafana","path":"infra/terraform/grafana"}'
+          fi
+
+          {
+            echo "any=${any}"
+            echo "validate_matrix=${validate}"
+            echo "plan_aws_matrix=${plan_aws}"
+            echo "plan_cloudflare=${cloudflare}"
+            echo "plan_grafana=${grafana}"
+          } >> "$GITHUB_OUTPUT"
+
   fmt:
     name: Format
+    needs: changes
+    if: needs.changes.outputs.any == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
@@ -52,22 +153,16 @@ jobs:
 
   validate:
     name: Validate (${{ matrix.root }})
+    needs:
+      - changes
+      - fmt
+    if: needs.changes.outputs.validate_matrix != '[]'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - root: aws/bootstrap
-            path: infra/terraform/aws/bootstrap
-          - root: aws/stg
-            path: infra/terraform/aws/envs/stg
-          - root: aws/prod
-            path: infra/terraform/aws/envs/prod
-          - root: cloudflare
-            path: infra/terraform/cloudflare
-          - root: grafana
-            path: infra/terraform/grafana
+        include: ${{ fromJson(needs.changes.outputs.validate_matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -102,21 +197,21 @@ jobs:
   plan-aws:
     name: Plan AWS (${{ matrix.root }})
     needs:
+      - changes
       - fmt
       - validate
+    if: |
+      always()
+      && needs.changes.outputs.plan_aws_matrix != '[]'
+      && needs.fmt.result == 'success'
+      && (needs.validate.result == 'success' || needs.validate.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 25
     environment: terraform
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - root: bootstrap
-            path: infra/terraform/aws/bootstrap
-          - root: stg
-            path: infra/terraform/aws/envs/stg
-          - root: prod
-            path: infra/terraform/aws/envs/prod
+        include: ${{ fromJson(needs.changes.outputs.plan_aws_matrix) }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7.0.1
@@ -201,8 +296,14 @@ jobs:
   plan-cloudflare:
     name: Plan Cloudflare
     needs:
+      - changes
       - fmt
       - validate
+    if: |
+      always()
+      && needs.changes.outputs.plan_cloudflare == 'true'
+      && needs.fmt.result == 'success'
+      && (needs.validate.result == 'success' || needs.validate.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: terraform
@@ -247,8 +348,14 @@ jobs:
   plan-grafana:
     name: Plan Grafana
     needs:
+      - changes
       - fmt
       - validate
+    if: |
+      always()
+      && needs.changes.outputs.plan_grafana == 'true'
+      && needs.fmt.result == 'success'
+      && (needs.validate.result == 'success' || needs.validate.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     environment: terraform
