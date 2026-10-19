@@ -1,5 +1,5 @@
-# Align Cloudflare edge TTL with origin Cache-Control (deploy sets max-age=60).
-# Without this, Cloudflare's default static-extension caching can hold JS/CSS ~4h.
+# Align Cloudflare edge TTL with origin Cache-Control.
+# Deploy: HTML max-age=60; versioned JS/CSS max-age=31536000 immutable (see deploy-block-drop.yml).
 resource "cloudflare_ruleset" "cache" {
   zone_id     = local.zone_id
   name        = "Block Drop cache settings"
