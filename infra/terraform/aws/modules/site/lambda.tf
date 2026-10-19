@@ -1,11 +1,24 @@
+locals {
+  high_scores_lambda_dir = "${path.module}/../../../../lambda"
+}
+
+check "high_scores_sdk_vendored" {
+  assert {
+    condition     = fileexists("${local.high_scores_lambda_dir}/node_modules/@aws-sdk/client-s3/package.json")
+    error_message = "Missing vendored @aws-sdk/client-s3. Run: cd infra/lambda && npm ci --omit=dev"
+  }
+}
+
 data "archive_file" "high_scores" {
   type        = "zip"
+  source_dir  = local.high_scores_lambda_dir
   output_path = "${path.module}/build/high-scores.zip"
-
-  source {
-    content  = file("${path.module}/../../../../lambda/high-scores.js")
-    filename = "high-scores.js"
-  }
+  excludes = [
+    "high-scores.test.js",
+    "package.json",
+    "package-lock.json",
+    "README.md",
+  ]
 }
 
 resource "aws_lambda_function" "high_scores" {

@@ -93,9 +93,22 @@ CloudFront rejects requests that lack a matching `X-Origin-Verify` header. Cloud
 - Cloudflare rate limiting (`infra/terraform/cloudflare/rate_limit.tf`) blocks IPs that exceed ~20 requests / 10s to `/api/scores` (Free-plan limits: one rule, path-only expression, 10s windows).
 - Cloudflare redirect rule (`infra/terraform/cloudflare/redirects.tf`) sends www/apex to `https://blockdrop.7oas7er.com` (301, path + query preserved). Host-header override is Enterprise-only; redirects keep ACM + CloudFront aliases on the canonical hostname only.
 
+## High-scores Lambda package
+
+Node.js 22 does not ship the AWS SDK. Before `terraform plan` / `apply` in `envs/stg` or `envs/prod`:
+
+```bash
+cd infra/lambda
+npm ci --omit=dev
+```
+
+Terraform zips `high-scores.js` + `node_modules` (see `modules/site/lambda.tf`). A `check` block fails the plan if `@aws-sdk/client-s3` is missing. Details: [`infra/lambda/README.md`](../../lambda/README.md).
+
 ## Local commands
 
 ```bash
+# From repo root — once / after lambda lockfile changes:
+#   cd infra/lambda && npm ci --omit=dev
 cd bootstrap   # first time / changes to state backend resources
 # or: cd envs/stg   # or envs/prod
 cp terraform.tfvars.example terraform.tfvars   # first time, if needed
