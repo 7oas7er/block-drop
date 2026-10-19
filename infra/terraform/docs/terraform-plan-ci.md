@@ -2,14 +2,16 @@
 
 Workflow: [`.github/workflows/terraform-plan.yml`](../../../.github/workflows/terraform-plan.yml).
 
-Runs on changes under `infra/terraform/**` or `infra/lambda/**` (and the workflow file). Separate from game deploy.
+Runs only when `infra/terraform/**`, `infra/lambda/**`, or this workflow file change (GitHub `paths:` filter). Separate from game deploy.
+
+Within a run, **validate/plan are scoped per root** (`dorny/paths-filter`): e.g. a Cloudflare-only PR does not plan Grafana; `infra/lambda` changes only exercise AWS stg/prod. `workflow_dispatch` and edits to the workflow file still exercise every root.
 
 | Job | What |
 |-----|------|
-| Format | `terraform fmt -check -recursive` |
-| Validate | `init -backend=false` + `validate` for every root |
-| Plan AWS | `bootstrap`, `envs/stg`, `envs/prod` via OIDC plan role |
-| Plan Cloudflare / Grafana | Same OIDC role for state + provider tokens from GitHub |
+| Detect changes | Builds per-root matrices |
+| Format | `terraform fmt -check -recursive` (if any infra path matched) |
+| Validate | `init -backend=false` + `validate` for **changed** roots only |
+| Plan AWS / Cloudflare / Grafana | Same scoping; OIDC plan role + provider tokens |
 
 Apply stays local (or a future apply workflow). Plan exit code **2** (changes) is treated as success; only errors fail the job.
 
