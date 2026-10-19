@@ -51,7 +51,7 @@ Examples for `stg`:
 
 Shared bootstrap resources use `shared` as the environment segment.
 
-Renaming named resources (buckets, roles, functions, OACs) forces Terraform to replace them. Copy site and high-score objects to the new buckets before destroying the old ones, and update GitHub Actions `AWS_*` variables after the prod deploy role / bucket names change. The high-scores bucket has `prevent_destroy`; remove that lifecycle guard temporarily if you intentionally replace it.
+Renaming named resources (buckets, roles, functions, OACs) forces Terraform to replace them. Copy site and high-score objects to the new buckets before destroying the old ones, and update GitHub Actions `AWS_*` variables after the prod deploy role / bucket names change. The high-scores bucket has `prevent_destroy` and versioning (noncurrent versions expire after 90 days); remove the lifecycle guard temporarily if you intentionally replace it. The site bucket is not versioned — `block-drop/` in git is the source of truth.
 
 ## Apply order
 
