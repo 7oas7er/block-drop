@@ -1,5 +1,5 @@
-# Supply-chain updates for CI Actions and Playwright (see best-practices review).
-# PRs target staging so they go through the same test gate as other work.
+# Supply-chain updates for CI Actions, Playwright, and the high-scores Lambda SDK.
+# PRs target staging so they go through the same test / terraform-plan gates as other work.
 version: 2
 updates:
   - package-ecosystem: github-actions
@@ -32,3 +32,18 @@ updates:
         patterns:
           - "@playwright/*"
           - "playwright*"
+
+  - package-ecosystem: npm
+    directory: /infra/lambda
+    schedule:
+      interval: weekly
+      day: monday
+    target-branch: staging
+    open-pull-requests-limit: 5
+    labels:
+      - dependencies
+      - javascript
+    groups:
+      aws-sdk:
+        patterns:
+          - "@aws-sdk/*"
