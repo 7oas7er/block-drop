@@ -58,6 +58,16 @@ Renaming named resources (buckets, roles, functions, OACs) forces Terraform to r
 5. Apply **prod**.
 6. Point Cloudflare `prod_cloudfront_domain_name` at the prod distribution; set GitHub Actions `AWS_*` variables to prod outputs.
 
+## Cloudflare origin verify
+
+CloudFront rejects requests that lack a matching `X-Origin-Verify` header. Cloudflare Transform Rules inject that header for the Block Drop hostnames, so only orange-cloud traffic is accepted. Direct `*.cloudfront.net` URLs return 403.
+
+- Set the same value in `envs/stg` `origin_verify_secret` and Cloudflare `stg_origin_verify_secret`.
+- Set the same value in `envs/prod` `origin_verify_secret` and Cloudflare `prod_origin_verify_secret`.
+- Prefer distinct secrets per environment. Store them only in local `terraform.tfvars` (gitignored).
+- Apply Cloudflare **before** enabling/updating the CloudFront Function gate so legitimate traffic is never locked out.
+- GitHub Actions S3 sync and CloudFront invalidation do not use the viewer path and are unaffected.
+
 ## Local commands
 
 ```bash

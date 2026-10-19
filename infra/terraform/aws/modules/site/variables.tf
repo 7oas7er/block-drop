@@ -22,3 +22,9 @@ variable "github_actions_subject" {
   description = "Immutable GitHub Actions OIDC subject allowed to assume the deploy role."
   type        = string
 }
+
+variable "origin_verify_secret" {
+  description = "Shared secret Cloudflare injects as X-Origin-Verify; CloudFront rejects requests without it."
+  type        = string
+  sensitive   = true
+}
