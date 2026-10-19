@@ -15,9 +15,22 @@ locals {
   high_scores_origin_id                 = "${local.name_prefix}-high-scores-origin"
   site_distribution_name                = "${local.name_prefix}-site-distribution"
   origin_verify_function_name           = "${local.name_prefix}-origin-verify-function"
+  site_response_headers_policy_name     = "${local.name_prefix}-security-headers-policy"
   cache_policy_caching_optimized        = "658327ea-f89d-4fab-a63d-7e88639e58f6"
   cache_policy_caching_disabled         = "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
   origin_request_all_viewer_except_host = "b689b0a8-53d0-40ab-baf2-68738e2966ac"
-  response_headers_security_headers     = "67f7725c-6f97-4210-82d7-5512b31e9d03"
-  lambda_function_url_hostname          = trimsuffix(replace(aws_lambda_function_url.high_scores.function_url, "https://", ""), "/")
+  # Same-origin vanilla game: no CDNs, no inline scripts (theme boot is an external file).
+  content_security_policy = join("; ", [
+    "default-src 'self'",
+    "script-src 'self'",
+    "style-src 'self'",
+    "img-src 'self'",
+    "font-src 'self'",
+    "connect-src 'self'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'self'",
+  ])
+  lambda_function_url_hostname = trimsuffix(replace(aws_lambda_function_url.high_scores.function_url, "https://", ""), "/")
 }

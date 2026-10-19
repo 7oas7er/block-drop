@@ -5,3 +5,6 @@ stg_cloudfront_domain_name  = "d222222abcdef8.cloudfront.net"
 # Must match the matching AWS env origin_verify_secret (never commit real values).
 stg_origin_verify_secret  = "replace-with-a-long-random-secret"
 prod_origin_verify_secret = "replace-with-a-different-long-random-secret"
+
+# After apply, put output zone_id into both GitHub Environments as CLOUDFLARE_ZONE_ID,
+# and add a CLOUDFLARE_API_TOKEN secret with Zone.Cache Purge (plus Zone.Read) for deploys.

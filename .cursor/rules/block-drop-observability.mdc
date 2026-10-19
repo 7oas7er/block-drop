@@ -17,7 +17,7 @@ When adding or extending observability for a hosted web app, mirror this stack:
    - Prod + stg **site** URLs (expect TLS + HTTP 200)
    - Prod + stg critical **API** paths (Block Drop: `/api/scores`)
    - Labels: `project`, `environment` (`prod`|`stg`), `kind` (`site`|`api`)
-   - Prefer a small set of EU probes; keep checks cheap (e.g. ~5m frequency on Free)
+   - Prefer a small set of EU probes; keep checks cheap on Free (prod ~5m / up to 2 probes; stg ~15m / 1 probe)
 
 2. **CloudWatch metric scrape** — Cloud Provider Observability (`grafana_cloud_provider_aws_*`)
    - Shared IAM role trusted by Grafana Labs account `008923505280` with `sts:ExternalId` = stack `prometheus_user_id` (override from UI Add-account modal if needed)

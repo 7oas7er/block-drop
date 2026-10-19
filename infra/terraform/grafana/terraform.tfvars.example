@@ -28,4 +28,5 @@ sm_access_token = "glsm_..."
 # Optional overrides:
 # prod_site_url = "https://blockdrop.7oas7er.com"
 # stg_site_url  = "https://blockdrop-stg.7oas7er.com"
-# check_frequency_ms = 300000
+# prod_check_frequency_ms = 300000  # 5m
+# stg_check_frequency_ms  = 900000  # 15m
