@@ -7,6 +7,7 @@ alwaysApply: false
 # Block Drop — deploy
 
 - Workflow: `.github/workflows/deploy-block-drop.yml`.
+- **Dependabot**: `.github/dependabot.yml` — weekly PRs to `staging` for GitHub Actions and `tests/` npm (Playwright grouped). Review CI green before merge.
 - **Branches**: merge to `staging` → deploy staging AWS; merge `staging` → `main` → deploy production AWS.
 - **Tests gate deploy**: job `test` (unit + Playwright under `tests/`) must succeed before job `deploy` runs. PRs to `staging`/`main` run tests only (no deploy).
 - **Deploy path filter**: `deploy` runs only when `block-drop/**` or this workflow file changed (or on `workflow_dispatch`). Pushes that only touch `tests/**` still run tests, but skip S3 sync / invalidation / Cloudflare purge.
