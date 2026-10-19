@@ -1,4 +1,5 @@
-aws_region  = "eu-north-1"
+aws_region = "eu-north-1"
+# Provider only (backends use env AWS_PROFILE / default chain).
 aws_profile = "7oas7er"
 
 # Optional overrides; defaults already target production.

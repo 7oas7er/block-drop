@@ -1,0 +1,70 @@
+# Terraform plan in CI
+
+Workflow: [`.github/workflows/terraform-plan.yml`](../../../.github/workflows/terraform-plan.yml).
+
+Runs on changes under `infra/terraform/**` or `infra/lambda/**` (and the workflow file). Separate from game deploy.
+
+| Job | What |
+|-----|------|
+| Format | `terraform fmt -check -recursive` |
+| Validate | `init -backend=false` + `validate` for every root |
+| Plan AWS | `bootstrap`, `envs/stg`, `envs/prod` via OIDC plan role |
+| Plan Cloudflare / Grafana | Same OIDC role for state + provider tokens from GitHub |
+
+Apply stays local (or a future apply workflow). Plan exit code **2** (changes) is treated as success; only errors fail the job.
+
+## One-time setup
+
+### 1. Apply the plan role (stg)
+
+```bash
+export AWS_PROFILE=7oas7er
+cd infra/lambda && npm ci --omit=dev
+cd ../terraform/aws/envs/stg
+terraform init -reconfigure   # backends no longer pin profile=
+terraform apply               # creates shared-block-drop-terraform-plan-role
+```
+
+Note the output `github_terraform_plan_role_arn`.
+
+### 2. GitHub Environment `terraform`
+
+Create Environment **terraform** (Settings → Environments). No deploy branch restriction required for plan-only.
+
+**Variables**
+
+| Name | Value |
+|------|--------|
+| `AWS_TERRAFORM_PLAN_ROLE_ARN` | `github_terraform_plan_role_arn` output |
+| `STG_SITE_CERTIFICATE_ARN` | staging ACM cert ARN |
+| `PROD_SITE_CERTIFICATE_ARN` | production ACM cert ARN (or omit if prod variable default is enough) |
+| `STG_CLOUDFRONT_DOMAIN_NAME` | stg `distribution_domain_name` |
+| `PROD_CLOUDFRONT_DOMAIN_NAME` | prod `distribution_domain_name` |
+| `GRAFANA_STACK_SLUG` | Grafana Cloud stack slug |
+
+**Secrets**
+
+| Name | Value |
+|------|--------|
+| `STG_ORIGIN_VERIFY_SECRET` | same as stg `origin_verify_secret` / Cloudflare stg |
+| `PROD_ORIGIN_VERIFY_SECRET` | same as prod / Cloudflare prod |
+| `CLOUDFLARE_API_TOKEN` | token with the same scopes as local Cloudflare Terraform |
+| `GRAFANA_CLOUD_ACCESS_POLICY_TOKEN` | stacks:read (+ SA write if plan needs it) |
+| `GRAFANA_CLOUD_PROVIDER_ACCESS_TOKEN` | integration-management scopes |
+| `GRAFANA_SM_ACCESS_TOKEN` | Synthetic Monitoring token |
+
+OIDC trust subject (already the Terraform default):
+
+`repo:7oas7er@2952810/block-drop@1407099747:environment:terraform`
+
+If your GitHub subject string differs, set `github_actions_plan_subject` in stg tfvars and re-apply.
+
+## Local commands after this change
+
+Backends no longer set `profile = "7oas7er"`. Before any root:
+
+```bash
+export AWS_PROFILE=7oas7er
+```
+
+Keep `aws_profile = "7oas7er"` in local `terraform.tfvars` for the AWS provider where used.
