@@ -6,9 +6,11 @@ alwaysApply: false
 
 # Block Drop — deploy
 
-- Workflow: `.github/workflows/deploy-block-drop.yml` publishes from `main` when `block-drop/**` changes (or manual dispatch).
-- Auth: GitHub OIDC → IAM deploy role. No long-lived AWS access keys in GitHub secrets.
-- Repo variables (currently aimed at **prod**): `AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`.
+- Workflow: `.github/workflows/deploy-block-drop.yml`.
+- **Branches**: merge to `staging` → deploy staging AWS; merge `staging` → `main` → deploy production AWS.
+- Auth: GitHub OIDC → env-specific IAM deploy role. No long-lived AWS access keys in GitHub secrets.
+- GitHub Environments `staging` and `production` each hold: `AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`.
+- OIDC trust: stg role → `refs/heads/staging` only; prod role → `refs/heads/main` only.
 - Sync `block-drop/` to the site bucket (exclude README / `.DS_Store`), short `Cache-Control`, then CloudFront `/*` invalidation.
-- After renaming deploy role or buckets in Terraform, update those GitHub variables before the next deploy.
+- After renaming deploy role or buckets in Terraform, update the matching GitHub Environment variables before the next deploy.
 - Do not point the deploy role at CloudFormation stack outputs; use Terraform outputs / variables only.

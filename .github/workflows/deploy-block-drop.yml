@@ -1,12 +1,11 @@
 name: Deploy Block Drop
 
-# Merging a pull request updates main. This workflow publishes the game when
-# that update changes block-drop/, then clears the CloudFront cache.
-# The deploy role trusts only this repository's main branch, so a pull request
-# workflow cannot assume it.
+# staging → staging AWS env; main → production AWS env.
+# Deploy roles trust only those branch refs via OIDC, so pull_request jobs cannot assume them.
 on:
   push:
     branches:
+      - staging
       - main
     paths:
       - "block-drop/**"
@@ -18,32 +17,33 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-block-drop
+  group: deploy-block-drop-${{ github.ref_name }}
   cancel-in-progress: false
 
 jobs:
   deploy:
     name: Publish to S3
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
     steps:
-      - name: Check repository variables
+      - name: Check environment variables
         run: |
           if [ -z "${{ vars.AWS_DEPLOY_ROLE_ARN }}" ]; then
-            echo "Set the AWS_DEPLOY_ROLE_ARN repository variable to the Terraform github_deploy_role_arn output."
+            echo "Set AWS_DEPLOY_ROLE_ARN on the GitHub Environment to the Terraform github_deploy_role_arn output."
             exit 1
           fi
           if [ -z "${{ vars.AWS_REGION }}" ]; then
-            echo "Set the AWS_REGION repository variable to the Terraform deploy_region output."
+            echo "Set AWS_REGION on the GitHub Environment to the Terraform deploy_region output."
             exit 1
           fi
           if [ -z "${{ vars.AWS_SITE_BUCKET }}" ]; then
-            echo "Set the AWS_SITE_BUCKET repository variable to the Terraform bucket_name output."
+            echo "Set AWS_SITE_BUCKET on the GitHub Environment to the Terraform bucket_name output."
             exit 1
           fi
           if [ -z "${{ vars.AWS_DISTRIBUTION_ID }}" ]; then
-            echo "Set the AWS_DISTRIBUTION_ID repository variable to the Terraform distribution_id output."
+            echo "Set AWS_DISTRIBUTION_ID on the GitHub Environment to the Terraform distribution_id output."
             exit 1
           fi
 

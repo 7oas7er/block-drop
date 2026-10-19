@@ -29,7 +29,7 @@ variable "site_certificate_arn" {
 }
 
 variable "github_actions_subject" {
-  description = "Immutable GitHub Actions OIDC subject allowed to assume the prod deploy role."
+  description = "Immutable GitHub Actions OIDC subject allowed to assume the prod deploy role (main branch only)."
   type        = string
   default     = "repo:7oas7er@2952810/block-drop@1407099747:ref:refs/heads/main"
 }
