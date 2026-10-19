@@ -9,7 +9,8 @@
     "test:e2e:install": "playwright install --with-deps chromium"
   },
   "devDependencies": {
-    "@playwright/test": "^1.55.0"
+    "@playwright/test": "^1.55.0",
+    "serve": "14.2.6"
   },
   "engines": {
     "node": ">=20"
