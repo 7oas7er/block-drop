@@ -10,7 +10,7 @@ alwaysApply: false
 - **Branches**: merge to `staging` → deploy staging AWS; merge `staging` → `main` → deploy production AWS.
 - Auth: GitHub OIDC → env-specific IAM deploy role. No long-lived AWS access keys in GitHub secrets.
 - GitHub Environments `staging` and `production` each hold: `AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`.
-- OIDC trust: stg role → `refs/heads/staging` only; prod role → `refs/heads/main` only.
+- OIDC trust: stg role → `…:environment:staging`; prod role → `…:environment:production` (GitHub sends environment subjects when the job sets `environment:`). Restrict which branches can use each Environment in GitHub deployment protection rules.
 - Sync `block-drop/` to the site bucket (exclude README / `.DS_Store`), short `Cache-Control`, then CloudFront `/*` invalidation.
 - After renaming deploy role or buckets in Terraform, update the matching GitHub Environment variables before the next deploy.
 - Do not point the deploy role at CloudFormation stack outputs; use Terraform outputs / variables only.
