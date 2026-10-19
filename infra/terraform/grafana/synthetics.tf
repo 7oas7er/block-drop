@@ -16,11 +16,15 @@ locals {
     if contains(keys(data.grafana_synthetic_monitoring_probes.main.probes), name)
   ]
 
-  synthetic_probes = (
+  available_probe_ids = (
     length(local.selected_probe_ids) > 0
-    ? slice(local.selected_probe_ids, 0, min(2, length(local.selected_probe_ids)))
+    ? local.selected_probe_ids
     : [values(data.grafana_synthetic_monitoring_probes.main.probes)[0]]
   )
+
+  # Prod: up to 2 EU probes. Stg: 1 probe to keep Free SM volume down.
+  prod_synthetic_probes = slice(local.available_probe_ids, 0, min(2, length(local.available_probe_ids)))
+  stg_synthetic_probes  = slice(local.available_probe_ids, 0, min(1, length(local.available_probe_ids)))
 }
 
 resource "grafana_synthetic_monitoring_check" "prod_site" {
@@ -29,9 +33,9 @@ resource "grafana_synthetic_monitoring_check" "prod_site" {
   job       = "block-drop-prod-site"
   target    = var.prod_site_url
   enabled   = true
-  frequency = var.check_frequency_ms
+  frequency = var.prod_check_frequency_ms
   timeout   = var.check_timeout_ms
-  probes    = local.synthetic_probes
+  probes    = local.prod_synthetic_probes
 
   labels = {
     project     = "block-drop"
@@ -54,9 +58,9 @@ resource "grafana_synthetic_monitoring_check" "stg_site" {
   job       = "block-drop-stg-site"
   target    = var.stg_site_url
   enabled   = true
-  frequency = var.check_frequency_ms
+  frequency = var.stg_check_frequency_ms
   timeout   = var.check_timeout_ms
-  probes    = local.synthetic_probes
+  probes    = local.stg_synthetic_probes
 
   labels = {
     project     = "block-drop"
@@ -79,9 +83,9 @@ resource "grafana_synthetic_monitoring_check" "prod_scores" {
   job       = "block-drop-prod-scores"
   target    = "${var.prod_site_url}/api/scores"
   enabled   = true
-  frequency = var.check_frequency_ms
+  frequency = var.prod_check_frequency_ms
   timeout   = var.check_timeout_ms
-  probes    = local.synthetic_probes
+  probes    = local.prod_synthetic_probes
 
   labels = {
     project     = "block-drop"
@@ -104,9 +108,9 @@ resource "grafana_synthetic_monitoring_check" "stg_scores" {
   job       = "block-drop-stg-scores"
   target    = "${var.stg_site_url}/api/scores"
   enabled   = true
-  frequency = var.check_frequency_ms
+  frequency = var.stg_check_frequency_ms
   timeout   = var.check_timeout_ms
-  probes    = local.synthetic_probes
+  probes    = local.stg_synthetic_probes
 
   labels = {
     project     = "block-drop"

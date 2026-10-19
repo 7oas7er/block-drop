@@ -76,10 +76,16 @@ variable "stg_site_url" {
   default     = "https://blockdrop-stg.7oas7er.com"
 }
 
-variable "check_frequency_ms" {
-  description = "Synthetic check interval in milliseconds."
+variable "prod_check_frequency_ms" {
+  description = "Production synthetic check interval in milliseconds (default 5m)."
   type        = number
   default     = 300000
+}
+
+variable "stg_check_frequency_ms" {
+  description = "Staging synthetic check interval in milliseconds (default 15m; keeps Free SM volume down)."
+  type        = number
+  default     = 900000
 }
 
 variable "check_timeout_ms" {

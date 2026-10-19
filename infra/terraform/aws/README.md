@@ -59,7 +59,7 @@ Renaming named resources (buckets, roles, functions, OACs) forces Terraform to r
 4. Apply Cloudflare with `stg_cloudfront_domain_name` set to the stg `distribution_domain_name` output.
 5. Apply **prod**.
 6. Point Cloudflare `prod_cloudfront_domain_name` at the prod distribution.
-7. Put Terraform deploy outputs into GitHub Environments: `staging` ← stg outputs, `production` ← prod outputs (`AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`).
+7. Put Terraform deploy outputs into GitHub Environments: `staging` ← stg outputs, `production` ← prod outputs (`AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`). Also set `SITE_HOST` (`blockdrop-stg.7oas7er.com` / `blockdrop.7oas7er.com`), `CLOUDFLARE_ZONE_ID` (Cloudflare `zone_id` output), and secret `CLOUDFLARE_API_TOKEN` (Zone Cache Purge) so deploy can purge the Cloudflare edge.
 8. Deploy path: merge to `staging` for stg; merge `staging` → `main` for prod. OIDC subjects match the GitHub Environments (`…:environment:staging` / `…:environment:production`); lock Environments to those branches in GitHub deployment rules.
 
 ## Cloudflare origin verify
@@ -70,7 +70,8 @@ CloudFront rejects requests that lack a matching `X-Origin-Verify` header. Cloud
 - Set the same value in `envs/prod` `origin_verify_secret` and Cloudflare `prod_origin_verify_secret`.
 - Prefer distinct secrets per environment. Store them only in local `terraform.tfvars` (gitignored).
 - Apply Cloudflare **before** enabling/updating the CloudFront Function gate so legitimate traffic is never locked out.
-- GitHub Actions S3 sync and CloudFront invalidation do not use the viewer path and are unaffected.
+- GitHub Actions S3 sync, CloudFront invalidation, and Cloudflare cache purge do not use the viewer path and are unaffected.
+- Cloudflare cache rules (`infra/terraform/cloudflare/cache.tf`) respect origin `Cache-Control` for Block Drop hosts and bypass `/api/*`.
 
 ## Local commands
 

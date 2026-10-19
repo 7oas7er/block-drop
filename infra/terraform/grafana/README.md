@@ -11,7 +11,7 @@ Observability for Block Drop lives in **Grafana Cloud Free** (synthetics + Cloud
 | `shared-block-drop-grafana-cloudwatch-role` | IAM role Grafana Labs assumes to read CloudWatch |
 | `grafana_cloud_provider_aws_account` | Links the AWS account to the Grafana stack (gated) |
 | `grafana_cloud_provider_aws_cloudwatch_scrape_job` | Scrapes Lambda + CloudFront metrics (gated) |
-| Synthetic HTTP checks | Prod/stg site + `/api/scores` |
+| Synthetic HTTP checks | Prod/stg site + `/api/scores` (prod: ≤2 EU probes @ 5m; stg: 1 probe @ 15m) |
 | Folder + dashboard `Block Drop` | Synthetics + (future) CloudWatch on one board |
 
 State key: `grafana/terraform.tfstate` in `shared-block-drop-terraform-state-bucket`.
