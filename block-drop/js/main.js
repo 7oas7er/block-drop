@@ -15,6 +15,7 @@ var nameInput = document.getElementById("player-name");
 var highScoreList = document.getElementById("high-score-list");
 var pauseButton = document.getElementById("pause");
 var muteButton = document.getElementById("mute");
+var themeButton = document.getElementById("theme");
 
 var lastFrameTime = null;
 var accumulator = 0;
@@ -42,13 +43,21 @@ function fillBlock(context, pixelX, pixelY, color) {
   context.fillRect(pixelX + 1, pixelY + 1, cell - 2, cell - 2);
 }
 
+function boardSurfaceColor() {
+  return BlockDropTheme.cssVar("--surface", "#1a1a2e");
+}
+
+function boardGridColor() {
+  return BlockDropTheme.cssVar("--grid", "rgba(255,255,255,0.08)");
+}
+
 function drawGrid(context) {
   var cell = BlockDrop.CELL;
   var width = BlockDrop.COLS * cell;
   var height = BlockDrop.ROWS * cell;
   var line;
 
-  context.strokeStyle = "rgba(255,255,255,0.08)";
+  context.strokeStyle = boardGridColor();
   context.beginPath();
   for (line = 0; line <= BlockDrop.COLS; line++) {
     context.moveTo(line * cell + 0.5, 0);
@@ -98,7 +107,7 @@ function drawActivePiece(context) {
 }
 
 function drawBoard() {
-  boardContext.fillStyle = "#1a1a2e";
+  boardContext.fillStyle = boardSurfaceColor();
   boardContext.fillRect(0, 0, boardCanvas.width, boardCanvas.height);
   drawGrid(boardContext);
   drawLockedCells(boardContext);
@@ -118,7 +127,7 @@ function drawNext() {
   var originY;
 
   nextContext.clearRect(0, 0, nextCanvas.width, nextCanvas.height);
-  nextContext.fillStyle = "#1a1a2e";
+  nextContext.fillStyle = boardSurfaceColor();
   nextContext.fillRect(0, 0, nextCanvas.width, nextCanvas.height);
 
   for (row = 0; row < shape.length; row++) {
@@ -339,6 +348,12 @@ function writeMuteLabel() {
   muteButton.setAttribute("aria-pressed", muted ? "true" : "false");
 }
 
+function writeThemeLabel() {
+  var light = BlockDropTheme.getTheme() === BlockDropTheme.LIGHT;
+  setText(themeButton, light ? "Dark mode" : "Light mode");
+  themeButton.setAttribute("aria-pressed", light ? "true" : "false");
+}
+
 function syncMusicToState() {
   if (state.paused || state.gameOver || BlockDropAudio.isMuted()) {
     BlockDropAudio.pauseMusic();
@@ -523,6 +538,12 @@ bindPress(muteButton, function () {
   syncMusicToState();
 });
 
+bindPress(themeButton, function () {
+  BlockDropTheme.toggle();
+  writeThemeLabel();
+  render();
+});
+
 bindHold(document.getElementById("move-left"), function () {
   tryMove(-1, 0);
 });
@@ -542,6 +563,7 @@ document.querySelector(".touch-pad").addEventListener("contextmenu", function (e
 });
 document.addEventListener("pointerdown", ensureAudio, { once: true });
 writeMuteLabel();
+writeThemeLabel();
 
 nameInput.addEventListener("input", function () {
   var cleaned = nameInput.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
