@@ -1,7 +1,7 @@
 {
   "uid": "block-drop-overview",
   "title": "Block Drop",
-  "description": "Synthetics and AWS observability for the Block Drop app. CloudWatch panels stay empty until enable_cloudwatch_scrape is on and account linking succeeds.",
+  "description": "Synthetics and AWS observability for the Block Drop app (Grafana CloudWatch scrape + synthetics).",
   "tags": ["block-drop", "synthetics", "observability"],
   "timezone": "browser",
   "schemaVersion": 39,
@@ -378,7 +378,7 @@
       "gridPos": { "h": 3, "w": 24, "x": 0, "y": 33 },
       "options": {
         "mode": "markdown",
-        "content": "CloudWatch scrape is **parked** (`enable_cloudwatch_scrape = false`) until Grafana can assume `shared-block-drop-grafana-cloudwatch-role`. Panels below use `project=\"block-drop\"` static labels from the scrape job and will populate once linking works."
+        "content": "CloudWatch scrape uses IAM role `shared-block-drop-grafana-cloudwatch-role` (Grafana Labs account `008923505280`). Panels below filter on `project=\"block-drop\"` static labels from the scrape job."
       }
     },
     {

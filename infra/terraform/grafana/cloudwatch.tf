@@ -1,6 +1,5 @@
-# Parked while Grafana Cloud Provider cannot assume the IAM role
-# (401 aws_authentication_error, no AssumeRole in CloudTrail). Set
-# enable_cloudwatch_scrape = true once Grafana confirms the link works.
+# Requires org RCP to allow Grafana Labs account 008923505280 to
+# sts:AssumeRole on shared-block-drop-grafana-cloudwatch-role (see README).
 resource "grafana_cloud_provider_aws_account" "block_drop" {
   count    = var.enable_cloudwatch_scrape ? 1 : 0
   provider = grafana.cloud_provider
