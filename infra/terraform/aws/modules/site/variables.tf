@@ -60,3 +60,14 @@ variable "lambda_log_retention_days" {
     error_message = "lambda_log_retention_days must be a CloudWatch Logs-supported retention value."
   }
 }
+
+variable "high_scores_noncurrent_version_expiration_days" {
+  description = "Days to retain noncurrent versions of high-scores objects before lifecycle expiration."
+  type        = number
+  default     = 90
+
+  validation {
+    condition     = var.high_scores_noncurrent_version_expiration_days >= 1 && var.high_scores_noncurrent_version_expiration_days <= 3650
+    error_message = "high_scores_noncurrent_version_expiration_days must be between 1 and 3650."
+  }
+}
