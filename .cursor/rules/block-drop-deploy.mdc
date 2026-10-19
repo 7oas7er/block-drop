@@ -8,6 +8,7 @@ alwaysApply: false
 
 - Workflow: `.github/workflows/deploy-block-drop.yml`.
 - **Branches**: merge to `staging` → deploy staging AWS; merge `staging` → `main` → deploy production AWS.
+- **Tests gate deploy**: job `test` (unit + Playwright under `tests/`) must succeed before job `deploy` runs. PRs to `staging`/`main` run tests only (no deploy).
 - Auth: GitHub OIDC → env-specific IAM deploy role. No long-lived AWS access keys in GitHub secrets.
 - GitHub Environments `staging` and `production` each hold: `AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`.
 - OIDC trust: stg role → `…:environment:staging`; prod role → `…:environment:production` (GitHub sends environment subjects when the job sets `environment:`). Restrict which branches can use each Environment in GitHub deployment protection rules.

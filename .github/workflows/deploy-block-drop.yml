@@ -1,7 +1,7 @@
 name: Deploy Block Drop
 
 # staging → staging AWS env; main → production AWS env.
-# Deploy roles trust only those branch refs via OIDC, so pull_request jobs cannot assume them.
+# Tests must pass before deploy. Deploy roles trust only those branch refs via OIDC.
 on:
   push:
     branches:
@@ -9,6 +9,15 @@ on:
       - main
     paths:
       - "block-drop/**"
+      - "tests/**"
+      - ".github/workflows/deploy-block-drop.yml"
+  pull_request:
+    branches:
+      - staging
+      - main
+    paths:
+      - "block-drop/**"
+      - "tests/**"
       - ".github/workflows/deploy-block-drop.yml"
   workflow_dispatch:
 
@@ -17,13 +26,43 @@ permissions:
   contents: read
 
 concurrency:
-  group: deploy-block-drop-${{ github.ref_name }}
+  group: deploy-block-drop-${{ github.workflow }}-${{ github.ref_name }}-${{ github.event_name }}
   cancel-in-progress: false
 
 jobs:
+  test:
+    name: Game tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tests
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: tests/package-lock.json
+
+      - name: Install test dependencies
+        run: npm ci
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Run unit and end-to-end tests
+        run: npm test
+        env:
+          CI: true
+
   deploy:
     name: Publish to S3
-    if: github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main'
+    needs: test
+    if: github.event_name != 'pull_request' && (github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/main')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     environment: ${{ github.ref_name == 'main' && 'production' || 'staging' }}
