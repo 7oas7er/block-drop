@@ -1,6 +1,5 @@
 locals {
   state_bucket_name = var.state_bucket_name
-  lock_table_name   = var.lock_table_name
 }
 
 resource "aws_s3_bucket" "terraform_state" {
@@ -76,26 +75,4 @@ data "aws_iam_policy_document" "terraform_state" {
 resource "aws_s3_bucket_policy" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
   policy = data.aws_iam_policy_document.terraform_state.json
-}
-
-# Legacy DynamoDB lock table (Terraform S3 backend used dynamodb_table).
-# All roots now lock via S3 use_lockfile; this table is unused but kept
-# with prevent_destroy until we deliberately remove it in a follow-up.
-resource "aws_dynamodb_table" "terraform_lock" {
-  name         = local.lock_table_name
-  billing_mode = "PAY_PER_REQUEST"
-  hash_key     = "LockID"
-
-  attribute {
-    name = "LockID"
-    type = "S"
-  }
-
-  tags = {
-    Name = local.lock_table_name
-  }
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }

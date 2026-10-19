@@ -9,7 +9,7 @@ One AWS account, two environments:
 
 Shared module: [`modules/site`](modules/site). The GitHub OIDC provider lives in **stg** only; prod looks it up with a data source.
 
-Bootstrap root: [`bootstrap`](bootstrap) creates the shared S3 state bucket (and a legacy DynamoDB lock table no longer referenced by backends).
+Bootstrap root: [`bootstrap`](bootstrap) creates the shared S3 state bucket.
 
 ## Remote state
 

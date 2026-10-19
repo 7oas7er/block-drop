@@ -1,5 +1,5 @@
 variable "aws_region" {
-  description = "Region for the Terraform state bucket and lock table."
+  description = "Region for the Terraform state bucket."
   type        = string
   default     = "eu-north-1"
 }
@@ -14,10 +14,4 @@ variable "state_bucket_name" {
   description = "S3 bucket that stores remote Terraform state."
   type        = string
   default     = "shared-block-drop-terraform-state-bucket"
-}
-
-variable "lock_table_name" {
-  description = "DynamoDB table used for Terraform state locking."
-  type        = string
-  default     = "shared-block-drop-terraform-lock-table"
 }
