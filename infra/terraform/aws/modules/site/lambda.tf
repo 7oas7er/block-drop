@@ -28,6 +28,7 @@ resource "aws_lambda_function" "high_scores" {
   }
 
   depends_on = [
+    aws_cloudwatch_log_group.high_scores,
     aws_iam_role_policy.high_scores,
     aws_iam_role_policy_attachment.high_scores_basic,
   ]
