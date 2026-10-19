@@ -13,6 +13,11 @@ output "bucket_name" {
   value       = aws_s3_bucket.site.bucket
 }
 
+output "access_logs_bucket_name" {
+  description = "Private bucket for CloudFront (v2) and S3 site access logs."
+  value       = aws_s3_bucket.access_logs.bucket
+}
+
 output "high_score_bucket_name" {
   description = "Private bucket that stores the high score table."
   value       = aws_s3_bucket.high_scores.bucket

@@ -28,3 +28,14 @@ variable "origin_verify_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "access_logs_retention_days" {
+  description = "Days to retain CloudFront and S3 access log objects before lifecycle expiration."
+  type        = number
+  default     = 90
+
+  validation {
+    condition     = var.access_logs_retention_days >= 1 && var.access_logs_retention_days <= 3650
+    error_message = "access_logs_retention_days must be between 1 and 3650."
+  }
+}

@@ -40,6 +40,7 @@ AWS resource names follow:
 Examples for `stg`:
 
 - `stg-block-drop-site-bucket`
+- `stg-block-drop-access-logs-bucket`
 - `stg-block-drop-high-scores-bucket`
 - `stg-block-drop-high-scores-function`
 - `stg-block-drop-high-scores-role`
@@ -61,6 +62,13 @@ Renaming named resources (buckets, roles, functions, OACs) forces Terraform to r
 6. Point Cloudflare `prod_cloudfront_domain_name` at the prod distribution.
 7. Put Terraform deploy outputs into GitHub Environments: `staging` ← stg outputs, `production` ← prod outputs (`AWS_DEPLOY_ROLE_ARN`, `AWS_REGION`, `AWS_SITE_BUCKET`, `AWS_DISTRIBUTION_ID`). Also set `SITE_HOST` (`blockdrop-stg.7oas7er.com` / `blockdrop.7oas7er.com`), `CLOUDFLARE_ZONE_ID` (Cloudflare `zone_id` output), and secret `CLOUDFLARE_API_TOKEN` (Zone Cache Purge) so deploy can purge the Cloudflare edge.
 8. Deploy path: merge to `staging` for stg; merge `staging` → `main` for prod. OIDC subjects match the GitHub Environments (`…:environment:staging` / `…:environment:production`); lock Environments to those branches in GitHub deployment rules.
+
+## Access logging
+
+Each env module creates a private `{env}-block-drop-access-logs-bucket` (SSE-S3, Block Public Access, 90-day lifecycle):
+
+- **CloudFront** standard logging **v2** (CloudWatch Logs delivery → S3 prefix `cloudfront/`; delivery APIs in `us-east-1`, bucket in `eu-north-1`). Uses JSON output (not Parquet) to avoid conversion charges.
+- **S3 site bucket** server access logs → prefix `s3-site/`.
 
 ## Cloudflare origin verify
 

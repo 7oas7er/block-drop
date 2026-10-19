@@ -18,6 +18,11 @@ output "bucket_name" {
   value       = module.site.bucket_name
 }
 
+output "access_logs_bucket_name" {
+  description = "Private bucket for production CloudFront and S3 site access logs."
+  value       = module.site.access_logs_bucket_name
+}
+
 output "high_score_bucket_name" {
   description = "Private bucket that stores the production high score table."
   value       = module.site.high_score_bucket_name
