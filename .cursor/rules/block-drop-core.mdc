@@ -6,7 +6,7 @@ alwaysApply: true
 # Block Drop — core decisions
 
 - **Product**: private falling-block puzzle game; keep the experience simple and fast.
-- **Game delivery**: static site only under `block-drop/` — HTML, CSS, plain JS. No framework, bundler, package manager, or build step for the game.
+- **Game delivery**: static site only under `block-drop/` — HTML, CSS, plain JS. No framework, bundler, package manager, or build step for the game. Automated tests live under `tests/` (Node + Playwright) and gate GitHub Actions deploy.
 - **Hosting**: AWS in **one account**, two environments (`stg` and `prod`). Terraform is the source of truth. Do **not** reintroduce CDK or manage app resources with CloudFormation.
 - **GitHub env separation**: feature work merges into `staging` (deploys AWS stg only). Promote to production only by merging `staging` → `main` (deploys AWS prod). Keep deploy config in GitHub Environments `staging` / `production`; do not point both envs at the same role, bucket, or distribution.
 - **DNS**: Cloudflare (separate Terraform root) fronts CloudFront custom domains.

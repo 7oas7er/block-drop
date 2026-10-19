@@ -1,0 +1,17 @@
+{
+  "name": "block-drop-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "node --test --test-reporter=spec --experimental-test-coverage --test-coverage-include=../block-drop/js/game.js --test-coverage-include=../block-drop/js/pieces.js --test-coverage-include=../block-drop/js/highscores.js unit/*.test.mjs",
+    "test:e2e": "playwright test",
+    "test:e2e:install": "playwright install --with-deps chromium"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
