@@ -44,12 +44,12 @@ variable "grafana_aws_external_id" {
 variable "enable_cloudwatch_scrape" {
   description = <<-EOT
     Create Grafana Cloud Provider AWS account + CloudWatch scrape job.
-    Keep false while Grafana returns aws_authentication_error without
-    calling STS (see README). IAM role is still managed so linking can
-    be re-enabled later.
+    Defaults to true once org RCP allows Grafana account 008923505280
+    to sts:AssumeRole (see README). Set false to tear down the scrape
+    job without removing the IAM role.
   EOT
   type        = bool
-  default     = false
+  default     = true
 }
 
 variable "sm_url" {

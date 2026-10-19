@@ -23,7 +23,7 @@ sm_access_token = "glsm_..."
 # grafana_aws_external_id = "..."
 
 # Cloud Provider AWS account + CloudWatch scrape (default off while Grafana
-# returns aws_authentication_error without calling STS).
+# scrape job without removing the IAM role.
 # enable_cloudwatch_scrape = false
 
 # Optional overrides:

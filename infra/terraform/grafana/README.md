@@ -2,7 +2,7 @@
 
 Observability for Block Drop lives in **Grafana Cloud Free** (synthetics + CloudWatch metric scrape). Cloudflare stays DNS/edge only.
 
-**CloudWatch scrape is parked** (`enable_cloudwatch_scrape = false`) until Grafana can assume the IAM role. Synthetics and the IAM role still apply. Flip the flag to `true` after support confirms linking works.
+CloudWatch scrape is enabled by default (`enable_cloudwatch_scrape = true`). Org RCP `ManagedAccountResourceControlPolicy` must exempt Grafana Labs account `008923505280` from the outside-org `sts:*` deny, or AssumeRole fails with `aws_authentication_error`.
 
 ## What this root manages
 
@@ -40,7 +40,7 @@ AWS profile: `7oas7er`. Tokens may also be supplied via `GRAFANA_*` env vars whe
 
 ## Notes
 
-- Set `enable_cloudwatch_scrape = true` in `terraform.tfvars` to create the Cloud Provider AWS account + scrape job.
+- Set `enable_cloudwatch_scrape = false` in `terraform.tfvars` to remove the Cloud Provider AWS account + scrape job without deleting the IAM role.
 - CloudWatch scrape covers `eu-north-1` and `us-east-1` (CloudFront metrics).
 - Tagged AWS resources (`Name` tags on Block Drop) improve metric discovery.
 - Shipping CloudWatch **Logs** into Grafana Cloud Logs is a follow-up (not required for the first scrape + synthetics setup).

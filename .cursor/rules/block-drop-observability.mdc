@@ -23,7 +23,7 @@ When adding or extending observability for a hosted web app, mirror this stack:
    - Shared IAM role trusted by Grafana Labs account `008923505280` with `sts:ExternalId` = stack `prometheus_user_id` (override from UI Add-account modal if needed)
    - Scrape services that back the app (Block Drop: `AWS/Lambda`, `AWS/CloudFront`); regions `eu-north-1` + `us-east-1` when CloudFront is involved
    - Tag AWS resources (`Name`, etc.) so scrape discovery works; use static label `project=<app>`
-   - Gate with `enable_cloudwatch_scrape` until account linking works (Grafana must actually AssumeRole)
+   - Org RCP must exempt Grafana account `008923505280` from outside-org `sts:*` deny or AssumeRole fails; toggle with `enable_cloudwatch_scrape`
 
 3. **One app dashboard** — folder + overview dashboard in the Grafana stack
    - Synthetics: availability stats, success/duration, HTTP status/phase latency, failure logs (Loki)
@@ -34,6 +34,6 @@ When adding or extending observability for a hosted web app, mirror this stack:
 ## Do / don’t
 
 - **Do** reuse labels (`project`, `environment`) so one dashboard can filter prod vs stg.
-- **Do** keep synthetics even if CloudWatch scrape is temporarily parked.
+- **Do** keep synthetics even if CloudWatch scrape is temporarily disabled.
 - **Don’t** invent a second observability product or duplicate synthetics in another vendor.
 - **Don’t** commit Grafana tokens, SM tokens, or service-account keys.
