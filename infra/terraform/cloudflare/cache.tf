@@ -11,7 +11,7 @@ resource "cloudflare_ruleset" "cache" {
     {
       ref         = "block_drop_api_bypass"
       description = "Do not cache Block Drop high-score API"
-      expression  = "(http.host in {\"blockdrop.7oas7er.com\" \"blockdrop-stg.7oas7er.com\" \"www.7oas7er.com\" \"7oas7er.com\"} and starts_with(http.request.uri.path, \"/api/\"))"
+      expression  = "(http.host in {\"blockdrop.7oas7er.com\" \"blockdrop-stg.7oas7er.com\"} and starts_with(http.request.uri.path, \"/api/\"))"
       action      = "set_cache_settings"
       action_parameters = {
         cache = false
@@ -20,7 +20,7 @@ resource "cloudflare_ruleset" "cache" {
     {
       ref         = "block_drop_respect_origin"
       description = "Respect origin Cache-Control for Block Drop static assets"
-      expression  = "(http.host in {\"blockdrop.7oas7er.com\" \"blockdrop-stg.7oas7er.com\" \"www.7oas7er.com\" \"7oas7er.com\"})"
+      expression  = "(http.host in {\"blockdrop.7oas7er.com\" \"blockdrop-stg.7oas7er.com\"})"
       action      = "set_cache_settings"
       action_parameters = {
         cache = true
