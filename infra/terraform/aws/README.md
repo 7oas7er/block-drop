@@ -104,15 +104,20 @@ npm ci --omit=dev
 
 Terraform zips `high-scores.js` + `node_modules` (see `modules/site/lambda.tf`). A `check` block fails the plan if `@aws-sdk/client-s3` is missing. Details: [`infra/lambda/README.md`](../../lambda/README.md).
 
+## CI plan
+
+GitHub Actions runs `terraform fmt` / `validate` / `plan` on infra changes (see [terraform-plan-ci.md](../docs/terraform-plan-ci.md)). Apply remains local. After creating the plan role, store `github_terraform_plan_role_arn` and related secrets on GitHub Environment **terraform**.
+
 ## Local commands
 
 ```bash
+export AWS_PROFILE=7oas7er
 # From repo root — once / after lambda lockfile changes:
 #   cd infra/lambda && npm ci --omit=dev
 cd bootstrap   # first time / changes to state backend resources
 # or: cd envs/stg   # or envs/prod
 cp terraform.tfvars.example terraform.tfvars   # first time, if needed
-terraform init
+terraform init -reconfigure   # if you previously had profile= in the backend
 terraform plan
 terraform apply
 ```

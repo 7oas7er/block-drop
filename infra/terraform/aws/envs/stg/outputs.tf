@@ -52,3 +52,8 @@ output "github_oidc_provider_arn" {
   description = "Account-wide GitHub OIDC provider ARN (referenced by prod)."
   value       = aws_iam_openid_connect_provider.github.arn
 }
+
+output "github_terraform_plan_role_arn" {
+  description = "Store this in the GitHub Environment variable AWS_TERRAFORM_PLAN_ROLE_ARN on environment terraform."
+  value       = aws_iam_role.github_terraform_plan.arn
+}

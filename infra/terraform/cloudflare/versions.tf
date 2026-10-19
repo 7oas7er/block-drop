@@ -15,7 +15,7 @@ terraform {
     region       = "eu-north-1"
     use_lockfile = true
     encrypt      = true
-    profile      = "7oas7er"
+    # No profile: local use AWS_PROFILE=7oas7er; CI uses OIDC default chain.
   }
 }
 

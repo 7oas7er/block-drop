@@ -11,9 +11,10 @@ variable "aws_region" {
 }
 
 variable "aws_profile" {
-  description = "Shared credentials / config profile for the AWS provider."
+  description = "Optional AWS shared-credentials profile for local use. Leave null in CI (use the default credential chain / OIDC)."
   type        = string
-  default     = "7oas7er"
+  default     = null
+  nullable    = true
 }
 
 variable "site_domain_name" {
@@ -31,6 +32,12 @@ variable "github_actions_subject" {
   description = "Immutable GitHub Actions OIDC subject for the staging GitHub Environment (jobs with environment: staging)."
   type        = string
   default     = "repo:7oas7er@2952810/block-drop@1407099747:environment:staging"
+}
+
+variable "github_actions_plan_subject" {
+  description = "Immutable GitHub Actions OIDC subject for the terraform GitHub Environment (plan-only CI)."
+  type        = string
+  default     = "repo:7oas7er@2952810/block-drop@1407099747:environment:terraform"
 }
 
 variable "origin_verify_secret" {

@@ -1,3 +1,4 @@
+# State backend uses env AWS_PROFILE / default chain (export AWS_PROFILE=7oas7er locally).
 # CloudFront distribution domain names (from envs/*/ terraform output distribution_domain_name).
 prod_cloudfront_domain_name = "d111111abcdef8.cloudfront.net"
 stg_cloudfront_domain_name  = "d222222abcdef8.cloudfront.net"

@@ -5,9 +5,10 @@ variable "aws_region" {
 }
 
 variable "aws_profile" {
-  description = "Shared credentials / config profile for the AWS provider."
+  description = "Optional AWS shared-credentials profile for local use. Leave null in CI (use the default credential chain / OIDC)."
   type        = string
-  default     = "7oas7er"
+  default     = null
+  nullable    = true
 }
 
 variable "stack_slug" {

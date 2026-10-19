@@ -28,6 +28,12 @@ Derive names in module locals from `var.environment`; do not scatter hard-coded 
 - Keys: `bootstrap/`, `envs/stg/`, `envs/prod/`, `cloudflare/`, `grafana/` under that bucket.
 - Do not reintroduce `dynamodb_table` in backends (deprecated).
 - Never commit `*.tfstate` or `terraform.tfvars`.
+- Backends do not pin `profile=`; locally `export AWS_PROFILE=7oas7er` (provider may still set `aws_profile` in tfvars).
+
+## CI plan
+
+- Workflow `.github/workflows/terraform-plan.yml` (fmt, validate, plan) — not apply.
+- Role `shared-block-drop-terraform-plan-role` (stg) + GitHub Environment `terraform`. Setup: `infra/terraform/docs/terraform-plan-ci.md`.
 
 ## Regions
 
