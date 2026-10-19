@@ -1,6 +1,6 @@
 # Block Drop tests
 
-Automated checks for the static game under `../block-drop/`. The game itself stays free of a package manager; this folder owns Node + Playwright only.
+Automated checks for the static game under `../block-drop/`. The game itself stays free of a package manager; this folder owns Node, Playwright, and a pinned `serve` for the e2e static host.
 
 ## What runs
 

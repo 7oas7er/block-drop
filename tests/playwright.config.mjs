@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 
 const testsDir = path.dirname(fileURLToPath(import.meta.url));
 const repoRoot = path.resolve(testsDir, "..");
+const serveBin = path.join(testsDir, "node_modules", ".bin", "serve");
 
 export default defineConfig({
   testDir: path.join(testsDir, "e2e"),
@@ -17,7 +18,8 @@ export default defineConfig({
     trace: "on-first-retry",
   },
   webServer: {
-    command: `npx --yes serve "${path.join(repoRoot, "block-drop")}" -l 4173 --no-request-logging`,
+    // Pinned via tests/package.json (avoid unpinned `npx --yes serve` on every run).
+    command: `"${serveBin}" "${path.join(repoRoot, "block-drop")}" -l 4173 --no-request-logging`,
     url: "http://127.0.0.1:4173",
     reuseExistingServer: !process.env.CI,
     timeout: 120000,
