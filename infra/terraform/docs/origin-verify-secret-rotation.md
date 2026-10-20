@@ -8,7 +8,7 @@ The same secret is stored in **two Terraform roots** (gitignored `terraform.tfva
 
 | Side | Root | Variable(s) |
 |------|------|-------------|
-| Inject header | `infra/terraform/cloudflare` | `stg_origin_verify_secret` / `prod_origin_verify_secret` |
+| Inject header | `infra/terraform/cloudflare` | `stg_origin_verify_secret` / `prod_origin_verify_secret` (Block Drop); `netrunner_stg_origin_verify_secret` / `netrunner_prod_origin_verify_secret` (Netrunner on same zone) |
 | Accept header | `infra/terraform/aws/envs/{stg\|prod}` | `origin_verify_secret` (+ optional `origin_verify_secret_previous`) |
 
 Prefer **distinct secrets per environment**. Never commit real values. The secret also

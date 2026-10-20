@@ -4,10 +4,12 @@ locals {
   zone_id = var.zone_id
 }
 
+# One zone ruleset per phase on 7oas7er.com. Host rules for Block Drop and
+# Netrunner live here so sibling apps do not create competing rulesets.
 resource "cloudflare_ruleset" "origin_verify" {
   zone_id     = local.zone_id
   name        = "Block Drop origin verify headers"
-  description = "Inject X-Origin-Verify so CloudFront accepts only Cloudflare-proxied traffic."
+  description = "Inject X-Origin-Verify so CloudFront accepts only Cloudflare-proxied traffic (Block Drop + Netrunner hosts)."
   kind        = "zone"
   phase       = "http_request_late_transform"
 
@@ -36,6 +38,34 @@ resource "cloudflare_ruleset" "origin_verify" {
           "X-Origin-Verify" = {
             operation = "set"
             value     = var.prod_origin_verify_secret
+          }
+        }
+      }
+    },
+    {
+      ref         = "netrunner_stg_origin_verify"
+      description = "Staging Netrunner origin verify"
+      expression  = "http.host eq \"netrunner-stg.7oas7er.com\""
+      action      = "rewrite"
+      action_parameters = {
+        headers = {
+          "X-Origin-Verify" = {
+            operation = "set"
+            value     = var.netrunner_stg_origin_verify_secret
+          }
+        }
+      }
+    },
+    {
+      ref         = "netrunner_prod_origin_verify"
+      description = "Production Netrunner origin verify"
+      expression  = "http.host eq \"netrunner.7oas7er.com\""
+      action      = "rewrite"
+      action_parameters = {
+        headers = {
+          "X-Origin-Verify" = {
+            operation = "set"
+            value     = var.netrunner_prod_origin_verify_secret
           }
         }
       }
