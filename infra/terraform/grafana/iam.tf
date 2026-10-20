@@ -4,7 +4,8 @@ resource "aws_iam_role" "grafana_cloudwatch" {
   assume_role_policy = data.aws_iam_policy_document.grafana_cloudwatch_assume_role.json
 
   tags = {
-    Name = local.grafana_cloudwatch_role
+    Name    = local.grafana_cloudwatch_role
+    Project = "blockdrop"
   }
 }
 
