@@ -11,7 +11,7 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`block-drop/`](block-drop/) | Static game (no framework, bundler, or package manager) |
 | [`tests/`](tests/) | Node unit tests + Playwright e2e; gates deploy |
 | [`infra/terraform/aws/`](infra/terraform/aws/) | Site module + `envs/stg` / `envs/prod` + bootstrap |
-| [`infra/terraform/cloudflare/`](infra/terraform/cloudflare/) | DNS, cache, rate limit, origin-verify headers, redirects |
+| [`infra/terraform/cloudflare/`](infra/terraform/cloudflare/) | DNS only (zone rulesets live in platform `shared-edge`) |
 | [`infra/terraform/grafana/`](infra/terraform/grafana/) | Synthetics, CloudWatch scrape, dashboards, data sources |
 | [`infra/lambda/`](infra/lambda/) | High-scores Lambda source (zipped by AWS Terraform) |
 | [`.cursor/rules/`](.cursor/rules/) | Platform (`app-*`) + product (`block-drop-*`) Cursor rules — see [`.cursor/rules/README.md`](.cursor/rules/README.md) |

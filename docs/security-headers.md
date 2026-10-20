@@ -5,7 +5,7 @@
 | Layer | Role |
 |-------|------|
 | **CloudFront** `aws_cloudfront_response_headers_policy.site` | **Source of truth** for viewer security headers (CSP, HSTS, Referrer-Policy, X-Frame-Options, X-Content-Type-Options, XSS-Protection, Permissions-Policy). Attached to default + `/api/scores` behaviors. |
-| **Cloudflare** | DNS, cache, rate limit, origin-verify **request** header. Does **not** set CSP / Permissions-Policy for this app — avoid duplicating security headers at the edge (double headers / override fights). |
+| **Cloudflare** | This app’s Terraform root is DNS-only. Cache / rate limit / origin-verify **request** header / redirects live in platform `shared-edge`. Does **not** set CSP / Permissions-Policy — avoid duplicating security headers at the edge. |
 | **S3 / Lambda origins** | Do not rely on origin-emitted security headers; CloudFront policy uses `override = true`. |
 
 Change headers in Terraform (`infra/terraform/aws/modules/site/cloudfront.tf` + `locals.tf`), then `terraform apply` the env roots. Deploy of static files alone does **not** update CSP.

@@ -27,6 +27,6 @@ Platform layout/CI: `app-terraform`.
 - OIDC provider managed in **stg** only; prod looks it up.
 - High-scores Lambda: `s3:GetObject`/`PutObject` only on `{bucket}/high-scores.json`; Node 22 package via `infra/lambda` (`npm ci --omit=dev`); zip includes `node_modules`.
 - High-score buckets: `prevent_destroy` + versioning (noncurrent expire ~90d). Site bucket unversioned.
-- **Origin-verify**: keep AWS `origin_verify_secret` in sync with Cloudflare; rotate via `infra/terraform/docs/origin-verify-secret-rotation.md`.
-- Cloudflare rate limit: one Free-plan rule on `/api/scores`. www/apex → Single Redirect to `blockdrop.7oas7er.com` (not Host-header Origin Rule).
+- **Origin-verify**: AWS `origin_verify_secret` must match platform `shared-edge` inject secrets; rotate via `infra/terraform/docs/origin-verify-secret-rotation.md`. Block Drop Cloudflare root is **DNS-only** (no zone rulesets here).
+- Zone cache / redirects / `/api/scores` rate limit / SSL: platform `shared-edge` only.
 - Access logs: `{env}-block-drop-access-logs-bucket` (CloudFront v2 + S3 site). Lambda log group finite retention; CF 5xx alarms in `us-east-1`.

@@ -4,12 +4,14 @@ Block Drop only accepts traffic that arrives through Cloudflare. Cloudflare inje
 `X-Origin-Verify`; a CloudFront Function rejects any other value (including direct
 `*.cloudfront.net` hits).
 
-The same secret is stored in **two Terraform roots** (gitignored `terraform.tfvars` only):
+The same secret is stored in **two places** (gitignored `terraform.tfvars` only):
 
-| Side | Root | Variable(s) |
+| Side | Where | Variable(s) |
 |------|------|-------------|
-| Inject header | `infra/terraform/cloudflare` | `stg_origin_verify_secret` / `prod_origin_verify_secret` (Block Drop); `netrunner_stg_origin_verify_secret` / `netrunner_prod_origin_verify_secret` (Netrunner on same zone) |
-| Accept header | `infra/terraform/aws/envs/{stg\|prod}` | `origin_verify_secret` (+ optional `origin_verify_secret_previous`) |
+| Inject header | Platform repo `infra/terraform/shared-edge` | `blockdrop_stg_origin_verify_secret` / `blockdrop_prod_origin_verify_secret` (and Netrunner vars there) |
+| Accept header | This repo `infra/terraform/aws/envs/{stg\|prod}` | `origin_verify_secret` (+ optional `origin_verify_secret_previous`) |
+
+Block Drop’s Cloudflare root is **DNS-only** and does not manage the inject ruleset.
 
 Prefer **distinct secrets per environment**. Never commit real values. The secret also
 appears in Terraform state and in the published CloudFront Function source for anyone
@@ -52,13 +54,14 @@ Confirm plan updates only `aws_cloudfront_function.origin_verify` (and the distr
 association if the function ARN/etag changes). Site must still work (Cloudflare still
 sends the old secret).
 
-### 2. Point Cloudflare at the new secret
+### 2. Point Cloudflare at the new secret (platform shared-edge)
 
-In `infra/terraform/cloudflare/terraform.tfvars`, set the matching variable to
-`<NEW_SECRET>` (`stg_origin_verify_secret` or `prod_origin_verify_secret`).
+In the **platform** repo `infra/terraform/shared-edge/terraform.tfvars`, set the matching
+Block Drop variable to `<NEW_SECRET>` (`blockdrop_stg_origin_verify_secret` or
+`blockdrop_prod_origin_verify_secret`).
 
 ```bash
-cd infra/terraform/cloudflare
+cd …/platform/infra/terraform/shared-edge
 terraform apply
 ```
 
@@ -68,12 +71,11 @@ Confirm plan updates only the origin-verify ruleset header value for that env.
 
 - Browser: `https://blockdrop-stg.7oas7er.com` or `https://blockdrop.7oas7er.com` loads.
 - API: `GET /api/scores` returns 200 through Cloudflare.
-- Direct CloudFront hostname still returns **403**.
-- Optional: Grafana synthetic checks for that env stay green for one interval.
+- Direct CloudFront URL still returns 403.
 
-### 4. Drop the previous secret on AWS
+### 4. Drop previous on AWS
 
-In the AWS env `terraform.tfvars`:
+In `infra/terraform/aws/envs/<env>/terraform.tfvars`:
 
 ```hcl
 origin_verify_secret = "<NEW_SECRET>"
@@ -85,33 +87,15 @@ cd infra/terraform/aws/envs/<env>
 terraform apply
 ```
 
-Confirm Function code no longer contains the old secret (AWS console → CloudFront →
-Functions, or `terraform plan` shows no drift afterward).
-
-### 5. Prod
-
-Repeat steps 1–4 for production with a **different** new secret.
-
-## Emergency / accept brief 403s
-
-If you cannot dual-accept (for example Function publish stuck), update **Cloudflare then
-AWS** as fast as possible (or the reverse). Expect a short 403 window. Prefer dual-accept
-whenever you can.
-
 ## Rollback
 
-1. Set Cloudflare var back to the old secret → `terraform apply` in Cloudflare.
+1. On platform shared-edge, set the inject secret back to the old value → `terraform apply`.
 2. On AWS, set `origin_verify_secret` to the old value and clear
    `origin_verify_secret_previous` → `terraform apply`.
 
-If AWS is still dual-accepting (new + old) and only Cloudflare was switched, rolling
-Cloudflare back alone restores traffic immediately.
+## Notes
 
-## What not to do
-
-- Do not put secrets in git, GitHub Actions, or Cursor rules.
-- Do not reuse the same secret for stg and prod.
 - Do not leave `origin_verify_secret_previous` set longer than needed (widens the
-  acceptance window if the old value leaks).
-- Do not rotate by editing the CloudFront Function or Cloudflare rule only in the
-  console — re-apply Terraform afterward or state will drift.
+  accept window).
+- Netrunner secrets on the same zone are rotated the same way in shared-edge + that
+  app’s AWS roots — not in this Cloudflare root.

@@ -49,11 +49,9 @@ Create Environment **terraform** (Settings → Environments). No deploy branch r
 
 | Name | Value |
 |------|--------|
-| `STG_ORIGIN_VERIFY_SECRET` | same as stg `origin_verify_secret` / Cloudflare stg |
-| `PROD_ORIGIN_VERIFY_SECRET` | same as prod / Cloudflare prod |
-| `NETRUNNER_STG_ORIGIN_VERIFY_SECRET` | play-scala AWS stg `origin_verify_secret` (shared-zone CF plan) |
-| `NETRUNNER_PROD_ORIGIN_VERIFY_SECRET` | play-scala AWS prod `origin_verify_secret` |
-| `CLOUDFLARE_API_TOKEN` | token with the same scopes as local Cloudflare Terraform |
+| `STG_ORIGIN_VERIFY_SECRET` | same as stg `origin_verify_secret` (AWS plan only; CF inject is platform shared-edge) |
+| `PROD_ORIGIN_VERIFY_SECRET` | same as prod `origin_verify_secret` (AWS plan only) |
+| `CLOUDFLARE_API_TOKEN` | DNS Edit (+ Read) for Block Drop cloudflare root; Cache Purge still on deploy Environments |
 | `GRAFANA_CLOUD_ACCESS_POLICY_TOKEN` | stacks:read (+ SA write if plan needs it) |
 | `GRAFANA_CLOUD_PROVIDER_ACCESS_TOKEN` | integration-management scopes |
 | `GRAFANA_SM_ACCESS_TOKEN` | Synthetic Monitoring token |
