@@ -54,8 +54,8 @@ resource "aws_cloudfront_response_headers_policy" "site" {
       access_control_max_age_sec = 31536000
       include_subdomains         = true
       # Preload applies to this host's subtree (e.g. *.blockdrop…), not the apex zone.
-      preload                    = true
-      override                   = true
+      preload  = true
+      override = true
     }
 
     xss_protection {
