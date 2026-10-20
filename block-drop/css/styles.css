@@ -52,30 +52,6 @@ h1 {
   font-weight: 700;
 }
 
-.score-corner {
-  position: fixed;
-  top: 1rem;
-  right: 1.25rem;
-  z-index: 2;
-  margin: 0;
-  display: flex;
-  align-items: baseline;
-  gap: 0.6rem;
-  padding: 0.4rem 0.75rem;
-  background: var(--panel);
-  border: 1px solid var(--border);
-  color: var(--fg);
-  font-size: 1.25rem;
-  font-variant-numeric: tabular-nums;
-  pointer-events: none;
-}
-
-.score-corner #score {
-  font-weight: 700;
-  min-width: 1ch;
-  text-align: right;
-}
-
 .layout {
   display: flex;
   flex-direction: row;
@@ -230,11 +206,27 @@ h1 {
 
 .high-scores {
   width: 11.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.high-scores .current-score {
+  font-size: 1.15rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.high-scores .current-score #score {
+  font-weight: 700;
+}
+
+.high-scores > .label {
+  margin: 0;
 }
 
 .high-scores ol {
   list-style: none;
-  margin: 0.6rem 0 0;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
