@@ -1,60 +1,31 @@
 ---
-description: AWS and Cloudflare Terraform conventions for Block Drop
+description: Block Drop Terraform naming, domains, and high-scores specifics
 globs: infra/terraform/**/*
 alwaysApply: false
 ---
 
-# Block Drop — Terraform
+# Block Drop — Terraform overlay
 
-## Layout
+Platform layout/CI: `app-terraform`.
 
-- AWS site module: `infra/terraform/aws/modules/site`
-- Env roots: `infra/terraform/aws/envs/stg`, `envs/prod`
-- Shared state bootstrap: `infra/terraform/aws/bootstrap`
-- Cloudflare DNS: `infra/terraform/cloudflare` (own root, same S3 backend)
-- Grafana Cloud observability: `infra/terraform/grafana` (own root, same S3 backend)
+## Naming / state
 
-## Naming
+- Pattern: `[environment]-block-drop-[purpose]-[resource-type]` (e.g. `stg-block-drop-site-bucket`).
+- State bucket: `shared-block-drop-terraform-state-bucket`; keys `bootstrap/`, `envs/stg/`, `envs/prod/`, `cloudflare/`, `grafana/`.
+- Plan role: `shared-block-drop-terraform-plan-role` + GitHub Environment `terraform` (`infra/terraform/docs/terraform-plan-ci.md`).
 
-AWS names: `[environment]-block-drop-[purpose]-[resource-type]`
-
-Examples: `stg-block-drop-site-bucket`, `prod-block-drop-github-deploy-role`, `shared-block-drop-terraform-state-bucket`.
-
-Derive names in module locals from `var.environment`; do not scatter hard-coded legacy CDK names.
-
-## State
-
-- Remote state only: bucket `shared-block-drop-terraform-state-bucket` with S3 native locking (`use_lockfile = true`; Terraform >= 1.10).
-- Keys: `bootstrap/`, `envs/stg/`, `envs/prod/`, `cloudflare/`, `grafana/` under that bucket.
-- Do not reintroduce `dynamodb_table` in backends (deprecated).
-- Never commit `*.tfstate` or `terraform.tfvars`.
-- Backends do not pin `profile=`; locally `export AWS_PROFILE=7oas7er` (provider may still set `aws_profile` in tfvars).
-
-## CI plan
-
-- Workflow `.github/workflows/terraform-plan.yml` (fmt, validate, plan) — not apply. Triggered only on `infra/terraform/**` / `infra/lambda/**` / the workflow file; validate/plan skip unchanged roots.
-- Role `shared-block-drop-terraform-plan-role` (stg) + GitHub Environment `terraform`. Setup: `infra/terraform/docs/terraform-plan-ci.md`.
-
-## Regions
-
-- Regional resources default to **`eu-north-1`** (see `block-drop-aws-regions` rule).
-- ACM for CloudFront aliases stays in **`us-east-1`**.
-
-## Environments
+## Domains
 
 | Env | Domain |
 |-----|--------|
 | stg | `blockdrop-stg.7oas7er.com` |
 | prod | `blockdrop.7oas7er.com` |
 
-- GitHub OIDC provider is managed in **stg** only; prod looks it up via data source.
-- **IAM**: define policies with `aws_iam_policy_document` data sources in `data.tf` (not inline `jsonencode` / heredoc JSON on the policy resource). Attach those documents from roles/policies elsewhere.
-- **High-scores Lambda S3**: grant only `s3:GetObject` / `s3:PutObject` on `{bucket}/high-scores.json` (`local.high_scores_object_key`) — not bucket-wide `/*` or List/GetBucket wildcards.
-- **High-scores Lambda package**: Node 22 has no AWS SDK in the runtime. Vendor `@aws-sdk/client-s3` via `infra/lambda` (`npm ci --omit=dev` before plan/apply); zip includes `node_modules`. Do not ship `high-scores.js` alone.
-- High-score buckets keep `prevent_destroy` and **S3 versioning** (noncurrent versions expire after 90d by default); renaming forces replace — migrate objects first. Site bucket stays unversioned (git is SoT).
-- Empty site buckets after replace cause CloudFront AccessDenied; sync `block-drop/` and invalidate.
-- **Origin gate (Block Drop)**: CloudFront requires Cloudflare-injected `X-Origin-Verify`; keep AWS `origin_verify_secret` in sync with Cloudflare `stg_`/`prod_origin_verify_secret`. Apply Cloudflare before tightening CloudFront. See core rule *Cloudflare-only traffic* for the broader principle. Rotate via `infra/terraform/docs/origin-verify-secret-rotation.md` (dual-accept with `origin_verify_secret_previous` — never flip only one root).
-- **Cloudflare rate limit (Block Drop)**: zone `http_ratelimit` ruleset on `/api/scores` (IP + colo). Free plan allows one rule, path-only match, and 10s period/mitigation — do not add a second rule or `http.host` filters without upgrading.
-- **www / apex → Block Drop**: keep ACM + CloudFront `aliases` on `blockdrop.7oas7er.com` only; Cloudflare Single Redirect 301s www/apex there (Free-compatible). Do not use Origin Rule Host-header override (Enterprise-only).
-- **Access logs**: per-env `{env}-block-drop-access-logs-bucket` holds CloudFront standard logging v2 (`cloudfront/` via us-east-1 delivery APIs) and S3 site access logs (`s3-site/`). Prefer v2 over legacy `logging_config` (ACLs). Do not enable Parquet conversion unless needed.
-- **Lambda logs / CW alarms**: manage `/aws/lambda/{env}-block-drop-high-scores-function` with finite retention (default 14d). Alarm on Lambda Errors/Throttles and CloudFront 5xxErrorRate (CF metrics in `us-east-1`). Prefer console/Grafana over adding a second paging SaaS; SNS is optional later.
+## App-specific
+
+- OIDC provider managed in **stg** only; prod looks it up.
+- High-scores Lambda: `s3:GetObject`/`PutObject` only on `{bucket}/high-scores.json`; Node 22 package via `infra/lambda` (`npm ci --omit=dev`); zip includes `node_modules`.
+- High-score buckets: `prevent_destroy` + versioning (noncurrent expire ~90d). Site bucket unversioned.
+- **Origin-verify**: keep AWS `origin_verify_secret` in sync with Cloudflare; rotate via `infra/terraform/docs/origin-verify-secret-rotation.md`.
+- Cloudflare rate limit: one Free-plan rule on `/api/scores`. www/apex → Single Redirect to `blockdrop.7oas7er.com` (not Host-header Origin Rule).
+- Access logs: `{env}-block-drop-access-logs-bucket` (CloudFront v2 + S3 site). Lambda log group finite retention; CF 5xx alarms in `us-east-1`.

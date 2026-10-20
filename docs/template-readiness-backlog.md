@@ -87,16 +87,16 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 ### P1.2 — Generalize Cursor rules for templating
 
-- [ ] Split product-specific vs platform rules (e.g. `app-core`, `app-aws-regions`, `app-observability` vs `block-drop-frontend`)
-- [ ] Keep Block Drop specifics thin; point platform rules at “public web app in one AWS account”
-- [ ] Update `alwaysApply` / globs so clones don’t fight `block-drop-*` naming forever
+- [x] Split product-specific vs platform rules (e.g. `app-core`, `app-aws-regions`, `app-observability` vs `block-drop-frontend`)
+- [x] Keep Block Drop specifics thin; point platform rules at “public web app in one AWS account”
+- [x] Update `alwaysApply` / globs so clones don’t fight `block-drop-*` naming forever
 
 **Why:** Required before “File → New project from this pattern.”
 
 ### P1.3 — Cursor Skill or personal-store “new app from template”
 
-- [ ] Capture a skill/runbook: copy layout, rename project, new S3 state keys, new Grafana folder labels, new GitHub Environments, checklist for first apply
-- [ ] Include “first PR” and “first promote to main” steps
+- [x] Capture a skill/runbook: copy layout, rename project, new S3 state keys, new Grafana folder labels, new GitHub Environments, checklist for first apply
+- [x] Include “first PR” and “first promote to main” steps
 
 **Why:** Turns this repo from a one-off into a repeatable education tool.
 
@@ -171,7 +171,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 | **1** | P0.1, P0.2 | Humans + agents share one front door and DoD — **done** |
 | **2** | P0.3, P0.4, P0.5 | PRs fail on bad IaC / bad deps; branches protected — **done** |
 | **3** | P1.1, P1.5 | Decisions and security contact path written down — **done** |
-| **4** | P1.2, P1.3 | Extractable template pattern (rules + skill) |
+| **4** | P1.2, P1.3 | Extractable template pattern (rules + skill) — **done** |
 | **5** | P1.4, P2.1, P2.2 | Local gates + SAST + headers |
 | **Later** | P2.3, P3 | As appetite / risk demands |
 
@@ -197,8 +197,8 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 | P0.4 | done | `dependency-audit.yml` + compression override in tests |
 | P0.5 | done | `docs/github-branch-protection.md` + ruleset on staging/main (`Required CI`) |
 | P1.1 | done | `docs/adr/` (0001–0006) |
-| P1.2 | | |
-| P1.3 | | |
+| P1.2 | done | `app-*` + thin `block-drop-*`; `.cursor/rules/README.md` |
+| P1.3 | done | `.cursor/skills/new-app-from-template` (+ personal store copy) |
 | P1.4 | | |
 | P1.5 | done | Root `SECURITY.md` |
 | P2.1 | | |

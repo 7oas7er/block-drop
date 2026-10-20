@@ -1,6 +1,6 @@
 # Architecture decision records
 
-Short “why” notes for irreversible or easy-to-re-litigate choices. Cursor rules (`.cursor/rules/`) and [`AGENTS.md`](../../AGENTS.md) point agents at the norms; ADRs keep the reasoning durable.
+Short “why” notes for irreversible or easy-to-re-litigate choices. Cursor rules (`.cursor/rules/` — platform `app-*` + product overlays) and [`AGENTS.md`](../../AGENTS.md) point agents at the norms; ADRs keep the reasoning durable.
 
 ## Rule of thumb
 
