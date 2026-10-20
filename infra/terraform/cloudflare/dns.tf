@@ -1,3 +1,7 @@
+locals {
+  zone_id = var.zone_id
+}
+
 resource "cloudflare_dns_record" "blockdrop" {
   zone_id = local.zone_id
   name    = "blockdrop.7oas7er.com"

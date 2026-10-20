@@ -7,24 +7,7 @@
 prod_cloudfront_domain_name = "d111111abcdef8.cloudfront.net"
 stg_cloudfront_domain_name  = "d222222abcdef8.cloudfront.net"
 
-# Must match the matching AWS env origin_verify_secret (never commit real values).
-# Rotation: see infra/terraform/docs/origin-verify-secret-rotation.md
-stg_origin_verify_secret  = "replace-with-a-long-random-secret"
-prod_origin_verify_secret = "replace-with-a-different-long-random-secret"
-
-# Netrunner hosts on this shared zone (distinct secrets from Block Drop).
-# Copy from play-scala envs/*/terraform.tfvars origin_verify_secret values.
-netrunner_stg_origin_verify_secret  = "replace-with-netrunner-stg-origin-verify-secret"
-netrunner_prod_origin_verify_secret = "replace-with-netrunner-prod-origin-verify-secret"
-
-# Deploy: CLOUDFLARE_ZONE_ID (same as zone_id) + CLOUDFLARE_API_TOKEN with Zone.Cache Purge
-# (plus Zone.Read) in both GitHub Environments.
+# This root is DNS only. Origin-verify, cache, redirects, rate-limit, and SSL
+# live in https://github.com/7oas7er/platform (infra/terraform/shared-edge).
 #
-# Terraform API token also needs Zone → Cache Rules → Edit, Zone → WAF → Edit
-# (rate limiting), Zone → Single Redirect → Edit (www/apex → blockdrop),
-# Transform Rules, DNS, and Zone Settings as used by this root.
-#
-# Optional Free-compatible /api/scores rate limit overrides (defaults: 20 req / 10s / IP):
-# api_rate_limit_period_seconds              = 10
-# api_rate_limit_requests_per_period         = 20
-# api_rate_limit_mitigation_timeout_seconds  = 10
+# Deploy still needs CLOUDFLARE_ZONE_ID + CLOUDFLARE_API_TOKEN (Zone.Cache Purge + Zone.Read).

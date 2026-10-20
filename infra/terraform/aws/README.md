@@ -81,17 +81,13 @@ Each env module creates a private `{env}-block-drop-access-logs-bucket` (SSE-S3,
 
 ## Cloudflare origin verify
 
-CloudFront rejects requests that lack a matching `X-Origin-Verify` header. Cloudflare Transform Rules inject that header for the Block Drop hostnames, so only orange-cloud traffic is accepted. Direct `*.cloudfront.net` URLs return 403.
+CloudFront rejects requests that lack a matching `X-Origin-Verify` header. Transform Rules in [`7oas7er/platform`](https://github.com/7oas7er/platform) `shared-edge` inject that header for Block Drop (and sibling) hostnames. Direct `*.cloudfront.net` URLs return 403.
 
-- Set the same value in `envs/stg` `origin_verify_secret` and Cloudflare `stg_origin_verify_secret`.
-- Set the same value in `envs/prod` `origin_verify_secret` and Cloudflare `prod_origin_verify_secret`.
+- Set the same value in `envs/stg` / `envs/prod` `origin_verify_secret` and platform `shared-edge` `blockdrop_stg_origin_verify_secret` / `blockdrop_prod_origin_verify_secret`.
 - Prefer distinct secrets per environment. Store them only in local `terraform.tfvars` (gitignored).
-- Apply Cloudflare **before** enabling/updating the CloudFront Function gate so legitimate traffic is never locked out.
-- **Rotation**: follow [origin-verify secret rotation](../docs/origin-verify-secret-rotation.md) (dual-accept via optional `origin_verify_secret_previous`, then switch Cloudflare, then drop the previous secret).
-- GitHub Actions S3 sync, CloudFront invalidation, and Cloudflare cache purge do not use the viewer path and are unaffected.
-- Cloudflare cache rules (`infra/terraform/cloudflare/cache.tf`) respect origin `Cache-Control` for Block Drop hosts and bypass `/api/*`.
-- Cloudflare rate limiting (`infra/terraform/cloudflare/rate_limit.tf`) blocks IPs that exceed ~20 requests / 10s to `/api/scores` (Free-plan limits: one rule, path-only expression, 10s windows).
-- Cloudflare redirect rule (`infra/terraform/cloudflare/redirects.tf`) sends www/apex to `https://blockdrop.7oas7er.com` (301, path + query preserved). Host-header override is Enterprise-only; redirects keep ACM + CloudFront aliases on the canonical hostname only.
+- Apply **shared-edge** before enabling/updating the CloudFront Function gate so legitimate traffic is never locked out.
+- **Rotation**: follow [origin-verify secret rotation](../docs/origin-verify-secret-rotation.md).
+- This repo’s Cloudflare root is **DNS only** (`infra/terraform/cloudflare`). Cache, rate-limit, and www/apex redirects live in platform `shared-edge`.
 
 ## High-scores Lambda package
 
