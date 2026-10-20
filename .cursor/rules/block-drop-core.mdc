@@ -5,8 +5,8 @@ alwaysApply: true
 
 # Block Drop — product
 
-Platform defaults: `app-core`, `app-aws-regions`, `app-observability` (see `.cursor/rules/README.md`).
+Platform defaults: `app-core`, `app-aws-regions`, `app-observability` (see `.cursor/rules/README.md`). Shared GitHub repo for zone/Grafana Free objects: [`7oas7er/platform`](https://github.com/7oas7er/platform) — see `docs/architecture.md`.
 
 - **Product**: private falling-block puzzle; keep it simple and fast.
 - **Game delivery**: static site only under `block-drop/` — HTML, CSS, plain JS. No framework, bundler, package manager, or build step for the game. Tests under `tests/` gate deploy.
-- **Agents**: `AGENTS.md`, `README.md`, `docs/adr/`, `SECURITY.md`. Prefer small diffs.
+- **Agents**: `AGENTS.md`, `README.md`, `docs/architecture.md`, `docs/adr/`, `SECURITY.md`. Prefer small diffs.

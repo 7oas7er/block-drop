@@ -1,6 +1,8 @@
 # Block Drop
 
-Private falling-block puzzle game, plus the AWS / Cloudflare / Grafana stack that hosts and observes it. This repo is also the working reference for a **solo + AI** app template (see [docs/template-readiness-backlog.md](docs/template-readiness-backlog.md)).
+Private falling-block puzzle game, plus the **app-owned** AWS / DNS / Grafana stack that hosts and observes it. This repo is the working reference for a **solo + AI** app template (see [docs/template-readiness-backlog.md](docs/template-readiness-backlog.md)).
+
+**Fundamental design:** each app is an **isolated repository**. Shared Cloudflare zone rulesets and shared Grafana Free objects (Infinity DS, GitHub plugin) live in [`7oas7er/platform`](https://github.com/7oas7er/platform). Apps depend on platform — **never on each other**. Architecture: [`docs/architecture.md`](docs/architecture.md).
 
 The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-drop/`](block-drop/). How to play and how scripts are wired: [`block-drop/README.md`](block-drop/README.md).
 
@@ -11,12 +13,13 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`block-drop/`](block-drop/) | Static game (no framework, bundler, or package manager) |
 | [`tests/`](tests/) | Node unit tests + Playwright e2e; gates deploy |
 | [`infra/terraform/aws/`](infra/terraform/aws/) | Site module + `envs/stg` / `envs/prod` + bootstrap |
-| [`infra/terraform/cloudflare/`](infra/terraform/cloudflare/) | DNS, cache, rate limit, origin-verify headers, redirects |
-| [`infra/terraform/grafana/`](infra/terraform/grafana/) | Synthetics, CloudWatch scrape, dashboards, data sources |
+| [`infra/terraform/cloudflare/`](infra/terraform/cloudflare/) | **DNS only** for Block Drop hosts (zone rulesets → platform `shared-edge`) |
+| [`infra/terraform/grafana/`](infra/terraform/grafana/) | App synthetics, CloudWatch, dashboard, GitHub DS (Infinity + plugin → platform `shared-obs`) |
 | [`infra/lambda/`](infra/lambda/) | High-scores Lambda source (zipped by AWS Terraform) |
 | [`.cursor/rules/`](.cursor/rules/) | Platform (`app-*`) + product (`block-drop-*`) Cursor rules — see [`.cursor/rules/README.md`](.cursor/rules/README.md) |
 | [`.cursor/skills/`](.cursor/skills/) | Project skills (`new-app-from-template`, `gap-against-app-template`) |
 | [`AGENTS.md`](AGENTS.md) | Definition of done for AI-assisted changes |
+| [`docs/architecture.md`](docs/architecture.md) | App vs shared-platform ownership |
 | [`docs/`](docs/) | Template backlog, ADRs, cross-cutting docs |
 | [`docs/maintenance.md`](docs/maintenance.md) | Ongoing patch / Dependabot cadence |
 | [`SECURITY.md`](SECURITY.md) | Reporting + secret leak / rotation pointers |
@@ -51,19 +54,23 @@ Roots (separate state keys under the shared state bucket):
 
 - `infra/terraform/aws/bootstrap`
 - `infra/terraform/aws/envs/stg` and `envs/prod`
-- `infra/terraform/cloudflare`
-- `infra/terraform/grafana`
+- `infra/terraform/cloudflare` (DNS)
+- `infra/terraform/grafana` (app dashboards / synthetics / CW / GitHub DS)
+
+Plus platform roots (separate repo / state): `shared-edge`, `shared-obs` — see [`7oas7er/platform`](https://github.com/7oas7er/platform).
 
 Never commit `.tfstate`, `terraform.tfvars`, API tokens, or AWS keys. Setup notes:
 
+- [Architecture](docs/architecture.md)
 - [Terraform plan CI](infra/terraform/docs/terraform-plan-ci.md)
 - [Origin-verify secret rotation](infra/terraform/docs/origin-verify-secret-rotation.md)
 - [AWS README](infra/terraform/aws/README.md)
+- [Cloudflare README](infra/terraform/cloudflare/README.md)
 - [Grafana README](infra/terraform/grafana/README.md)
 
 ## Observability
 
-**Grafana Cloud Free** only: synthetics, CloudWatch scrape, Cloudflare edge analytics (via GraphQL into Grafana), GitHub Actions panels. Do not add a second monitoring SaaS. Cloudflare remains DNS/edge (plus analytics pulled into Grafana)—not an APM product.
+**Grafana Cloud Free** only: synthetics, CloudWatch scrape, Cloudflare edge analytics (via GraphQL into Grafana), GitHub Actions panels. Do not add a second monitoring SaaS. Shared Infinity + GitHub plugin: platform `shared-obs`. Cloudflare remains DNS/edge (plus analytics pulled into Grafana)—not an APM product.
 
 ## Security principles
 
