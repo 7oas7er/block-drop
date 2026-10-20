@@ -2,14 +2,16 @@
 
 Rules split so this repo can be cloned as a **solo + AI** template without fighting `block-drop-*` names forever.
 
+**Naming note:** Cursor `app-*` rules are the **in-repo platform pattern** (hosting, Grafana, Terraform habits). The **GitHub platform repository** [`7oas7er/platform`](https://github.com/7oas7er/platform) is separate: shared-edge + shared-obs that all apps consume. Do not conflate the two.
+
 | Kind | Prefix | Role |
 |------|--------|------|
-| **Platform** | `app-*` | Public web app in **one AWS account**, Cloudflare edge, Grafana-first, Terraform SoT |
+| **App pattern** | `app-*` | Public web app in **one AWS account**, DNS-only Cloudflare in-app, Grafana-first, Terraform SoT; depends on `7oas7er/platform` for zone rulesets + shared Infinity/plugin |
 | **Product** | `block-drop-*` | This puzzle game only (static `block-drop/`, names, domains, `/api/scores`) |
 
-When cloning for a new app: keep `app-*`, replace or delete `block-drop-*`, and follow the skill `.cursor/skills/new-app-from-template/`.
+When cloning for a new app: keep `app-*`, replace or delete `block-drop-*`, wire secrets/hosts into [`7oas7er/platform`](https://github.com/7oas7er/platform), and follow the skill `.cursor/skills/new-app-from-template/`.
 
-When **gap-analyzing or migrating** an existing repo toward this pattern: `.cursor/skills/gap-against-app-template/` (also in personal Agent Store).
+When **gap-analyzing or migrating** an existing repo toward this pattern: `.cursor/skills/gap-against-app-template/` (also in personal Agent Store). Architecture: [`docs/architecture.md`](../../docs/architecture.md).
 
 ## Files
 

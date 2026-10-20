@@ -1,12 +1,13 @@
 # Agent definition of done — Block Drop
 
-Instructions for Cursor (and similar) agents working in this repo. Platform rules: [`app-core.mdc`](.cursor/rules/app-core.mdc) (see [`.cursor/rules/README.md`](.cursor/rules/README.md)). Product overlay: [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture: [`README.md`](README.md). Decisions: [`docs/adr/`](docs/adr/). Secrets: [`SECURITY.md`](SECURITY.md). Cloning a new app: [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/). Gap analysis / migrate an existing repo toward this pattern: [`.cursor/skills/gap-against-app-template/`](.cursor/skills/gap-against-app-template/).
+Instructions for Cursor (and similar) agents working in this repo. Platform rules: [`app-core.mdc`](.cursor/rules/app-core.mdc) (see [`.cursor/rules/README.md`](.cursor/rules/README.md)). Product overlay: [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture: [`docs/architecture.md`](docs/architecture.md). Decisions: [`docs/adr/`](docs/adr/). Secrets: [`SECURITY.md`](SECURITY.md). Cloning a new app: [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/). Gap analysis / migrate an existing repo toward this pattern: [`.cursor/skills/gap-against-app-template/`](.cursor/skills/gap-against-app-template/).
 
 ## Defaults
 
 - Prefer **small diffs** that match existing patterns. No drive-by refactors outside the task.
 - Keep the game under `block-drop/` as **static HTML/CSS/plain JS** — no framework, bundler, package manager, or build step for the game.
-- **Terraform** is the source of truth for AWS / Cloudflare / Grafana. Do not reintroduce CDK or manage app resources with CloudFormation.
+- **Repo isolation**: this app must not become a dependency of sibling apps. Shared edge/obs → [`7oas7er/platform`](https://github.com/7oas7er/platform) (`app → platform` only).
+- **Terraform** is the source of truth for AWS / Cloudflare DNS / Grafana app objects. Do not reintroduce CDK or manage app resources with CloudFormation.
 - **Observability**: Grafana Cloud only. Do not add Checkly, Datadog, New Relic, or similar unless Frank explicitly asks to replace Grafana. Shared Infinity DS + GitHub plugin: [`7oas7er/platform`](https://github.com/7oas7er/platform) `shared-obs`.
 - **Cloudflare** app root is DNS only; zone rulesets live in platform `shared-edge`. Do not turn Cloudflare into a second monitoring product or default Workers platform for this app.
 - Public apps must **only accept Cloudflare-fronted traffic**; reject direct origin access.

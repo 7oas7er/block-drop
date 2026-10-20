@@ -101,12 +101,12 @@ whenever you can.
 
 ## Rollback
 
-1. Set Cloudflare var back to the old secret → `terraform apply` in Cloudflare.
+1. Set the platform `shared-edge` origin-verify var back to the old secret → `terraform apply` there.
 2. On AWS, set `origin_verify_secret` to the old value and clear
    `origin_verify_secret_previous` → `terraform apply`.
 
-If AWS is still dual-accepting (new + old) and only Cloudflare was switched, rolling
-Cloudflare back alone restores traffic immediately.
+If AWS is still dual-accepting (new + old) and only shared-edge was switched, rolling
+shared-edge back alone restores traffic immediately.
 
 ## What not to do
 

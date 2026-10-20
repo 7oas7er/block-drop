@@ -1,38 +1,40 @@
 ---
 name: gap-against-app-template
 description: >-
-  Compares the current repo to the Block Drop / app-* solo+AI template (one AWS
-  account, Cloudflare edge, Grafana-first, Terraform SoT, staging→main). Use when
-  the user asks for a gap analysis, template compliance check, migrate-to-template
-  plan, or how an existing project differs from Block Drop / the app template.
+  Compares the current repo to the Block Drop / app-* solo+AI template (isolated
+  app repo + 7oas7er/platform shared-edge/shared-obs, one AWS account,
+  Grafana-first, Terraform SoT, staging→main). Use when the user asks for a gap
+  analysis, template compliance check, migrate-to-template plan, or how an
+  existing project differs from Block Drop / the app template.
 ---
 
 # Gap against app template
 
-Compare **this workspace** to the canonical template (Block Drop / `app-*` pattern). Produce gaps + a staged migration plan. Do **not** apply infra or rewrite the app unless Frank explicitly asks.
+Compare **this workspace** to the canonical template (Block Drop / `app-*` pattern + [`7oas7er/platform`](https://github.com/7oas7er/platform)). Produce gaps + a staged migration plan. Do **not** apply infra or rewrite the app unless Frank explicitly asks.
 
 ## Locate the template
 
 1. Prefer a path or GitHub URL Frank gives in the message.
-2. Else try sibling / known checkout: `…/devel/Cursor` or repo `7oas7er/block-drop`.
+2. Else try sibling / known checkout: `…/devel/Cursor` or repo `7oas7er/block-drop`; platform at `…/devel/platform` or `7oas7er/platform`.
 3. If the template is not readable, ask once for the path or to add it to the workspace — then stop guessing.
 
-Read from the template (when available): `.cursor/rules/README.md`, `app-core` / `app-observability` / `app-terraform` / `app-deploy`, `docs/adr/`, `docs/maintenance.md`, `AGENTS.md`, `SECURITY.md`, skill `new-app-from-template`.
+Read from the template (when available): `docs/architecture.md`, `.cursor/rules/README.md`, `app-core` / `app-observability` / `app-terraform` / `app-deploy`, `docs/adr/` (esp. 0007), `docs/maintenance.md`, `AGENTS.md`, `SECURITY.md`, skill `new-app-from-template`. Also platform `docs/architecture.md` / ADR 0001.
 
 ## Rubric (score each: aligned / partial / missing / N/A)
 
 | Area | Template expectation |
 |------|----------------------|
+| **Repo isolation** | Own app repo; depends on `7oas7er/platform` (or equivalent) for zone rulesets + shared Infinity/plugin; **not** on sibling apps |
 | **Delivery** | Static or minimal frontend as product requires; no drive-by SPA/bundler unless product needs it |
-| **IaC** | Terraform SoT; no CDK/CloudFormation app stacks; separate roots (aws envs, cloudflare, grafana, bootstrap) |
+| **IaC** | Terraform SoT; no CDK/CloudFormation app stacks; separate roots (aws envs, cloudflare DNS, grafana app, bootstrap) |
 | **Apply model** | CI plan-only; local apply; no default CI apply |
 | **Envs** | `staging` → AWS stg; `main` → AWS prod; distinct GitHub Environments |
-| **Edge** | Cloudflare DNS/edge; Cloudflare-only origin (direct origin rejected) |
-| **Observability** | Grafana-first only; no second APM SaaS |
+| **Edge** | App Cloudflare = DNS only; zone rulesets in platform; Cloudflare-only origin |
+| **Observability** | Grafana-first only; Infinity + GitHub plugin in platform; no second APM SaaS |
 | **Regions** | `eu-north-1` default; `us-east-1` only when required (e.g. ACM for CloudFront) |
 | **CI gates** | Tests gate deploy; terraform fmt/validate/plan; Checkov or equivalent; npm audit high+; CodeQL or equivalent SAST |
 | **Supply chain** | Dependabot (or Renovate) → staging; Actions + app deps + Terraform providers |
-| **Docs / agents** | `AGENTS.md`, ADRs for irreversible choices, `SECURITY.md`, Cursor `app-*` (or equivalent) rules |
+| **Docs / agents** | `AGENTS.md`, architecture doc, ADRs for irreversible choices, `SECURITY.md`, Cursor `app-*` rules |
 | **Maintenance** | Documented weekly/monthly cadence |
 | **Secrets** | No committed tfvars/state/tokens; OIDC for AWS in Actions |
 
