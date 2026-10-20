@@ -74,14 +74,14 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 ### P1.1 — Lightweight decision log (ADRs)
 
-- [ ] Add `docs/adr/` (or a single `docs/decisions.md`) with short entries for:
+- [x] Add `docs/adr/` (or a single `docs/decisions.md`) with short entries for:
   - Static game delivery (no framework/bundler)
   - Terraform not CDK
   - Local `terraform apply` (not CI apply)
   - Grafana-first observability; Cloudflare not a second APM
   - Cloudflare-only origin traffic
   - GitHub env separation (`staging` / `production`)
-- [ ] Rule of thumb: new irreversible choice → ½-page ADR
+- [x] Rule of thumb: new irreversible choice → ½-page ADR
 
 **Why:** Agents re-litigate decisions unless “why” is durable.
 
@@ -109,9 +109,9 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 ### P1.5 — SECURITY.md + secret/incident pointers
 
-- [ ] Add `SECURITY.md`: how to report issues; what to do if `CLOUDFLARE_*` / Grafana / origin-verify / GitHub PAT leaks
-- [ ] Link `infra/terraform/docs/origin-verify-secret-rotation.md`
-- [ ] One paragraph on rotating Grafana / Cloudflare analytics tokens used by Terraform
+- [x] Add `SECURITY.md`: how to report issues; what to do if `CLOUDFLARE_*` / Grafana / origin-verify / GitHub PAT leaks
+- [x] Link `infra/terraform/docs/origin-verify-secret-rotation.md`
+- [x] One paragraph on rotating Grafana / Cloudflare analytics tokens used by Terraform
 
 **Why:** Template-grade hygiene; cheap insurance.
 
@@ -170,7 +170,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 |--------|-------|---------|
 | **1** | P0.1, P0.2 | Humans + agents share one front door and DoD — **done** |
 | **2** | P0.3, P0.4, P0.5 | PRs fail on bad IaC / bad deps; branches protected — **done** |
-| **3** | P1.1, P1.5 | Decisions and security contact path written down |
+| **3** | P1.1, P1.5 | Decisions and security contact path written down — **done** |
 | **4** | P1.2, P1.3 | Extractable template pattern (rules + skill) |
 | **5** | P1.4, P2.1, P2.2 | Local gates + SAST + headers |
 | **Later** | P2.3, P3 | As appetite / risk demands |
@@ -196,11 +196,11 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 | P0.3 | done | Checkov in terraform-plan + `docs/iac-policy.md` |
 | P0.4 | done | `dependency-audit.yml` + compression override in tests |
 | P0.5 | done | `docs/github-branch-protection.md` + ruleset on staging/main (`Required CI`) |
-| P1.1 | | |
+| P1.1 | done | `docs/adr/` (0001–0006) |
 | P1.2 | | |
 | P1.3 | | |
 | P1.4 | | |
-| P1.5 | | |
+| P1.5 | done | Root `SECURITY.md` |
 | P2.1 | | |
 | P2.2 | | |
 | P2.3 | | |
