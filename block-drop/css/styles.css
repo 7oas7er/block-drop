@@ -343,9 +343,30 @@ a {
   color: var(--link);
 }
 
-.site-footer {
-  margin-top: 1.5rem;
+/* Text link in the control column — same width rhythm as buttons, still clearly a link. */
+.panel-link {
+  display: block;
+  margin-top: 0.15rem;
+  padding: 0.35rem 0.75rem;
+  font: inherit;
   font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--muted);
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+.panel-link:hover {
+  color: var(--fg);
+}
+
+.panel-link:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
+  border-radius: 2px;
 }
 
 .imprint {
@@ -364,11 +385,6 @@ a {
 }
 
 @media (max-width: 760px), (hover: none), (pointer: coarse) {
-  h1 {
-    align-self: flex-start;
-    margin-right: 7.5rem;
-  }
-
   .layout {
     flex-direction: column;
     align-items: center;
