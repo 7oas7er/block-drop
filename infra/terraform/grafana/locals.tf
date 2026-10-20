@@ -11,9 +11,9 @@ locals {
   ]
 
   # nonsensitive(): presence checks on tokens must not taint boolean outputs/counts.
+  # Infinity DS is owned by platform shared-obs; this flag only gates zoneTag wiring.
   enable_cloudflare_edge = nonsensitive(
     var.enable_cloudflare_edge
-    && var.cloudflare_analytics_token != null
     && var.cloudflare_zone_tag != null
   )
 

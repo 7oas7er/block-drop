@@ -27,13 +27,11 @@ sm_access_token = "glsm_..."
 # scrape job without removing the IAM role.
 # enable_cloudwatch_scrape = false
 
-# Cloudflare edge analytics via Infinity → GraphQL (Free plan; not the Business Alloy integration).
-# Token: Zone Analytics Read on 7oas7er.com. Zone tag defaults to 7oas7er.com (CLOUDFLARE_ZONE_ID).
-# cloudflare_analytics_token = "..."
-# cloudflare_zone_tag        = "701810fff825f90c0eea671970a0cc9e"
-# enable_cloudflare_edge     = true
+# Cloudflare zoneTag for dashboard panels (Infinity DS owned by 7oas7er/platform shared-obs).
+# cloudflare_zone_tag    = "701810fff825f90c0eea671970a0cc9e"
+# enable_cloudflare_edge = true
 
-# GitHub Actions panels (fine-grained PAT: Actions + Metadata read on block-drop).
+# GitHub Actions panels (plugin owned by platform shared-obs; PAT for this repo).
 # github_access_token = "github_pat_..."
 # github_owner        = "7oas7er"
 # github_repository   = "block-drop"
