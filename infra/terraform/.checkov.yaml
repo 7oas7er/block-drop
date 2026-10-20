@@ -18,6 +18,9 @@ skip-check:
   - CKV_AWS_310  # Origin failover — single S3 + Lambda URL origin by design
   - CKV_AWS_86   # CloudFront access logging — S3 server access logs cover origin; CF logs optional cost
   - CKV_AWS_174  # "TLS 1.2" allowlist is stale — distribution uses TLSv1.3_2025 (stricter)
+  # Graph check misses response_headers_policy_id → custom aws_cloudfront_response_headers_policy.site
+  # (HSTS/CSP/frame-options already set in modules/site/cloudfront.tf).
+  - CKV2_AWS_32
 
   # --- Lambda (high-scores via CloudFront OAC; keep cost/complexity low) ---
   - CKV_AWS_117  # VPC — not required; origin is CloudFront→Lambda URL with OAC
@@ -33,6 +36,9 @@ skip-check:
 
   # --- S3 (AES256 + single-region by design; see aws-regions rule) ---
   - CKV_AWS_145  # Require CMK — SSE-S3 AES256 is intentional
+  # Graph CKV_AWS_19 often misses aws_s3_bucket_server_side_encryption_configuration links
+  # (AES256 is set on state, site, high_scores, access_logs — do not "fix" by nesting legacy SSE blocks).
+  - CKV_AWS_19
   - CKV_AWS_144  # Cross-region replication — single-region (eu-north-1) by design
   - CKV2_AWS_62  # Event notifications — not used; no downstream consumers
   - CKV_AWS_18   # Access logging on state / high-scores — site bucket is logged; state is private account-only
