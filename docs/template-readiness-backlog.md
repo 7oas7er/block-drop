@@ -28,6 +28,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
   - Observability: Grafana only; Cloudflare = DNS/edge (+ analytics pulled into Grafana)
   - Pointer to this backlog and to `.cursor/rules/`
 - [x] Link existing runbooks (`infra/terraform/docs/*`) from that README
+- [x] Document **isolated apps + [`7oas7er/platform`](https://github.com/7oas7er/platform)** (`docs/architecture.md`, ADR 0007); app Cloudflare DNS-only; shared-edge / shared-obs outside this repo
 
 **Why:** Today knowledge is split across rules and nested docs; a template needs one front door for humans and agents.
 
