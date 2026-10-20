@@ -14,9 +14,11 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`infra/terraform/cloudflare/`](infra/terraform/cloudflare/) | DNS, cache, rate limit, origin-verify headers, redirects |
 | [`infra/terraform/grafana/`](infra/terraform/grafana/) | Synthetics, CloudWatch scrape, dashboards, data sources |
 | [`infra/lambda/`](infra/lambda/) | High-scores Lambda source (zipped by AWS Terraform) |
-| [`.cursor/rules/`](.cursor/rules/) | Durable product / infra decisions for Cursor |
+| [`.cursor/rules/`](.cursor/rules/) | Platform (`app-*`) + product (`block-drop-*`) Cursor rules — see [`.cursor/rules/README.md`](.cursor/rules/README.md) |
+| [`.cursor/skills/`](.cursor/skills/) | Project skills (e.g. new app from template) |
 | [`AGENTS.md`](AGENTS.md) | Definition of done for AI-assisted changes |
-| [`docs/`](docs/) | Template backlog and cross-cutting docs |
+| [`docs/`](docs/) | Template backlog, ADRs, cross-cutting docs |
+| [`SECURITY.md`](SECURITY.md) | Reporting + secret leak / rotation pointers |
 
 ## Environments and promotion
 
@@ -32,8 +34,9 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`.github/workflows/terraform-plan.yml`](.github/workflows/terraform-plan.yml) | `fmt` / **Checkov** / `validate` / **plan** for changed Terraform roots (OIDC read-only plan role). **Never applies.** |
 | [`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml) | `npm audit --audit-level=high` for `tests/` and `infra/lambda/` when those lockfiles change |
 | [`.github/workflows/required-ci.yml`](.github/workflows/required-ci.yml) | Always-on PR check (`Required CI`) for branch rulesets |
+| [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml) | CodeQL SAST for `block-drop/`, `infra/lambda/`, and Actions workflows |
 
-Deploy auth is GitHub OIDC → env-specific IAM roles (no long-lived AWS keys in GitHub). Dependabot opens weekly PRs to `staging` for Actions, Playwright, and the Lambda AWS SDK. Branch rules and required check names: [`docs/github-branch-protection.md`](docs/github-branch-protection.md). Checkov suppressions: [`docs/iac-policy.md`](docs/iac-policy.md).
+Deploy auth is GitHub OIDC → env-specific IAM roles (no long-lived AWS keys in GitHub). Dependabot opens weekly PRs to `staging` for Actions, Playwright, and the Lambda AWS SDK. Branch rules and required check names: [`docs/github-branch-protection.md`](docs/github-branch-protection.md). Checkov: [`docs/iac-policy.md`](docs/iac-policy.md). CodeQL: [`docs/codeql.md`](docs/codeql.md). Security headers: [`docs/security-headers.md`](docs/security-headers.md).
 
 ## Terraform (local apply)
 
@@ -65,6 +68,7 @@ Never commit `.tfstate`, `terraform.tfvars`, API tokens, or AWS keys. Setup note
 
 - Public traffic must arrive via **Cloudflare**; direct CloudFront (or other origin) URLs are rejected (origin-verify header gate).
 - Secrets live in gitignored tfvars, GitHub Environment secrets, or env vars—not in git.
+- Reporting and leak response: [`SECURITY.md`](SECURITY.md). Durable “why” for stack choices: [`docs/adr/`](docs/adr/).
 
 ## Local development
 
@@ -81,6 +85,16 @@ npm test
 
 Details: [`tests/README.md`](tests/README.md).
 
+**Pre-commit** (optional but recommended — catches `terraform fmt` and unit-test regressions before CI):
+
+```bash
+pipx install pre-commit   # or: brew install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
+
+Config: [`.pre-commit-config.yaml`](.pre-commit-config.yaml). Hooks run `terraform fmt` under `infra/terraform/` and `npm run test:unit` when `tests/` or `block-drop/js/` change. Full `terraform validate` stays in CI (needs init/backends).
+
 ## Working with Cursor / agents
 
-Follow [`AGENTS.md`](AGENTS.md) and the always-on rules under [`.cursor/rules/`](.cursor/rules/). Template hardening backlog: [`docs/template-readiness-backlog.md`](docs/template-readiness-backlog.md).
+Follow [`AGENTS.md`](AGENTS.md) and rules under [`.cursor/rules/`](.cursor/rules/) (`app-*` platform + `block-drop-*` product). New app from this pattern: skill [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/). Decisions: [`docs/adr/`](docs/adr/). Backlog: [`docs/template-readiness-backlog.md`](docs/template-readiness-backlog.md).

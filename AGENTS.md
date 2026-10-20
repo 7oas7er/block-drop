@@ -1,6 +1,6 @@
 # Agent definition of done — Block Drop
 
-Instructions for Cursor (and similar) agents working in this repo. Product and infra decisions live in [`.cursor/rules/`](.cursor/rules/); start with [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture overview: [`README.md`](README.md).
+Instructions for Cursor (and similar) agents working in this repo. Platform rules: [`app-core.mdc`](.cursor/rules/app-core.mdc) (see [`.cursor/rules/README.md`](.cursor/rules/README.md)). Product overlay: [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture: [`README.md`](README.md). Decisions: [`docs/adr/`](docs/adr/). Secrets: [`SECURITY.md`](SECURITY.md). Cloning a new app: [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/).
 
 ## Defaults
 
@@ -20,7 +20,8 @@ Instructions for Cursor (and similar) agents working in this repo. Product and i
 
 ## Terraform
 
-- CI runs **fmt / validate / plan** only (see `.github/workflows/terraform-plan.yml`). **Never** add or run `terraform apply` in GitHub Actions unless Frank explicitly requests that change and an ADR updates the decision.
+- CI runs **fmt / validate / plan** only (see `.github/workflows/terraform-plan.yml`). **Never** add or run `terraform apply` in GitHub Actions unless Frank explicitly requests that change and an ADR supersedes [`docs/adr/0003-local-terraform-apply.md`](docs/adr/0003-local-terraform-apply.md).
+- New irreversible platform choice → add a short ADR under [`docs/adr/`](docs/adr/) (see that folder’s README).
 - Apply locally with `AWS_PROFILE=7oas7er` when Frank asks.
 - Never commit `.tfstate`, `terraform.tfvars`, API tokens, or AWS keys.
 
@@ -35,13 +36,14 @@ Instructions for Cursor (and similar) agents working in this repo. Product and i
 Before considering a task finished:
 
 1. [ ] Change matches the request; no unrelated refactors.
-2. [ ] Follows `.cursor/rules` for the area touched (frontend / terraform / deploy / observability).
+2. [ ] Follows `.cursor/rules` for the area touched (`app-*` platform + `block-drop-*` product overlays).
 3. [ ] No secrets or state files staged.
 4. [ ] If `block-drop/` or `tests/` changed: note or run relevant tests (`cd tests && npm test` when practical).
-5. [ ] If Terraform changed: roots identified; remind Frank to `terraform plan` / `apply` locally; CI plan + Checkov will run on the PR when paths match. New Checkov skips need a one-line justification (`docs/iac-policy.md`).
+5. [ ] If Terraform changed: roots identified; remind Frank to `terraform plan` / `apply` locally; CI plan + Checkov will run on the PR when paths match. New Checkov skips need a one-line justification (`docs/iac-policy.md`). Security header / CSP changes need stg apply first (`docs/security-headers.md`).
 6. [ ] If `tests/` or `infra/lambda/` lockfiles changed: `npm audit --audit-level=high` must stay clean (CI workflow `dependency-audit.yml`).
-7. [ ] If asked for a PR: target **`staging`** unless Frank asked for a promote-to-`main` PR.
-8. [ ] Docs updated when behavior or operator steps change (README, runbooks under `infra/terraform/docs/`, or this file).
+7. [ ] If `block-drop/` or `infra/lambda/` JS changed: expect CodeQL on the PR (`docs/codeql.md`); fix real findings, don’t blanket-suppress.
+8. [ ] If asked for a PR: target **`staging`** unless Frank asked for a promote-to-`main` PR.
+9. [ ] Docs updated when behavior or operator steps change (README, runbooks under `infra/terraform/docs/`, or this file). Optional: `pre-commit install` locally (`.pre-commit-config.yaml`).
 
 ## Explicit non-goals (unless Frank overrides in writing)
 

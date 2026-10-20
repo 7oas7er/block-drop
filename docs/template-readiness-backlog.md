@@ -74,44 +74,44 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 ### P1.1 — Lightweight decision log (ADRs)
 
-- [ ] Add `docs/adr/` (or a single `docs/decisions.md`) with short entries for:
+- [x] Add `docs/adr/` (or a single `docs/decisions.md`) with short entries for:
   - Static game delivery (no framework/bundler)
   - Terraform not CDK
   - Local `terraform apply` (not CI apply)
   - Grafana-first observability; Cloudflare not a second APM
   - Cloudflare-only origin traffic
   - GitHub env separation (`staging` / `production`)
-- [ ] Rule of thumb: new irreversible choice → ½-page ADR
+- [x] Rule of thumb: new irreversible choice → ½-page ADR
 
 **Why:** Agents re-litigate decisions unless “why” is durable.
 
 ### P1.2 — Generalize Cursor rules for templating
 
-- [ ] Split product-specific vs platform rules (e.g. `app-core`, `app-aws-regions`, `app-observability` vs `block-drop-frontend`)
-- [ ] Keep Block Drop specifics thin; point platform rules at “public web app in one AWS account”
-- [ ] Update `alwaysApply` / globs so clones don’t fight `block-drop-*` naming forever
+- [x] Split product-specific vs platform rules (e.g. `app-core`, `app-aws-regions`, `app-observability` vs `block-drop-frontend`)
+- [x] Keep Block Drop specifics thin; point platform rules at “public web app in one AWS account”
+- [x] Update `alwaysApply` / globs so clones don’t fight `block-drop-*` naming forever
 
 **Why:** Required before “File → New project from this pattern.”
 
 ### P1.3 — Cursor Skill or personal-store “new app from template”
 
-- [ ] Capture a skill/runbook: copy layout, rename project, new S3 state keys, new Grafana folder labels, new GitHub Environments, checklist for first apply
-- [ ] Include “first PR” and “first promote to main” steps
+- [x] Capture a skill/runbook: copy layout, rename project, new S3 state keys, new Grafana folder labels, new GitHub Environments, checklist for first apply
+- [x] Include “first PR” and “first promote to main” steps
 
 **Why:** Turns this repo from a one-off into a repeatable education tool.
 
 ### P1.4 — Local pre-commit (or Lefthook)
 
-- [ ] Hooks: `terraform fmt -check`, optional `terraform validate` on changed roots, `npm test` (unit) under `tests/` when JS/tests change
-- [ ] Document install in root README
+- [x] Hooks: `terraform fmt -check`, optional `terraform validate` on changed roots, `npm test` (unit) under `tests/` when JS/tests change
+- [x] Document install in root README
 
 **Why:** Catches AI drive-by formatting/logic before CI.
 
 ### P1.5 — SECURITY.md + secret/incident pointers
 
-- [ ] Add `SECURITY.md`: how to report issues; what to do if `CLOUDFLARE_*` / Grafana / origin-verify / GitHub PAT leaks
-- [ ] Link `infra/terraform/docs/origin-verify-secret-rotation.md`
-- [ ] One paragraph on rotating Grafana / Cloudflare analytics tokens used by Terraform
+- [x] Add `SECURITY.md`: how to report issues; what to do if `CLOUDFLARE_*` / Grafana / origin-verify / GitHub PAT leaks
+- [x] Link `infra/terraform/docs/origin-verify-secret-rotation.md`
+- [x] One paragraph on rotating Grafana / Cloudflare analytics tokens used by Terraform
 
 **Why:** Template-grade hygiene; cheap insurance.
 
@@ -121,17 +121,17 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 ### P2.1 — SAST intentionality (CodeQL / Semgrep)
 
-- [ ] Confirm CodeQL (or Semgrep) covers `block-drop/**` and `infra/lambda/**` on PRs to `staging`/`main`
-- [ ] Document expected alerts vs ignore noise
-- [ ] Fix or explicitly waive findings
+- [x] Confirm CodeQL (or Semgrep) covers `block-drop/**` and `infra/lambda/**` on PRs to `staging`/`main`
+- [x] Document expected alerts vs ignore noise
+- [x] Fix or explicitly waive findings
 
 **Why:** You already have CodeQL appearing in Actions history; make it a deliberate gate.
 
 ### P2.2 — Browser hardening pass (public site)
 
-- [ ] CSP appropriate for static game + high-scores API
-- [ ] `Permissions-Policy` (and related headers) via CloudFront/Cloudflare as fits the stack
-- [ ] Document header ownership (CloudFront response headers vs Cloudflare)
+- [x] CSP appropriate for static game + high-scores API
+- [x] `Permissions-Policy` (and related headers) via CloudFront/Cloudflare as fits the stack
+- [x] Document header ownership (CloudFront response headers vs Cloudflare)
 
 **Why:** Worth doing for any public template site; secondary to IaC/deps.
 
@@ -170,9 +170,9 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 |--------|-------|---------|
 | **1** | P0.1, P0.2 | Humans + agents share one front door and DoD — **done** |
 | **2** | P0.3, P0.4, P0.5 | PRs fail on bad IaC / bad deps; branches protected — **done** |
-| **3** | P1.1, P1.5 | Decisions and security contact path written down |
-| **4** | P1.2, P1.3 | Extractable template pattern (rules + skill) |
-| **5** | P1.4, P2.1, P2.2 | Local gates + SAST + headers |
+| **3** | P1.1, P1.5 | Decisions and security contact path written down — **done** |
+| **4** | P1.2, P1.3 | Extractable template pattern (rules + skill) — **done** |
+| **5** | P1.4, P2.1, P2.2 | Local gates + SAST + headers — **done** |
 | **Later** | P2.3, P3 | As appetite / risk demands |
 
 ---
@@ -196,13 +196,13 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 | P0.3 | done | Checkov in terraform-plan + `docs/iac-policy.md` |
 | P0.4 | done | `dependency-audit.yml` + compression override in tests |
 | P0.5 | done | `docs/github-branch-protection.md` + ruleset on staging/main (`Required CI`) |
-| P1.1 | | |
-| P1.2 | | |
-| P1.3 | | |
-| P1.4 | | |
-| P1.5 | | |
-| P2.1 | | |
-| P2.2 | | |
+| P1.1 | done | `docs/adr/` (0001–0006) |
+| P1.2 | done | `app-*` + thin `block-drop-*`; `.cursor/rules/README.md` |
+| P1.3 | done | `.cursor/skills/new-app-from-template` (+ personal store copy) |
+| P1.4 | done | `.pre-commit-config.yaml` + README install |
+| P1.5 | done | Root `SECURITY.md` |
+| P2.1 | done | In-repo CodeQL workflow + `docs/codeql.md` |
+| P2.2 | done | Permissions-Policy + CSP tweak; `docs/security-headers.md` |
 | P2.3 | | |
 | P2.4 | deferred | Local apply remains default |
 

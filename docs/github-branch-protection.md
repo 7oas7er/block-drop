@@ -19,6 +19,7 @@ These **must** pass when GitHub schedules them. Do **not** add them as ruleset-r
 | `IaC policy (Checkov)` | Terraform plan | same as Format |
 | `npm audit (tests)` | Dependency audit | `tests/package*.json` or that workflow |
 | `npm audit (lambda)` | Dependency audit | `infra/lambda/package*.json` or that workflow |
+| `Analyze (javascript-typescript)` / `Analyze (actions)` | CodeQL | `block-drop/**`, `infra/lambda/**`, workflows, or `.github/codeql/**` |
 
 Also expect Validate / Plan jobs from Terraform plan when infra changes.
 
