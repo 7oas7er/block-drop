@@ -37,7 +37,7 @@ The official Grafana Cloudflare integration needs Cloudflare **Business/Enterpri
    - Scope it to zone `7oas7er.com`.
 2. Set `cloudflare_analytics_token` in `terraform.tfvars` (or `CLOUDFLARE_ANALYTICS_TOKEN`).
 3. Set `cloudflare_zone_tag` to the zone id (`cd ../cloudflare && terraform output -raw zone_id`, or Zone ID in the Cloudflare overview).
-4. Probe datasets (expect `enabled: true` for adaptive HTTP + firewall nodes):
+4. Probe datasets (expect `enabled: true` for `httpRequestsAdaptiveGroups` and `firewallEventsAdaptive`):
 
 ```bash
 export CLOUDFLARE_API_TOKEN='...'   # Analytics Read token
@@ -45,7 +45,9 @@ export CLOUDFLARE_ZONE_TAG='...'    # zone id
 ./scripts/probe-cloudflare-graphql.sh
 ```
 
-5. `terraform apply` — creates Infinity DS `infinity-cloudflare`. On the dashboard, confirm the **CF zoneTag** variable is populated.
+   On Cloudflare **Free**, `firewallEventsAdaptiveGroups` stays disabled — the dashboard uses HTTP status 403/429 from `httpRequestsAdaptiveGroups` plus the `firewallEventsAdaptive` event table instead.
+
+5. `terraform apply` — creates Infinity DS `infinity-cloudflare`. On the dashboard, confirm the **CF zoneTag** variable is populated (`701810fff825f90c0eea671970a0cc9e` for `7oas7er.com`).
 
 ### GitHub Actions CI
 

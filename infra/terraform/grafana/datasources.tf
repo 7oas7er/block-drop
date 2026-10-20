@@ -9,8 +9,11 @@ resource "grafana_data_source" "cloudflare_infinity" {
   uid  = "infinity-cloudflare"
 
   json_data_encoded = jsonencode({
-    auth_method  = "bearerToken"
-    allowedHosts = ["https://api.cloudflare.com"]
+    auth_method = "bearerToken"
+    allowedHosts = [
+      "https://api.cloudflare.com",
+      "https://api.cloudflare.com/client/v4/graphql",
+    ]
   })
 
   secure_json_data_encoded = jsonencode({

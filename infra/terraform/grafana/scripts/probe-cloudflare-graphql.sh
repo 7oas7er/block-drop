@@ -42,7 +42,26 @@ print(json.dumps({
 PY
 )
 
-curl -sS "https://api.cloudflare.com/client/v4/graphql" \
+RESP=$(curl -sS "https://api.cloudflare.com/client/v4/graphql" \
   -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
   -H "Content-Type: application/json" \
-  -d "$BODY" | python3 -m json.tool
+  -d "$BODY")
+
+echo "$RESP" | python3 -m json.tool
+
+# Free plan: firewallEventsAdaptiveGroups is typically disabled — warn loudly.
+echo "$RESP" | python3 -c '
+import json, sys
+j = json.load(sys.stdin)
+zones = ((j.get("data") or {}).get("viewer") or {}).get("zones") or []
+if not zones:
+    print("WARNING: no zones returned — check token zone scope and CLOUDFLARE_ZONE_TAG", file=sys.stderr)
+    sys.exit(1)
+groups = ((zones[0].get("settings") or {}).get("firewallEventsAdaptiveGroups")) or {}
+if not groups.get("enabled"):
+    print(
+        "NOTE: firewallEventsAdaptiveGroups is disabled (expected on Cloudflare Free). "
+        "Use httpRequestsAdaptiveGroups status 403/429 + firewallEventsAdaptive instead.",
+        file=sys.stderr,
+    )
+'

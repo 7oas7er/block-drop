@@ -11,7 +11,7 @@
   ],
   "timezone": "browser",
   "schemaVersion": 39,
-  "version": 2,
+  "version": 3,
   "refresh": "1m",
   "time": {
     "from": "now-6h",
@@ -910,7 +910,7 @@
       "id": 21,
       "type": "timeseries",
       "title": "Cloudflare edge requests",
-      "description": "httpRequestsAdaptiveGroups for the selected host (Infinity \u2192 Cloudflare GraphQL).",
+      "description": "httpRequestsAdaptiveGroups for the selected host (Infinity \u2192 Cloudflare GraphQL). Requires CF zoneTag dashboard variable and Zone Analytics Read token.",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -977,8 +977,8 @@
     {
       "id": 22,
       "type": "timeseries",
-      "title": "Cloudflare blocks / rate limits",
-      "description": "firewallEventsAdaptiveGroups for block/managedChallenge/rateLimit on /api/scores.",
+      "title": "Cloudflare edge blocks (HTTP 403)",
+      "description": "Free plan cannot use firewallEventsAdaptiveGroups. This panel uses httpRequestsAdaptiveGroups with edgeResponseStatus=403 (managed firewall / WAF blocks). Rate-limit hits may appear as 403/429 here or in the firewall events table.",
       "gridPos": {
         "h": 8,
         "w": 12,
@@ -1024,7 +1024,7 @@
             "data": ""
           },
           "parser": "backend",
-          "root_selector": "data.viewer.zones.0.firewallEventsAdaptiveGroups",
+          "root_selector": "data.viewer.zones.0.httpRequestsAdaptiveGroups",
           "columns": [
             {
               "selector": "dimensions.datetimeHour",
@@ -1033,25 +1033,47 @@
             },
             {
               "selector": "count",
-              "text": "events",
+              "text": "blocks",
               "type": "number"
-            },
-            {
-              "selector": "dimensions.action",
-              "text": "action",
-              "type": "string"
             }
           ],
           "filters": [],
-          "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      firewallEventsAdaptiveGroups(\n        limit: 2000\n        orderBy: [datetimeHour_ASC]\n        filter: {\n          datetime_geq: \"${__from:date:iso}\"\n          datetime_leq: \"${__to:date:iso}\"\n          clientRequestPath: \"/api/scores\"\n          OR: [{ action: \"block\" }, { action: \"managedChallenge\" }, { source: \"rateLimit\" }]\n        }\n      ) {\n        count\n        dimensions { datetimeHour action source }\n      }\n    }\n  }\n}"
+          "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 2000\n        orderBy: [datetimeHour_ASC]\n        filter: {\n          datetime_geq: \"${__from:date:iso}\"\n          datetime_leq: \"${__to:date:iso}\"\n          clientRequestHTTPHost: \"${cf_host}\"\n          edgeResponseStatus: 403\n        }\n      ) {\n        count\n        dimensions { datetimeHour edgeResponseStatus }\n      }\n    }\n  }\n}"
+        },
+        {
+          "refId": "B",
+          "type": "graphql",
+          "source": "url",
+          "format": "timeseries",
+          "url": "https://api.cloudflare.com/client/v4/graphql",
+          "url_options": {
+            "method": "POST",
+            "data": ""
+          },
+          "parser": "backend",
+          "root_selector": "data.viewer.zones.0.httpRequestsAdaptiveGroups",
+          "columns": [
+            {
+              "selector": "dimensions.datetimeHour",
+              "text": "Time",
+              "type": "timestamp"
+            },
+            {
+              "selector": "count",
+              "text": "429",
+              "type": "number"
+            }
+          ],
+          "filters": [],
+          "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 2000\n        orderBy: [datetimeHour_ASC]\n        filter: {\n          datetime_geq: \"${__from:date:iso}\"\n          datetime_leq: \"${__to:date:iso}\"\n          clientRequestHTTPHost: \"${cf_host}\"\n          edgeResponseStatus: 429\n        }\n      ) {\n        count\n        dimensions { datetimeHour edgeResponseStatus }\n      }\n    }\n  }\n}"
         }
       ]
     },
     {
       "id": 23,
       "type": "table",
-      "title": "Recent /api/scores firewall events",
-      "description": "Latest firewallEventsAdaptive rows for /api/scores (blocks and rate limits).",
+      "title": "Recent Cloudflare firewall events",
+      "description": "firewallEventsAdaptive for the selected host (Free-compatible). Includes managed firewall blocks and any rate-limit actions. Path /api/scores rate-limit events appear here when they occur.",
       "gridPos": {
         "h": 8,
         "w": 24,
@@ -1103,6 +1125,11 @@
               "type": "string"
             },
             {
+              "selector": "clientRequestHTTPHost",
+              "text": "host",
+              "type": "string"
+            },
+            {
               "selector": "clientRequestPath",
               "text": "path",
               "type": "string"
@@ -1114,7 +1141,7 @@
             }
           ],
           "filters": [],
-          "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      firewallEventsAdaptive(\n        limit: 50\n        orderBy: [datetime_DESC]\n        filter: {\n          datetime_geq: \"${__from:date:iso}\"\n          datetime_leq: \"${__to:date:iso}\"\n          clientRequestPath: \"/api/scores\"\n        }\n      ) {\n        datetime action source clientIP clientRequestPath clientCountryName userAgent\n      }\n    }\n  }\n}"
+          "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      firewallEventsAdaptive(\n        limit: 50\n        orderBy: [datetime_DESC]\n        filter: {\n          datetime_geq: \"${__from:date:iso}\"\n          datetime_leq: \"${__to:date:iso}\"\n          clientRequestHTTPHost: \"${cf_host}\"\n        }\n      ) {\n        datetime action source clientIP clientRequestHTTPHost clientRequestPath clientCountryName userAgent\n      }\n    }\n  }\n}"
         }
       ]
     },
