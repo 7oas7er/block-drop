@@ -4,12 +4,12 @@ Block Drop only accepts traffic that arrives through Cloudflare. Cloudflare inje
 `X-Origin-Verify`; a CloudFront Function rejects any other value (including direct
 `*.cloudfront.net` hits).
 
-The same secret is stored in **two Terraform roots** (gitignored `terraform.tfvars` only):
+The same secret is stored in **two places** (gitignored `terraform.tfvars` only):
 
 | Side | Root | Variable(s) |
 |------|------|-------------|
-| Inject header | `infra/terraform/cloudflare` | `stg_origin_verify_secret` / `prod_origin_verify_secret` (Block Drop); `netrunner_stg_origin_verify_secret` / `netrunner_prod_origin_verify_secret` (Netrunner on same zone) |
-| Accept header | `infra/terraform/aws/envs/{stg\|prod}` | `origin_verify_secret` (+ optional `origin_verify_secret_previous`) |
+| Inject header | [`7oas7er/platform`](https://github.com/7oas7er/platform) `infra/terraform/shared-edge` | `blockdrop_stg_origin_verify_secret` / `blockdrop_prod_origin_verify_secret` (and Netrunner vars for sibling hosts) |
+| Accept header | this repo `infra/terraform/aws/envs/{stg\|prod}` | `origin_verify_secret` (+ optional `origin_verify_secret_previous`) |
 
 Prefer **distinct secrets per environment**. Never commit real values. The secret also
 appears in Terraform state and in the published CloudFront Function source for anyone
@@ -54,11 +54,12 @@ sends the old secret).
 
 ### 2. Point Cloudflare at the new secret
 
-In `infra/terraform/cloudflare/terraform.tfvars`, set the matching variable to
-`<NEW_SECRET>` (`stg_origin_verify_secret` or `prod_origin_verify_secret`).
+In platform `shared-edge` `terraform.tfvars`, set
+`blockdrop_stg_origin_verify_secret` or `blockdrop_prod_origin_verify_secret` to
+`<NEW_SECRET>`.
 
 ```bash
-cd infra/terraform/cloudflare
+cd /path/to/platform/infra/terraform/shared-edge
 terraform apply
 ```
 

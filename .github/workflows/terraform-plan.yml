@@ -356,11 +356,7 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           TF_VAR_stg_cloudfront_domain_name: ${{ vars.STG_CLOUDFRONT_DOMAIN_NAME }}
           TF_VAR_prod_cloudfront_domain_name: ${{ vars.PROD_CLOUDFRONT_DOMAIN_NAME }}
-          TF_VAR_stg_origin_verify_secret: ${{ secrets.STG_ORIGIN_VERIFY_SECRET }}
-          TF_VAR_prod_origin_verify_secret: ${{ secrets.PROD_ORIGIN_VERIFY_SECRET }}
-          # Netrunner hosts on shared zone (play-scala origin_verify_secret values).
-          TF_VAR_netrunner_stg_origin_verify_secret: ${{ secrets.NETRUNNER_STG_ORIGIN_VERIFY_SECRET }}
-          TF_VAR_netrunner_prod_origin_verify_secret: ${{ secrets.NETRUNNER_PROD_ORIGIN_VERIFY_SECRET }}
+          # Origin-verify secrets live in 7oas7er/platform shared-edge (not this DNS-only root).
         run: |
           set +e
           terraform plan -input=false -no-color -lock-timeout=5m -detailed-exitcode
