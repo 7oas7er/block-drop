@@ -1,15 +1,9 @@
-# Grafana Cloud does not ship these catalog plugins by default. Without an
+# Grafana Cloud does not ship every catalog plugin by default. Without an
 # install, a provisioned data source of that type is invisible in the UI
 # ("No data sources found" on dashboard variables).
-resource "grafana_cloud_plugin_installation" "infinity" {
-  count    = local.enable_cloudflare_edge ? 1 : 0
-  provider = grafana.cloud
-
-  stack_slug = var.stack_slug
-  slug       = "yesoreyeram-infinity-datasource"
-  version    = "latest"
-}
-
+#
+# Infinity (yesoreyeram-infinity-datasource) is pre-provisioned on this Cloud
+# stack — installing it via the API returns 409 Conflict. Do not manage it here.
 resource "grafana_cloud_plugin_installation" "github" {
   count    = local.enable_github_ci ? 1 : 0
   provider = grafana.cloud
