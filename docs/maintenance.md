@@ -48,6 +48,11 @@ Roots with lockfiles: `infra/terraform/aws/bootstrap`, `aws/envs/stg`, `aws/envs
 - Re-read [template-readiness-backlog.md](template-readiness-backlog.md) P2.3 / P3 — only if needed
 - Confirm branch ruleset + CodeQL advanced setup still as documented
 
+## Template reuse
+
+- New app from this repo: skill `new-app-from-template`
+- Existing app gap / migrate: skill `gap-against-app-template`
+
 ## What not to add by default
 
 - Renovate alongside Dependabot

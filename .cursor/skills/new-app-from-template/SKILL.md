@@ -11,6 +11,8 @@ description: >-
 
 Source pattern: this repo (`block-drop` + `app-*` Cursor rules). Read `.cursor/rules/README.md` first.
 
+For an **existing** app that was not cloned from this template, use **`gap-against-app-template`** instead (gap table + migration plan).
+
 ## Preconditions
 
 - One AWS account, profile `7oas7er` (or update docs/rules to the new profile).
