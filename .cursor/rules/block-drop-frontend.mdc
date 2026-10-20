@@ -6,12 +6,13 @@ alwaysApply: false
 
 # Block Drop — frontend
 
+Product-only (no platform rename needed when cloning unless the static app path changes).
+
 - Stay vanilla: no React/Vue, no npm, no bundler, no TypeScript transpile step.
 - Share one global namespace: `window.BlockDrop`. New modules attach to it; do not invent a second global.
 - Keep script concerns split (data / rules / UI loop / audio / high scores / touch). Prefer extending existing files over new frameworks.
-- Load classic `<script>` tags in dependency order from `index.html` (and imprint only what it needs). Keep `theme-boot.js` blocking in `<head>` (FOUC). Mark the game scripts `defer` so they fetch in parallel and still run in order — prefer that over concatenating (no bundler).
-- Version JS/CSS with a shared `?v=` query on every reference in HTML; **bump `?v=` whenever JS or CSS content changes** (no bundler/hashes). Deploy gives those files long immutable `Cache-Control`.
+- Load classic `<script>` tags in dependency order from `index.html` (and imprint only what it needs). Keep `theme-boot.js` blocking in `<head>` (FOUC). Mark game scripts `defer`.
+- Version JS/CSS with a shared `?v=` on every HTML reference; **bump `?v=` whenever JS or CSS changes**.
 - Board and next-piece preview stay on canvas; layout in `css/styles.css`.
-- Support keyboard and on-screen touch controls; preserve Safari-friendly click/tap behavior (no double-fire on rotate; Pause/Restart on press).
-- High scores: client talks to `/api/scores` on the same origin; do not assume a separate API hostname.
-- After game asset changes, bump `?v=` if needed, then deploy syncs `block-drop/` and invalidates CloudFront / purges Cloudflare.
+- Support keyboard and on-screen touch; preserve Safari-friendly click/tap behavior.
+- High scores: `/api/scores` on the same origin; do not assume a separate API hostname.

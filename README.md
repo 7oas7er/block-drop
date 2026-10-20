@@ -14,7 +14,8 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`infra/terraform/cloudflare/`](infra/terraform/cloudflare/) | DNS, cache, rate limit, origin-verify headers, redirects |
 | [`infra/terraform/grafana/`](infra/terraform/grafana/) | Synthetics, CloudWatch scrape, dashboards, data sources |
 | [`infra/lambda/`](infra/lambda/) | High-scores Lambda source (zipped by AWS Terraform) |
-| [`.cursor/rules/`](.cursor/rules/) | Durable product / infra decisions for Cursor |
+| [`.cursor/rules/`](.cursor/rules/) | Platform (`app-*`) + product (`block-drop-*`) Cursor rules — see [`.cursor/rules/README.md`](.cursor/rules/README.md) |
+| [`.cursor/skills/`](.cursor/skills/) | Project skills (e.g. new app from template) |
 | [`AGENTS.md`](AGENTS.md) | Definition of done for AI-assisted changes |
 | [`docs/`](docs/) | Template backlog, ADRs, cross-cutting docs |
 | [`SECURITY.md`](SECURITY.md) | Reporting + secret leak / rotation pointers |
@@ -85,4 +86,4 @@ Details: [`tests/README.md`](tests/README.md).
 
 ## Working with Cursor / agents
 
-Follow [`AGENTS.md`](AGENTS.md) and the always-on rules under [`.cursor/rules/`](.cursor/rules/). Decisions: [`docs/adr/`](docs/adr/). Template hardening backlog: [`docs/template-readiness-backlog.md`](docs/template-readiness-backlog.md).
+Follow [`AGENTS.md`](AGENTS.md) and rules under [`.cursor/rules/`](.cursor/rules/) (`app-*` platform + `block-drop-*` product). New app from this pattern: skill [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/). Decisions: [`docs/adr/`](docs/adr/). Backlog: [`docs/template-readiness-backlog.md`](docs/template-readiness-backlog.md).

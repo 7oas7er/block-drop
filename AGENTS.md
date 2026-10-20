@@ -1,6 +1,6 @@
 # Agent definition of done — Block Drop
 
-Instructions for Cursor (and similar) agents working in this repo. Product and infra decisions live in [`.cursor/rules/`](.cursor/rules/); start with [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture overview: [`README.md`](README.md). Durable “why”: [`docs/adr/`](docs/adr/). Secret incidents: [`SECURITY.md`](SECURITY.md).
+Instructions for Cursor (and similar) agents working in this repo. Platform rules: [`app-core.mdc`](.cursor/rules/app-core.mdc) (see [`.cursor/rules/README.md`](.cursor/rules/README.md)). Product overlay: [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture: [`README.md`](README.md). Decisions: [`docs/adr/`](docs/adr/). Secrets: [`SECURITY.md`](SECURITY.md). Cloning a new app: [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/).
 
 ## Defaults
 
@@ -36,7 +36,7 @@ Instructions for Cursor (and similar) agents working in this repo. Product and i
 Before considering a task finished:
 
 1. [ ] Change matches the request; no unrelated refactors.
-2. [ ] Follows `.cursor/rules` for the area touched (frontend / terraform / deploy / observability).
+2. [ ] Follows `.cursor/rules` for the area touched (`app-*` platform + `block-drop-*` product overlays).
 3. [ ] No secrets or state files staged.
 4. [ ] If `block-drop/` or `tests/` changed: note or run relevant tests (`cd tests && npm test` when practical).
 5. [ ] If Terraform changed: roots identified; remind Frank to `terraform plan` / `apply` locally; CI plan + Checkov will run on the PR when paths match. New Checkov skips need a one-line justification (`docs/iac-policy.md`).
