@@ -138,6 +138,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 ### P2.3 — Supply-chain attestations (optional but modern)
 
 - [ ] Pin Actions by SHA where not already (or document Dependabot grouping as enough)
+- [x] Dependabot covers Terraform providers (per-root lockfiles) — see `.github/dependabot.yml` + `docs/maintenance.md`
 - [ ] Consider artifact attestation for deploy tarball / Lambda zip if packaging grows
 - [ ] Skip npm provenance until you publish packages
 
