@@ -33,6 +33,8 @@ When adding or extending observability for a hosted web app, mirror this stack:
    - Skip the Business/Enterprise Cloudflare Alloy integration on Free
 
 4. **GitHub Actions CI** — Grafana GitHub data source (no Alloy exporter)
+   - Install catalog plugin `grafana-github-datasource` on the stack (`grafana_cloud_plugin_installation`); otherwise the DS is invisible
+   - Cloud token needs `stack-plugins:read|write|delete`
    - Fine-grained PAT: Actions + Metadata read on the app repo
    - Panels: workflow runs / usage for deploy + terraform-plan (and annotations for commits)
 

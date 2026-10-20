@@ -21,7 +21,7 @@ State key: `grafana/terraform.tfstate` in `shared-block-drop-terraform-state-buc
 ## One-time Grafana setup
 
 1. Create a [Grafana Cloud Free](https://grafana.com/products/cloud/) account and stack.
-2. Create a Cloud access policy token with `stacks:read`, `stack-service-accounts:write` (for dashboards), and `integration-management:read|write` for Cloud Provider (or a separate token).
+2. Create a Cloud access policy token with `stacks:read`, `stack-service-accounts:write` (for dashboards), `stack-plugins:read|write|delete` (to install Infinity + GitHub plugins), and `integration-management:read|write` for Cloud Provider (or a separate token).
 3. In the stack: **Synthetics → Config** — create an SM access token (`sm_access_token`).
 4. Copy `terraform.tfvars.example` → `terraform.tfvars` and fill values (never commit `terraform.tfvars`).
    - IAM trust External ID defaults to the stack `prometheus_user_id`. If account create fails with `aws_authentication_error` and CloudTrail shows no `AssumeRole`, copy the External ID from **Cloud Provider → AWS → Add account** into `grafana_aws_external_id`.
@@ -53,9 +53,10 @@ export CLOUDFLARE_ZONE_TAG='...'    # zone id
 
 1. Create a fine-grained PAT for repo `7oas7er/block-drop` with **Actions: Read**, **Metadata: Read**, and **Contents: Read** if the plugin requires it.
 2. Set `github_access_token` in `terraform.tfvars` (or `GITHUB_GRAFANA_TOKEN`).
-3. `terraform apply` — creates GitHub DS `github-block-drop`. Dashboard panels cover `deploy-block-drop.yml` and `terraform-plan.yml`.
+3. `terraform apply` — installs the `grafana-github-datasource` Cloud plugin (not present by default), then creates DS `github-block-drop`. Without the plugin install, the dashboard GitHub variable shows **No data sources found**.
+4. Dashboard panels cover `deploy-block-drop.yml` and `terraform-plan.yml`.
 
-Without these tokens, synthetics + CloudWatch still apply; Cloudflare/GitHub data sources are skipped.
+Without these tokens, synthetics + CloudWatch still apply; Cloudflare/GitHub plugins and data sources are skipped.
 
 ## Apply
 

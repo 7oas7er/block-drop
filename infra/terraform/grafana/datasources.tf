@@ -4,6 +4,8 @@ resource "grafana_data_source" "cloudflare_infinity" {
   count    = local.enable_cloudflare_edge ? 1 : 0
   provider = grafana.stack
 
+  depends_on = [grafana_cloud_plugin_installation.infinity]
+
   type = "yesoreyeram-infinity-datasource"
   name = "Cloudflare GraphQL"
   uid  = "infinity-cloudflare"
@@ -25,6 +27,8 @@ resource "grafana_data_source" "cloudflare_infinity" {
 resource "grafana_data_source" "github" {
   count    = local.enable_github_ci ? 1 : 0
   provider = grafana.stack
+
+  depends_on = [grafana_cloud_plugin_installation.github]
 
   type = "grafana-github-datasource"
   name = "GitHub Block Drop"

@@ -6,7 +6,8 @@ aws_profile = "7oas7er"
 stack_slug = "your-stack-slug"
 
 # Cloud access policy token with stacks:read, stack-service-accounts:write,
-# and (for Cloud Provider) integration-management:read|write.
+# stack-plugins:read|write|delete (Infinity + GitHub plugins), and (for Cloud
+# Provider) integration-management:read|write.
 # Or export GRAFANA_CLOUD_ACCESS_POLICY_TOKEN and omit this.
 cloud_access_policy_token = "glc_..."
 
