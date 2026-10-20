@@ -1,6 +1,6 @@
 # Agent definition of done — Block Drop
 
-Instructions for Cursor (and similar) agents working in this repo. Platform rules: [`app-core.mdc`](.cursor/rules/app-core.mdc) (see [`.cursor/rules/README.md`](.cursor/rules/README.md)). Product overlay: [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture: [`README.md`](README.md). Decisions: [`docs/adr/`](docs/adr/). Secrets: [`SECURITY.md`](SECURITY.md). Cloning a new app: [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/).
+Instructions for Cursor (and similar) agents working in this repo. Platform rules: [`app-core.mdc`](.cursor/rules/app-core.mdc) (see [`.cursor/rules/README.md`](.cursor/rules/README.md)). Product overlay: [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture: [`README.md`](README.md). Decisions: [`docs/adr/`](docs/adr/). Secrets: [`SECURITY.md`](SECURITY.md). Cloning a new app: [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/). Gap analysis / migrate an existing repo toward this pattern: [`.cursor/skills/gap-against-app-template/`](.cursor/skills/gap-against-app-template/).
 
 ## Defaults
 

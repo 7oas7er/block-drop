@@ -15,7 +15,7 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`infra/terraform/grafana/`](infra/terraform/grafana/) | Synthetics, CloudWatch scrape, dashboards, data sources |
 | [`infra/lambda/`](infra/lambda/) | High-scores Lambda source (zipped by AWS Terraform) |
 | [`.cursor/rules/`](.cursor/rules/) | Platform (`app-*`) + product (`block-drop-*`) Cursor rules — see [`.cursor/rules/README.md`](.cursor/rules/README.md) |
-| [`.cursor/skills/`](.cursor/skills/) | Project skills (e.g. new app from template) |
+| [`.cursor/skills/`](.cursor/skills/) | Project skills (`new-app-from-template`, `gap-against-app-template`) |
 | [`AGENTS.md`](AGENTS.md) | Definition of done for AI-assisted changes |
 | [`docs/`](docs/) | Template backlog, ADRs, cross-cutting docs |
 | [`docs/maintenance.md`](docs/maintenance.md) | Ongoing patch / Dependabot cadence |
@@ -98,4 +98,4 @@ Config: [`.pre-commit-config.yaml`](.pre-commit-config.yaml). Hooks run `terrafo
 
 ## Working with Cursor / agents
 
-Follow [`AGENTS.md`](AGENTS.md) and rules under [`.cursor/rules/`](.cursor/rules/) (`app-*` platform + `block-drop-*` product). New app from this pattern: skill [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/). Decisions: [`docs/adr/`](docs/adr/). Backlog: [`docs/template-readiness-backlog.md`](docs/template-readiness-backlog.md).
+Follow [`AGENTS.md`](AGENTS.md) and rules under [`.cursor/rules/`](.cursor/rules/) (`app-*` platform + `block-drop-*` product). New app from this pattern: [`.cursor/skills/new-app-from-template/`](.cursor/skills/new-app-from-template/). Gap-analyze / migrate an existing repo: [`.cursor/skills/gap-against-app-template/`](.cursor/skills/gap-against-app-template/). Decisions: [`docs/adr/`](docs/adr/). Backlog: [`docs/template-readiness-backlog.md`](docs/template-readiness-backlog.md).

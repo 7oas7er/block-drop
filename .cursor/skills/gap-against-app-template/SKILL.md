@@ -1,0 +1,60 @@
+---
+name: gap-against-app-template
+description: >-
+  Compares the current repo to the Block Drop / app-* solo+AI template (one AWS
+  account, Cloudflare edge, Grafana-first, Terraform SoT, staging→main). Use when
+  the user asks for a gap analysis, template compliance check, migrate-to-template
+  plan, or how an existing project differs from Block Drop / the app template.
+---
+
+# Gap against app template
+
+Compare **this workspace** to the canonical template (Block Drop / `app-*` pattern). Produce gaps + a staged migration plan. Do **not** apply infra or rewrite the app unless Frank explicitly asks.
+
+## Locate the template
+
+1. Prefer a path or GitHub URL Frank gives in the message.
+2. Else try sibling / known checkout: `…/devel/Cursor` or repo `7oas7er/block-drop`.
+3. If the template is not readable, ask once for the path or to add it to the workspace — then stop guessing.
+
+Read from the template (when available): `.cursor/rules/README.md`, `app-core` / `app-observability` / `app-terraform` / `app-deploy`, `docs/adr/`, `docs/maintenance.md`, `AGENTS.md`, `SECURITY.md`, skill `new-app-from-template`.
+
+## Rubric (score each: aligned / partial / missing / N/A)
+
+| Area | Template expectation |
+|------|----------------------|
+| **Delivery** | Static or minimal frontend as product requires; no drive-by SPA/bundler unless product needs it |
+| **IaC** | Terraform SoT; no CDK/CloudFormation app stacks; separate roots (aws envs, cloudflare, grafana, bootstrap) |
+| **Apply model** | CI plan-only; local apply; no default CI apply |
+| **Envs** | `staging` → AWS stg; `main` → AWS prod; distinct GitHub Environments |
+| **Edge** | Cloudflare DNS/edge; Cloudflare-only origin (direct origin rejected) |
+| **Observability** | Grafana-first only; no second APM SaaS |
+| **Regions** | `eu-north-1` default; `us-east-1` only when required (e.g. ACM for CloudFront) |
+| **CI gates** | Tests gate deploy; terraform fmt/validate/plan; Checkov or equivalent; npm audit high+; CodeQL or equivalent SAST |
+| **Supply chain** | Dependabot (or Renovate) → staging; Actions + app deps + Terraform providers |
+| **Docs / agents** | `AGENTS.md`, ADRs for irreversible choices, `SECURITY.md`, Cursor `app-*` (or equivalent) rules |
+| **Maintenance** | Documented weekly/monthly cadence |
+| **Secrets** | No committed tfvars/state/tokens; OIDC for AWS in Actions |
+
+Mark **N/A** when the product legitimately differs (e.g. not a public web app) — say why.
+
+## Output format
+
+1. **Context** — one paragraph: what this repo is; template path used.
+2. **Gap table** — Area | Status | Evidence (paths) | Notes.
+3. **Migration plan** — ordered PRs/steps, smallest first (docs/rules → CI → Terraform layout → edge gate → Grafana). Call out blast radius and “apply locally” where needed.
+4. **Non-goals** — what not to copy from Block Drop (game-specific `block-drop-*`, `/api/scores`, puzzle UX).
+5. **Ask** — only if blocked (missing template access, ambiguous prod risk).
+
+## Rules of engagement
+
+- Prefer **gap report + plan** over drive-by refactors.
+- Reuse template wording from ADRs; don’t invent a second monitoring stack or CI apply “to catch up.”
+- For greenfield from the template, point Frank at **`new-app-from-template`** instead of this skill.
+- After Frank approves a slice, implement in small PRs to `staging` (or that repo’s equivalent).
+
+## Example triggers
+
+- “Gap-analyze this repo against Block Drop.”
+- “What would it take to migrate X to the app template?”
+- “Template compliance check vs `7oas7er/block-drop`.”

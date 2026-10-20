@@ -9,6 +9,8 @@ Rules split so this repo can be cloned as a **solo + AI** template without fight
 
 When cloning for a new app: keep `app-*`, replace or delete `block-drop-*`, and follow the skill `.cursor/skills/new-app-from-template/`.
 
+When **gap-analyzing or migrating** an existing repo toward this pattern: `.cursor/skills/gap-against-app-template/` (also in personal Agent Store).
+
 ## Files
 
 | Rule | Scope |
