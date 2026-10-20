@@ -1,8 +1,8 @@
 name: Required CI
 
 # Always runs on PRs to staging/main so branch rules can require one stable check.
-# Path-filtered workflows (Deploy, Terraform plan, Dependency audit) still enforce
-# their own jobs when those paths change — see docs/github-branch-protection.md.
+# Path-filtered workflows (Deploy, Terraform plan, Dependency audit, CodeQL) still
+# enforce their own jobs when those paths change — see docs/github-branch-protection.md.
 on:
   pull_request:
     branches:
@@ -45,6 +45,11 @@ jobs:
               - 'infra/lambda/package.json'
               - 'infra/lambda/package-lock.json'
               - '.github/workflows/dependency-audit.yml'
+            codeql:
+              - 'block-drop/**'
+              - 'infra/lambda/**'
+              - '.github/workflows/**'
+              - '.github/codeql/**'
 
       - name: Gate map
         run: |
@@ -59,8 +64,12 @@ jobs:
           if [ "${{ steps.filter.outputs.deps }}" = "true" ]; then
             echo "- Dependency audit → npm audit (tests / lambda)"
           fi
+          if [ "${{ steps.filter.outputs.codeql }}" = "true" ]; then
+            echo "- CodeQL → Analyze (javascript-typescript / actions)"
+          fi
           if [ "${{ steps.filter.outputs.site }}" != "true" ] \
             && [ "${{ steps.filter.outputs.infra }}" != "true" ] \
-            && [ "${{ steps.filter.outputs.deps }}" != "true" ]; then
+            && [ "${{ steps.filter.outputs.deps }}" != "true" ] \
+            && [ "${{ steps.filter.outputs.codeql }}" != "true" ]; then
             echo "- Docs/meta-only PR: path-filtered suites intentionally skipped"
           fi

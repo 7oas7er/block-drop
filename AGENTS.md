@@ -39,10 +39,11 @@ Before considering a task finished:
 2. [ ] Follows `.cursor/rules` for the area touched (`app-*` platform + `block-drop-*` product overlays).
 3. [ ] No secrets or state files staged.
 4. [ ] If `block-drop/` or `tests/` changed: note or run relevant tests (`cd tests && npm test` when practical).
-5. [ ] If Terraform changed: roots identified; remind Frank to `terraform plan` / `apply` locally; CI plan + Checkov will run on the PR when paths match. New Checkov skips need a one-line justification (`docs/iac-policy.md`).
+5. [ ] If Terraform changed: roots identified; remind Frank to `terraform plan` / `apply` locally; CI plan + Checkov will run on the PR when paths match. New Checkov skips need a one-line justification (`docs/iac-policy.md`). Security header / CSP changes need stg apply first (`docs/security-headers.md`).
 6. [ ] If `tests/` or `infra/lambda/` lockfiles changed: `npm audit --audit-level=high` must stay clean (CI workflow `dependency-audit.yml`).
-7. [ ] If asked for a PR: target **`staging`** unless Frank asked for a promote-to-`main` PR.
-8. [ ] Docs updated when behavior or operator steps change (README, runbooks under `infra/terraform/docs/`, or this file).
+7. [ ] If `block-drop/` or `infra/lambda/` JS changed: expect CodeQL on the PR (`docs/codeql.md`); fix real findings, don’t blanket-suppress.
+8. [ ] If asked for a PR: target **`staging`** unless Frank asked for a promote-to-`main` PR.
+9. [ ] Docs updated when behavior or operator steps change (README, runbooks under `infra/terraform/docs/`, or this file). Optional: `pre-commit install` locally (`.pre-commit-config.yaml`).
 
 ## Explicit non-goals (unless Frank overrides in writing)
 
