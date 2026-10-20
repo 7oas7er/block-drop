@@ -46,25 +46,25 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 ### P0.3 — IaC policy scan in CI
 
-- [ ] Add a GitHub Actions job (new workflow or step in `terraform-plan.yml`) running **Checkov** or **Trivy config** on `infra/terraform/**`
-- [ ] Fail PRs on high/critical findings (tune allowlist sparingly)
-- [ ] Document how to suppress a finding with justification
+- [x] Add a GitHub Actions job (new workflow or step in `terraform-plan.yml`) running **Checkov** or **Trivy config** on `infra/terraform/**`
+- [x] Fail PRs on high/critical findings (tune allowlist sparingly)
+- [x] Document how to suppress a finding with justification
 
 **Why:** AI-authored Terraform is the main regression surface; Dependabot does not cover this.
 
 ### P0.4 — Dependency audit in CI
 
-- [ ] On PRs that touch `tests/` or `infra/lambda/`, run `npm audit` (or OSV-Scanner) with a clear fail threshold (e.g. high+)
-- [ ] Keep Dependabot weekly updates targeting `staging` (already present)
-- [ ] Treat open **high/critical** Dependabot alerts on default branches as merge blockers (process + optional GitHub ruleset)
+- [x] On PRs that touch `tests/` or `infra/lambda/`, run `npm audit` (or OSV-Scanner) with a clear fail threshold (e.g. high+)
+- [x] Keep Dependabot weekly updates targeting `staging` (already present)
+- [x] Treat open **high/critical** Dependabot alerts on default branches as merge blockers (process + optional GitHub ruleset)
 
 **Why:** You already saw a high alert on the default branch; audits make that a gate, not a surprise.
 
 ### P0.5 — Branch protection / required checks (documented + enabled)
 
-- [ ] Document required checks for `staging` and `main` (tests; terraform plan when infra paths change)
-- [ ] Enable GitHub branch protection / rulesets accordingly
-- [ ] Confirm secret scanning + push protection are on for the repo
+- [x] Document required checks for `staging` and `main` (tests; terraform plan when infra paths change)
+- [x] Enable GitHub branch protection / rulesets accordingly
+- [x] Confirm secret scanning + push protection are on for the repo
 
 **Why:** Solo now; templates need this written and enforced before a second human (or busier AI loop) arrives.
 
@@ -169,7 +169,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 | Sprint | Items | Outcome |
 |--------|-------|---------|
 | **1** | P0.1, P0.2 | Humans + agents share one front door and DoD — **done** |
-| **2** | P0.3, P0.4, P0.5 | PRs fail on bad IaC / bad deps; branches protected |
+| **2** | P0.3, P0.4, P0.5 | PRs fail on bad IaC / bad deps; branches protected — **done** |
 | **3** | P1.1, P1.5 | Decisions and security contact path written down |
 | **4** | P1.2, P1.3 | Extractable template pattern (rules + skill) |
 | **5** | P1.4, P2.1, P2.2 | Local gates + SAST + headers |
@@ -193,9 +193,9 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 |----|--------|------------|
 | P0.1 | done | Root `README.md` |
 | P0.2 | done | `AGENTS.md` |
-| P0.3 | | |
-| P0.4 | | |
-| P0.5 | | |
+| P0.3 | done | Checkov in terraform-plan + `docs/iac-policy.md` |
+| P0.4 | done | `dependency-audit.yml` + compression override in tests |
+| P0.5 | done | `docs/github-branch-protection.md` + ruleset on staging/main (`Required CI`) |
 | P1.1 | | |
 | P1.2 | | |
 | P1.3 | | |

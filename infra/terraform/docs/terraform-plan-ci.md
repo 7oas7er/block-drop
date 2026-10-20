@@ -10,6 +10,7 @@ Within a run, **validate/plan are scoped per root** (`dorny/paths-filter`): e.g.
 |-----|------|
 | Detect changes | Builds per-root matrices |
 | Format | `terraform fmt -check -recursive` (if any infra path matched) |
+| IaC policy (Checkov) | Scans `infra/terraform` with [`../.checkov.yaml`](../.checkov.yaml); see [`docs/iac-policy.md`](../../../docs/iac-policy.md) |
 | Validate | `init -backend=false` + `validate` for **changed** roots only |
 | Plan AWS / Cloudflare / Grafana | Same scoping; OIDC plan role + provider tokens |
 

@@ -151,6 +151,27 @@ jobs:
       - name: terraform fmt -check
         run: terraform fmt -check -recursive infra/terraform
 
+  # Policy scan is independent of fmt so a format nit does not hide IaC findings.
+  policy:
+    name: IaC policy (Checkov)
+    needs: changes
+    if: needs.changes.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Checkov
+        uses: bridgecrewio/checkov-action@v12.1347.0
+        with:
+          directory: infra/terraform
+          config_file: infra/terraform/.checkov.yaml
+          framework: terraform
+          soft_fail: false
+          download_external_modules: false
+          output_format: cli
+
   validate:
     name: Validate (${{ matrix.root }})
     needs:

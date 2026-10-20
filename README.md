@@ -29,9 +29,11 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | Workflow | What it does |
 |----------|----------------|
 | [`.github/workflows/deploy-block-drop.yml`](.github/workflows/deploy-block-drop.yml) | Unit + Playwright; on push to `staging`/`main`, syncs `block-drop/` to S3, invalidates CloudFront, purges Cloudflare (when site paths change) |
-| [`.github/workflows/terraform-plan.yml`](.github/workflows/terraform-plan.yml) | `fmt` / `validate` / **plan** for changed Terraform roots (OIDC read-only plan role). **Never applies.** |
+| [`.github/workflows/terraform-plan.yml`](.github/workflows/terraform-plan.yml) | `fmt` / **Checkov** / `validate` / **plan** for changed Terraform roots (OIDC read-only plan role). **Never applies.** |
+| [`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml) | `npm audit --audit-level=high` for `tests/` and `infra/lambda/` when those lockfiles change |
+| [`.github/workflows/required-ci.yml`](.github/workflows/required-ci.yml) | Always-on PR check (`Required CI`) for branch rulesets |
 
-Deploy auth is GitHub OIDC → env-specific IAM roles (no long-lived AWS keys in GitHub). Dependabot opens weekly PRs to `staging` for Actions, Playwright, and the Lambda AWS SDK.
+Deploy auth is GitHub OIDC → env-specific IAM roles (no long-lived AWS keys in GitHub). Dependabot opens weekly PRs to `staging` for Actions, Playwright, and the Lambda AWS SDK. Branch rules and required check names: [`docs/github-branch-protection.md`](docs/github-branch-protection.md). Checkov suppressions: [`docs/iac-policy.md`](docs/iac-policy.md).
 
 ## Terraform (local apply)
 
