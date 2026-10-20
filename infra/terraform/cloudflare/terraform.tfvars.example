@@ -12,6 +12,11 @@ stg_cloudfront_domain_name  = "d222222abcdef8.cloudfront.net"
 stg_origin_verify_secret  = "replace-with-a-long-random-secret"
 prod_origin_verify_secret = "replace-with-a-different-long-random-secret"
 
+# Netrunner hosts on this shared zone (distinct secrets from Block Drop).
+# Copy from play-scala envs/*/terraform.tfvars origin_verify_secret values.
+netrunner_stg_origin_verify_secret  = "replace-with-netrunner-stg-origin-verify-secret"
+netrunner_prod_origin_verify_secret = "replace-with-netrunner-prod-origin-verify-secret"
+
 # Deploy: CLOUDFLARE_ZONE_ID (same as zone_id) + CLOUDFLARE_API_TOKEN with Zone.Cache Purge
 # (plus Zone.Read) in both GitHub Environments.
 #
