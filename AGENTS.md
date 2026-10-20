@@ -38,9 +38,10 @@ Before considering a task finished:
 2. [ ] Follows `.cursor/rules` for the area touched (frontend / terraform / deploy / observability).
 3. [ ] No secrets or state files staged.
 4. [ ] If `block-drop/` or `tests/` changed: note or run relevant tests (`cd tests && npm test` when practical).
-5. [ ] If Terraform changed: roots identified; remind Frank to `terraform plan` / `apply` locally; CI plan will run on the PR when paths match.
-6. [ ] If asked for a PR: target **`staging`** unless Frank asked for a promote-to-`main` PR.
-7. [ ] Docs updated when behavior or operator steps change (README, runbooks under `infra/terraform/docs/`, or this file).
+5. [ ] If Terraform changed: roots identified; remind Frank to `terraform plan` / `apply` locally; CI plan + Checkov will run on the PR when paths match. New Checkov skips need a one-line justification (`docs/iac-policy.md`).
+6. [ ] If `tests/` or `infra/lambda/` lockfiles changed: `npm audit --audit-level=high` must stay clean (CI workflow `dependency-audit.yml`).
+7. [ ] If asked for a PR: target **`staging`** unless Frank asked for a promote-to-`main` PR.
+8. [ ] Docs updated when behavior or operator steps change (README, runbooks under `infra/terraform/docs/`, or this file).
 
 ## Explicit non-goals (unless Frank overrides in writing)
 
