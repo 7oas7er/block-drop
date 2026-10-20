@@ -16,7 +16,8 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`infra/lambda/`](infra/lambda/) | High-scores Lambda source (zipped by AWS Terraform) |
 | [`.cursor/rules/`](.cursor/rules/) | Durable product / infra decisions for Cursor |
 | [`AGENTS.md`](AGENTS.md) | Definition of done for AI-assisted changes |
-| [`docs/`](docs/) | Template backlog and cross-cutting docs |
+| [`docs/`](docs/) | Template backlog, ADRs, cross-cutting docs |
+| [`SECURITY.md`](SECURITY.md) | Reporting + secret leak / rotation pointers |
 
 ## Environments and promotion
 
@@ -65,6 +66,7 @@ Never commit `.tfstate`, `terraform.tfvars`, API tokens, or AWS keys. Setup note
 
 - Public traffic must arrive via **Cloudflare**; direct CloudFront (or other origin) URLs are rejected (origin-verify header gate).
 - Secrets live in gitignored tfvars, GitHub Environment secrets, or env vars—not in git.
+- Reporting and leak response: [`SECURITY.md`](SECURITY.md). Durable “why” for stack choices: [`docs/adr/`](docs/adr/).
 
 ## Local development
 
@@ -83,4 +85,4 @@ Details: [`tests/README.md`](tests/README.md).
 
 ## Working with Cursor / agents
 
-Follow [`AGENTS.md`](AGENTS.md) and the always-on rules under [`.cursor/rules/`](.cursor/rules/). Template hardening backlog: [`docs/template-readiness-backlog.md`](docs/template-readiness-backlog.md).
+Follow [`AGENTS.md`](AGENTS.md) and the always-on rules under [`.cursor/rules/`](.cursor/rules/). Decisions: [`docs/adr/`](docs/adr/). Template hardening backlog: [`docs/template-readiness-backlog.md`](docs/template-readiness-backlog.md).

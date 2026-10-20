@@ -1,6 +1,6 @@
 # Agent definition of done — Block Drop
 
-Instructions for Cursor (and similar) agents working in this repo. Product and infra decisions live in [`.cursor/rules/`](.cursor/rules/); start with [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture overview: [`README.md`](README.md).
+Instructions for Cursor (and similar) agents working in this repo. Product and infra decisions live in [`.cursor/rules/`](.cursor/rules/); start with [`block-drop-core.mdc`](.cursor/rules/block-drop-core.mdc). Architecture overview: [`README.md`](README.md). Durable “why”: [`docs/adr/`](docs/adr/). Secret incidents: [`SECURITY.md`](SECURITY.md).
 
 ## Defaults
 
@@ -20,7 +20,8 @@ Instructions for Cursor (and similar) agents working in this repo. Product and i
 
 ## Terraform
 
-- CI runs **fmt / validate / plan** only (see `.github/workflows/terraform-plan.yml`). **Never** add or run `terraform apply` in GitHub Actions unless Frank explicitly requests that change and an ADR updates the decision.
+- CI runs **fmt / validate / plan** only (see `.github/workflows/terraform-plan.yml`). **Never** add or run `terraform apply` in GitHub Actions unless Frank explicitly requests that change and an ADR supersedes [`docs/adr/0003-local-terraform-apply.md`](docs/adr/0003-local-terraform-apply.md).
+- New irreversible platform choice → add a short ADR under [`docs/adr/`](docs/adr/) (see that folder’s README).
 - Apply locally with `AWS_PROFILE=7oas7er` when Frank asks.
 - Never commit `.tfstate`, `terraform.tfvars`, API tokens, or AWS keys.
 
