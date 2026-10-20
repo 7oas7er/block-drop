@@ -50,3 +50,23 @@ output "block_drop_folder_uid" {
   description = "UID of the Block Drop Grafana folder."
   value       = grafana_folder.block_drop.uid
 }
+
+output "cloudflare_edge_datasource_uid" {
+  description = "Infinity Cloudflare GraphQL data source UID (null if not provisioned)."
+  value       = try(grafana_data_source.cloudflare_infinity[0].uid, null)
+}
+
+output "github_ci_datasource_uid" {
+  description = "GitHub data source UID (null if not provisioned)."
+  value       = try(grafana_data_source.github[0].uid, null)
+}
+
+output "enable_cloudflare_edge" {
+  description = "Whether the Cloudflare GraphQL Infinity data source is managed."
+  value       = local.enable_cloudflare_edge
+}
+
+output "enable_github_ci" {
+  description = "Whether the GitHub data source is managed."
+  value       = local.enable_github_ci
+}
