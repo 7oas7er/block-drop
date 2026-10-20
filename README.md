@@ -34,8 +34,9 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`.github/workflows/terraform-plan.yml`](.github/workflows/terraform-plan.yml) | `fmt` / **Checkov** / `validate` / **plan** for changed Terraform roots (OIDC read-only plan role). **Never applies.** |
 | [`.github/workflows/dependency-audit.yml`](.github/workflows/dependency-audit.yml) | `npm audit --audit-level=high` for `tests/` and `infra/lambda/` when those lockfiles change |
 | [`.github/workflows/required-ci.yml`](.github/workflows/required-ci.yml) | Always-on PR check (`Required CI`) for branch rulesets |
+| [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml) | CodeQL SAST for `block-drop/`, `infra/lambda/`, and Actions workflows |
 
-Deploy auth is GitHub OIDC → env-specific IAM roles (no long-lived AWS keys in GitHub). Dependabot opens weekly PRs to `staging` for Actions, Playwright, and the Lambda AWS SDK. Branch rules and required check names: [`docs/github-branch-protection.md`](docs/github-branch-protection.md). Checkov suppressions: [`docs/iac-policy.md`](docs/iac-policy.md).
+Deploy auth is GitHub OIDC → env-specific IAM roles (no long-lived AWS keys in GitHub). Dependabot opens weekly PRs to `staging` for Actions, Playwright, and the Lambda AWS SDK. Branch rules and required check names: [`docs/github-branch-protection.md`](docs/github-branch-protection.md). Checkov: [`docs/iac-policy.md`](docs/iac-policy.md). CodeQL: [`docs/codeql.md`](docs/codeql.md). Security headers: [`docs/security-headers.md`](docs/security-headers.md).
 
 ## Terraform (local apply)
 
@@ -83,6 +84,16 @@ npm test
 ```
 
 Details: [`tests/README.md`](tests/README.md).
+
+**Pre-commit** (optional but recommended — catches `terraform fmt` and unit-test regressions before CI):
+
+```bash
+pipx install pre-commit   # or: brew install pre-commit
+pre-commit install
+pre-commit run --all-files
+```
+
+Config: [`.pre-commit-config.yaml`](.pre-commit-config.yaml). Hooks run `terraform fmt` under `infra/terraform/` and `npm run test:unit` when `tests/` or `block-drop/js/` change. Full `terraform validate` stays in CI (needs init/backends).
 
 ## Working with Cursor / agents
 

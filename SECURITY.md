@@ -37,3 +37,5 @@ Tokens that only exist for Terraform (Grafana Cloud access policy, Cloud Provide
 - Architecture / Cloudflare-only traffic: [`docs/adr/0005-cloudflare-only-origin.md`](docs/adr/0005-cloudflare-only-origin.md)
 - Branch protection / CI gates: [`docs/github-branch-protection.md`](docs/github-branch-protection.md)
 - IaC policy skips: [`docs/iac-policy.md`](docs/iac-policy.md)
+- Browser headers (CSP / Permissions-Policy): [`docs/security-headers.md`](docs/security-headers.md)
+- CodeQL SAST: [`docs/codeql.md`](docs/codeql.md)

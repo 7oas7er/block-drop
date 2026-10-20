@@ -102,8 +102,8 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 ### P1.4 — Local pre-commit (or Lefthook)
 
-- [ ] Hooks: `terraform fmt -check`, optional `terraform validate` on changed roots, `npm test` (unit) under `tests/` when JS/tests change
-- [ ] Document install in root README
+- [x] Hooks: `terraform fmt -check`, optional `terraform validate` on changed roots, `npm test` (unit) under `tests/` when JS/tests change
+- [x] Document install in root README
 
 **Why:** Catches AI drive-by formatting/logic before CI.
 
@@ -121,17 +121,17 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 ### P2.1 — SAST intentionality (CodeQL / Semgrep)
 
-- [ ] Confirm CodeQL (or Semgrep) covers `block-drop/**` and `infra/lambda/**` on PRs to `staging`/`main`
-- [ ] Document expected alerts vs ignore noise
-- [ ] Fix or explicitly waive findings
+- [x] Confirm CodeQL (or Semgrep) covers `block-drop/**` and `infra/lambda/**` on PRs to `staging`/`main`
+- [x] Document expected alerts vs ignore noise
+- [x] Fix or explicitly waive findings
 
 **Why:** You already have CodeQL appearing in Actions history; make it a deliberate gate.
 
 ### P2.2 — Browser hardening pass (public site)
 
-- [ ] CSP appropriate for static game + high-scores API
-- [ ] `Permissions-Policy` (and related headers) via CloudFront/Cloudflare as fits the stack
-- [ ] Document header ownership (CloudFront response headers vs Cloudflare)
+- [x] CSP appropriate for static game + high-scores API
+- [x] `Permissions-Policy` (and related headers) via CloudFront/Cloudflare as fits the stack
+- [x] Document header ownership (CloudFront response headers vs Cloudflare)
 
 **Why:** Worth doing for any public template site; secondary to IaC/deps.
 
@@ -172,7 +172,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 | **2** | P0.3, P0.4, P0.5 | PRs fail on bad IaC / bad deps; branches protected — **done** |
 | **3** | P1.1, P1.5 | Decisions and security contact path written down — **done** |
 | **4** | P1.2, P1.3 | Extractable template pattern (rules + skill) — **done** |
-| **5** | P1.4, P2.1, P2.2 | Local gates + SAST + headers |
+| **5** | P1.4, P2.1, P2.2 | Local gates + SAST + headers — **done** |
 | **Later** | P2.3, P3 | As appetite / risk demands |
 
 ---
@@ -199,10 +199,10 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 | P1.1 | done | `docs/adr/` (0001–0006) |
 | P1.2 | done | `app-*` + thin `block-drop-*`; `.cursor/rules/README.md` |
 | P1.3 | done | `.cursor/skills/new-app-from-template` (+ personal store copy) |
-| P1.4 | | |
+| P1.4 | done | `.pre-commit-config.yaml` + README install |
 | P1.5 | done | Root `SECURITY.md` |
-| P2.1 | | |
-| P2.2 | | |
+| P2.1 | done | In-repo CodeQL workflow + `docs/codeql.md` |
+| P2.2 | done | Permissions-Policy + CSP tweak; `docs/security-headers.md` |
 | P2.3 | | |
 | P2.4 | deferred | Local apply remains default |
 

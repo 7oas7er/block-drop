@@ -25,10 +25,19 @@ resource "aws_cloudfront_function" "origin_verify" {
   })
 }
 
-# Custom policy: managed SecurityHeadersPolicy equivalents + CSP (managed policy has no CSP).
+# Custom policy: managed SecurityHeadersPolicy equivalents + CSP + Permissions-Policy.
+# Header ownership: docs/security-headers.md (CloudFront SoT; Cloudflare does not duplicate these).
 resource "aws_cloudfront_response_headers_policy" "site" {
   name    = local.site_response_headers_policy_name
   comment = "Block Drop security headers including Content-Security-Policy"
+
+  custom_headers_config {
+    items {
+      header   = "permissions-policy"
+      override = true
+      value    = local.permissions_policy
+    }
+  }
 
   security_headers_config {
     content_security_policy {
