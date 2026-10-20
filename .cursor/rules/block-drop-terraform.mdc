@@ -13,6 +13,7 @@ Platform layout/CI: `app-terraform`.
 - Pattern: `[environment]-block-drop-[purpose]-[resource-type]` (e.g. `stg-block-drop-site-bucket`).
 - State bucket: `shared-block-drop-terraform-state-bucket`; keys `bootstrap/`, `envs/stg/`, `envs/prod/`, `cloudflare/`, `grafana/`.
 - Plan role: `shared-block-drop-terraform-plan-role` + GitHub Environment `terraform` (`infra/terraform/docs/terraform-plan-ci.md`).
+- AWS provider `default_tags`: `Project = "blockdrop"` (plus `Environment`) on bootstrap / stg / prod.
 
 ## Domains
 
