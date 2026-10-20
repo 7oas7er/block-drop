@@ -22,9 +22,21 @@ sm_access_token = "glsm_..."
 # Grafana → Cloud Provider → AWS → Add account:
 # grafana_aws_external_id = "..."
 
-# Cloud Provider AWS account + CloudWatch scrape (default off while Grafana
+# Cloud Provider AWS account + CloudWatch scrape (default on). Set false to remove
 # scrape job without removing the IAM role.
 # enable_cloudwatch_scrape = false
+
+# Cloudflare edge analytics via Infinity → GraphQL (Free plan; not the Business Alloy integration).
+# Token: Zone Analytics Read on 7oas7er.com. Zone tag defaults to 7oas7er.com (CLOUDFLARE_ZONE_ID).
+# cloudflare_analytics_token = "..."
+# cloudflare_zone_tag        = "701810fff825f90c0eea671970a0cc9e"
+# enable_cloudflare_edge     = true
+
+# GitHub Actions panels (fine-grained PAT: Actions + Metadata read on block-drop).
+# github_access_token = "github_pat_..."
+# github_owner        = "7oas7er"
+# github_repository   = "block-drop"
+# enable_github_ci    = true
 
 # Optional overrides:
 # prod_site_url = "https://blockdrop.7oas7er.com"

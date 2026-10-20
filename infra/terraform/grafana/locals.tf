@@ -9,4 +9,16 @@ locals {
     "eu-north-1",
     "us-east-1",
   ]
+
+  # nonsensitive(): presence checks on tokens must not taint boolean outputs/counts.
+  enable_cloudflare_edge = nonsensitive(
+    var.enable_cloudflare_edge
+    && var.cloudflare_analytics_token != null
+    && var.cloudflare_zone_tag != null
+  )
+
+  enable_github_ci = nonsensitive(
+    var.enable_github_ci
+    && var.github_access_token != null
+  )
 }
