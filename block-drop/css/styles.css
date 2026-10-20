@@ -55,7 +55,7 @@ h1 {
 .layout {
   display: flex;
   flex-direction: row;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: center;
   gap: 1.25rem;
   width: 100%;
@@ -343,10 +343,10 @@ a {
   color: var(--link);
 }
 
-/* Text link in the control column — same width rhythm as buttons, still clearly a link. */
+/* Text link pinned to the bottom of the control column; still clearly a link. */
 .panel-link {
   display: block;
-  margin-top: 0.15rem;
+  margin-top: auto;
   padding: 0.35rem 0.75rem;
   font: inherit;
   font-size: 0.9rem;
