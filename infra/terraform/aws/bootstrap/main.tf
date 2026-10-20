@@ -6,7 +6,8 @@ resource "aws_s3_bucket" "terraform_state" {
   bucket = local.state_bucket_name
 
   tags = {
-    Name = local.state_bucket_name
+    Name    = local.state_bucket_name
+    Project = "blockdrop"
   }
 
   lifecycle {
