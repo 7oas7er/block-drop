@@ -197,6 +197,7 @@ jobs:
             "/css/styles.css?v=2" \
             "/css/styles.css?v=theme-1" \
             "/css/styles.css?v=score-1" \
+            "/css/styles.css?v=imprint-1" \
             "/js/theme-boot.js" \
             "/js/theme-boot.js?v=2" \
             "/js/theme-boot.js?v=theme-1" \
