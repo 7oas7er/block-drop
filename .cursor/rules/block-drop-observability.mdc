@@ -26,12 +26,15 @@ When adding or extending observability for a hosted web app, mirror this stack:
    - Org RCP must exempt Grafana account `008923505280` from outside-org `sts:*` deny or AssumeRole fails; toggle with `enable_cloudwatch_scrape`
 
 3. **Cloudflare edge analytics (Free)** — Infinity data source → Cloudflare GraphQL
-   - Token: Zone Analytics Read; zoneTag from Cloudflare zone id
-   - Panels: `httpRequestsAdaptiveGroups` (traffic) + `firewallEventsAdaptive` / `Groups` (blocks / rate limits on `/api/scores`)
+   - Token: Zone Analytics Read (`cfat_` account tokens OK); zoneTag from Cloudflare zone id
+   - Panels: `httpRequestsAdaptiveGroups` (traffic + HTTP 403/429 blocks); `firewallEventsAdaptive` event table by host
+   - Free does **not** enable `firewallEventsAdaptiveGroups` — do not query it
    - Probe: `infra/terraform/grafana/scripts/probe-cloudflare-graphql.sh`
    - Skip the Business/Enterprise Cloudflare Alloy integration on Free
 
 4. **GitHub Actions CI** — Grafana GitHub data source (no Alloy exporter)
+   - Install catalog plugin `grafana-github-datasource` on the stack (`grafana_cloud_plugin_installation`); otherwise the DS is invisible
+   - Cloud token needs `stack-plugins:read|write|delete`
    - Fine-grained PAT: Actions + Metadata read on the app repo
    - Panels: workflow runs / usage for deploy + terraform-plan (and annotations for commits)
 
