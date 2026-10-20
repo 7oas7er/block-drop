@@ -30,6 +30,20 @@ variable "prod_origin_verify_secret" {
   sensitive   = true
 }
 
+# Netrunner (play-scala) shares this zone; secrets must match that app's AWS origin_verify_secret
+# (not Block Drop's). See play-scala infra/terraform/cloudflare/README.md.
+variable "netrunner_stg_origin_verify_secret" {
+  description = "X-Origin-Verify for netrunner-stg.7oas7er.com; must match Netrunner AWS stg origin_verify_secret."
+  type        = string
+  sensitive   = true
+}
+
+variable "netrunner_prod_origin_verify_secret" {
+  description = "X-Origin-Verify for netrunner.7oas7er.com; must match Netrunner AWS prod origin_verify_secret."
+  type        = string
+  sensitive   = true
+}
+
 # Cloudflare Free only allows a 10s counting period and 10s mitigation timeout.
 # On Pro+, you can raise these (supported values: 10, 15, 20, 30, …).
 variable "api_rate_limit_period_seconds" {

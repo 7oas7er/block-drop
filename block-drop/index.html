@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Block Drop</title>
   <script src="js/theme-boot.js?v=2"></script>
-  <link rel="stylesheet" href="css/styles.css?v=2">
+  <link rel="stylesheet" href="css/styles.css?v=imprint-2">
 </head>
 <body>
-  <p class="score-corner"><span class="label">Score</span> <span id="score">0</span></p>
   <h1>Block Drop</h1>
   <div class="layout">
     <aside class="high-scores" aria-label="High scores">
+      <p class="stat current-score"><span class="label">Score</span> <span id="score">0</span></p>
       <p class="label">High scores</p>
       <ol id="high-score-list"></ol>
       <p id="high-score-status" class="high-score-status" role="status"></p>
@@ -63,11 +63,9 @@
         <li>P pause</li>
         <li>R restart</li>
       </ul>
+      <a class="panel-link" href="imprint.html">Imprint</a>
     </aside>
   </div>
-  <footer class="site-footer">
-    <a href="imprint.html">Imprint</a>
-  </footer>
   <script defer src="js/theme.js?v=2"></script>
   <script defer src="js/pieces.js?v=2"></script>
   <script defer src="js/game.js?v=2"></script>
