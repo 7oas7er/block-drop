@@ -6,8 +6,8 @@ alwaysApply: true
 # Observability — Grafana first
 
 - **Default platform**: Grafana Cloud Free for external monitoring and AWS metric views. Do **not** add Checkly, Datadog, New Relic, or similar unless explicitly asked to replace Grafana.
-- **IaC**: Terraform root `infra/terraform/grafana/` (S3 state key `grafana/`). Tokens only in gitignored `terraform.tfvars` or `GRAFANA_*` env vars.
-- **Cloudflare** stays DNS/edge only — no second monitoring SaaS there.
+- **IaC**: Terraform root `infra/terraform/grafana/` (S3 state key `grafana/`). Tokens only in gitignored `terraform.tfvars` or `GRAFANA_*` / related env vars.
+- **Cloudflare** stays DNS/edge only — no second monitoring SaaS there. Edge traffic and rate-limit / firewall events may be **pulled into** Grafana via GraphQL (Infinity data source). Do not use the official Grafana Cloudflare Alloy integration unless the Cloudflare plan is Business/Enterprise.
 
 ## Pattern for a public web app (Block Drop reference)
 
@@ -25,9 +25,21 @@ When adding or extending observability for a hosted web app, mirror this stack:
    - Tag AWS resources (`Name`, etc.) so scrape discovery works; use static label `project=<app>`
    - Org RCP must exempt Grafana account `008923505280` from outside-org `sts:*` deny or AssumeRole fails; toggle with `enable_cloudwatch_scrape`
 
-3. **One app dashboard** — folder + overview dashboard in the Grafana stack
-   - Synthetics: availability stats, success/duration, HTTP status/phase latency, failure logs (Loki)
-   - CloudWatch panels on the same board (may be empty until scrape is enabled)
+3. **Cloudflare edge analytics (Free)** — Infinity data source → Cloudflare GraphQL
+   - Token: Zone Analytics Read (`cfat_` account tokens OK); zoneTag from Cloudflare zone id
+   - Panels: `httpRequestsAdaptiveGroups` (traffic + HTTP 403/429 blocks); `firewallEventsAdaptive` event table by host
+   - Free does **not** enable `firewallEventsAdaptiveGroups` — do not query it
+   - Probe: `infra/terraform/grafana/scripts/probe-cloudflare-graphql.sh`
+   - Skip the Business/Enterprise Cloudflare Alloy integration on Free
+
+4. **GitHub Actions CI** — Grafana GitHub data source (no Alloy exporter)
+   - Install catalog plugin `grafana-github-datasource` on the stack (`grafana_cloud_plugin_installation`); otherwise the DS is invisible
+   - Cloud token needs `stack-plugins:read|write|delete`
+   - Fine-grained PAT: Actions + Metadata read on the app repo
+   - Panels: workflow runs / usage for deploy + terraform-plan (and annotations for commits)
+
+5. **One app dashboard** — folder + overview dashboard in the Grafana stack
+   - Synthetics, CloudWatch, Cloudflare edge, GitHub CI on the same board
    - Publish via stack service account (`block-drop-terraform`); cloud token needs `stack-service-accounts:write`
    - Reference: `infra/terraform/grafana/dashboards/block-drop.json`
 
@@ -36,4 +48,4 @@ When adding or extending observability for a hosted web app, mirror this stack:
 - **Do** reuse labels (`project`, `environment`) so one dashboard can filter prod vs stg.
 - **Do** keep synthetics even if CloudWatch scrape is temporarily disabled.
 - **Don’t** invent a second observability product or duplicate synthetics in another vendor.
-- **Don’t** commit Grafana tokens, SM tokens, or service-account keys.
+- **Don’t** commit Grafana tokens, SM tokens, Cloudflare analytics tokens, GitHub PATs, or service-account keys.

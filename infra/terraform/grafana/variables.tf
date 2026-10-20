@@ -94,3 +94,69 @@ variable "check_timeout_ms" {
   type        = number
   default     = 10000
 }
+
+variable "enable_cloudflare_edge" {
+  description = <<-EOT
+    Provision Infinity data source for Cloudflare GraphQL edge analytics.
+    Also requires cloudflare_analytics_token and cloudflare_zone_tag.
+  EOT
+  type        = bool
+  default     = true
+}
+
+variable "cloudflare_analytics_token" {
+  description = <<-EOT
+    Cloudflare API token with Zone Analytics Read (GraphQL). Prefer
+    CLOUDFLARE_ANALYTICS_TOKEN. Create via Cloudflare → My Profile → API Tokens
+    (Analytics template / Zone Analytics Read). Not the deploy purge token unless
+    it also has Analytics Read.
+  EOT
+  type        = string
+  default     = null
+  sensitive   = true
+  nullable    = true
+}
+
+variable "cloudflare_zone_tag" {
+  description = <<-EOT
+    Cloudflare zone id (zoneTag) for 7oas7er.com. From cloudflare root output
+    zone_id, GitHub Environment CLOUDFLARE_ZONE_ID, or the Zone ID in the
+    Cloudflare dashboard overview. Defaults to the Block Drop zone.
+  EOT
+  type        = string
+  default     = "701810fff825f90c0eea671970a0cc9e"
+  nullable    = true
+}
+
+variable "enable_github_ci" {
+  description = <<-EOT
+    Provision GitHub data source for Actions workflow panels.
+    Also requires github_access_token.
+  EOT
+  type        = bool
+  default     = true
+}
+
+variable "github_access_token" {
+  description = <<-EOT
+    Fine-grained (preferred) or classic PAT with read access to Actions and
+    Metadata on the Block Drop repo (Contents read if the plugin requests it).
+    Prefer GITHUB_GRAFANA_TOKEN so it is not confused with deploy tokens.
+  EOT
+  type        = string
+  default     = null
+  sensitive   = true
+  nullable    = true
+}
+
+variable "github_owner" {
+  description = "GitHub owner (user or org) for Block Drop CI panels."
+  type        = string
+  default     = "7oas7er"
+}
+
+variable "github_repository" {
+  description = "GitHub repository name for Block Drop CI panels."
+  type        = string
+  default     = "block-drop"
+}
