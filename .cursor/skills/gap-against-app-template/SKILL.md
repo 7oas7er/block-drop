@@ -34,6 +34,7 @@ Read from the template (when available): `docs/architecture.md`, `.cursor/rules/
 | **Regions** | `eu-north-1` default; `us-east-1` only when required (e.g. ACM for CloudFront) |
 | **CI gates** | Tests gate deploy; terraform fmt/validate/plan; Checkov or equivalent; npm audit high+; CodeQL or equivalent SAST |
 | **Supply chain** | Dependabot (or Renovate) → staging; Actions + app deps + Terraform providers |
+| **GitHub security floor** | Default branch `main`; Dependabot **alerts** on; secret scanning + push protection on; ruleset on `main`/`staging` (`Required CI`); Actions `GITHUB_TOKEN` read-only (no PR approve); CodeQL default setup off. **Verify via GitHub API** — do not score from docs alone (`docs/github-branch-protection.md`) |
 | **Docs / agents** | `AGENTS.md`, architecture doc, ADRs for irreversible choices, `SECURITY.md`, Cursor `app-*` rules |
 | **Maintenance** | Documented weekly/monthly cadence |
 | **Secrets** | No committed tfvars/state/tokens; OIDC for AWS in Actions |
@@ -44,7 +45,7 @@ Mark **N/A** when the product legitimately differs (e.g. not a public web app) �
 
 1. **Context** — one paragraph: what this repo is; template path used.
 2. **Gap table** — Area | Status | Evidence (paths) | Notes.
-3. **Migration plan** — ordered PRs/steps, smallest first (docs/rules → CI → Terraform layout → edge gate → Grafana). Call out blast radius and “apply locally” where needed.
+3. **Migration plan** — ordered PRs/steps, smallest first (docs/rules → **GitHub security floor via `gh`** → CI → Terraform layout → edge gate → Grafana). Call out blast radius and “apply locally” where needed. Security Settings gaps are **P0** even when in-repo workflows already exist.
 4. **Non-goals** — what not to copy from Block Drop (game-specific `block-drop-*`, `/api/scores`, puzzle UX).
 5. **Ask** — only if blocked (missing template access, ambiguous prod risk).
 

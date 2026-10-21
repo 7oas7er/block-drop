@@ -65,9 +65,9 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 
 - [x] Document required checks for `staging` and `main` (tests; terraform plan when infra paths change)
 - [x] Enable GitHub branch protection / rulesets accordingly
-- [x] Confirm secret scanning + push protection are on for the repo
+- [x] Confirm secret scanning + push protection are on for the repo (**API verify** — never assume create-time defaults or sibling repos; see `docs/github-branch-protection.md`)
 
-**Why:** Solo now; templates need this written and enforced before a second human (or busier AI loop) arrives.
+**Why:** Solo now; templates need this written and enforced before a second human (or busier AI loop) arrives. Migrated/old repos often lack the floor newer public repos get at create time.
 
 ---
 
