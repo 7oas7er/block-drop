@@ -42,6 +42,29 @@ function memoryStore(seed) {
   };
 }
 
+function memoryTicketStore() {
+  const burned = new Set();
+  return {
+    burned,
+    async burn(jti) {
+      if (burned.has(jti)) {
+        const error = new Error('conflict');
+        error.name = 'PreconditionFailed';
+        throw error;
+      }
+      burned.add(jti);
+    },
+  };
+}
+
+function ticketsAt(nowSec) {
+  return scores.createTicketService(
+    'test-secret',
+    memoryTicketStore(),
+    { minAgeSec: 0, ttlSec: 3600, now: () => nowSec },
+  );
+}
+
 function fullTable() {
   const table = [];
   for (let rank = 0; rank < 10; rank += 1) {
@@ -77,12 +100,26 @@ test('loads an empty table when the object is missing', async () => {
   assert.equal(response.headers['cache-control'], 'no-store');
 });
 
-test('saves a qualifying score and reads it back', async () => {
+test('issues a play ticket', async () => {
+  const tickets = ticketsAt(1_700_000_000);
+  const response = await scores.handleScores({
+    method: 'POST',
+    body: JSON.stringify({ op: 'ticket' }),
+  }, memoryStore(), tickets);
+  assert.equal(response.statusCode, 200);
+  const payload = JSON.parse(response.body);
+  assert.match(payload.ticket, /^v1\.[a-f0-9]{32}\.\d+\.\d+\.[A-Za-z0-9_-]+$/);
+  assert.equal(payload.expiresAt, 1_700_000_000 + 3600);
+});
+
+test('saves a qualifying score with a valid ticket and reads it back', async () => {
   const store = memoryStore();
+  const tickets = ticketsAt(1_700_000_000);
+  const issued = tickets.issue();
   const saved = await scores.handleScores({
     method: 'POST',
-    body: JSON.stringify({ name: 'ace!', score: 2400 }),
-  }, store);
+    body: JSON.stringify({ name: 'ace!', score: 2400, ticket: issued.ticket }),
+  }, store, tickets);
   assert.equal(saved.statusCode, 200);
   assert.deepEqual(JSON.parse(saved.body), {
     scores: [{ name: 'ACE', score: 2400 }],
@@ -95,18 +132,59 @@ test('saves a qualifying score and reads it back', async () => {
   });
 });
 
+test('rejects a reuse of the same ticket', async () => {
+  const store = memoryStore();
+  const tickets = ticketsAt(1_700_000_000);
+  const issued = tickets.issue();
+  const first = await scores.handleScores({
+    method: 'POST',
+    body: JSON.stringify({ name: 'ACE', score: 100, ticket: issued.ticket }),
+  }, store, tickets);
+  assert.equal(first.statusCode, 200);
+  const second = await scores.handleScores({
+    method: 'POST',
+    body: JSON.stringify({ name: 'BOB', score: 200, ticket: issued.ticket }),
+  }, store, tickets);
+  assert.equal(second.statusCode, 403);
+});
+
+test('rejects a score above MAX_SCORE even with a ticket', async () => {
+  const tickets = ticketsAt(1_700_000_000);
+  const issued = tickets.issue();
+  const response = await scores.handleScores({
+    method: 'POST',
+    body: JSON.stringify({
+      name: 'ACE',
+      score: scores.MAX_SCORE + 1,
+      ticket: issued.ticket,
+    }),
+  }, memoryStore(), tickets);
+  assert.equal(response.statusCode, 400);
+});
+
+test('rejects a missing ticket', async () => {
+  const response = await scores.handleScores({
+    method: 'POST',
+    body: JSON.stringify({ name: 'ACE', score: 100 }),
+  }, memoryStore(), ticketsAt(1_700_000_000));
+  assert.equal(response.statusCode, 403);
+});
+
 test('rejects a zero score and a score below a full table', async () => {
   const store = memoryStore(fullTable());
+  const tickets = ticketsAt(1_700_000_000);
+  const zeroTicket = tickets.issue();
   const zero = await scores.handleScores({
     method: 'POST',
-    body: JSON.stringify({ name: 'AAA', score: 0 }),
-  }, store);
+    body: JSON.stringify({ name: 'AAA', score: 0, ticket: zeroTicket.ticket }),
+  }, store, tickets);
   assert.equal(zero.statusCode, 400);
 
+  const lowTicket = tickets.issue();
   const low = await scores.handleScores({
     method: 'POST',
-    body: JSON.stringify({ name: 'LOW', score: 900 }),
-  }, store);
+    body: JSON.stringify({ name: 'LOW', score: 900, ticket: lowTicket.ticket }),
+  }, store, tickets);
   assert.equal(low.statusCode, 200);
   const payload = JSON.parse(low.body);
   assert.equal(payload.saved, false);
@@ -116,14 +194,16 @@ test('rejects a zero score and a score below a full table', async () => {
 
 test('retries when two saves write the same table', async () => {
   const store = memoryStore();
+  const tickets = ticketsAt(1_700_000_000);
+  const issued = tickets.issue();
   store.failNextWrite((state) => {
     state.document = fullTable();
     state.etag = 'other-player';
   });
   const response = await scores.handleScores({
     method: 'POST',
-    body: JSON.stringify({ name: 'NEW', score: 40 }),
-  }, store);
+    body: JSON.stringify({ name: 'NEW', score: 40, ticket: issued.ticket }),
+  }, store, tickets);
   const payload = JSON.parse(response.body);
   assert.equal(response.statusCode, 200);
   assert.equal(payload.saved, false);
@@ -133,13 +213,37 @@ test('retries when two saves write the same table', async () => {
 
 test('rejects unexpected methods and malformed scores', async () => {
   const store = memoryStore();
-  const removed = await scores.handleScores({ method: 'DELETE', body: '' }, store);
+  const tickets = ticketsAt(1_700_000_000);
+  const removed = await scores.handleScores({ method: 'DELETE', body: '' }, store, tickets);
   assert.equal(removed.statusCode, 405);
-  const malformed = await scores.handleScores({ method: 'POST', body: '{not json' }, store);
+  const malformed = await scores.handleScores({ method: 'POST', body: '{not json' }, store, tickets);
   assert.equal(malformed.statusCode, 400);
   const textScore = await scores.handleScores({
     method: 'POST',
-    body: JSON.stringify({ name: 'AAA', score: '2400' }),
-  }, store);
+    body: JSON.stringify({ name: 'AAA', score: '2400', ticket: tickets.issue().ticket }),
+  }, store, tickets);
   assert.equal(textScore.statusCode, 400);
+});
+
+test('enforces ticket minimum age', async () => {
+  let now = 1_700_000_000;
+  const ticketStore = memoryTicketStore();
+  const tickets = scores.createTicketService('test-secret', ticketStore, {
+    minAgeSec: 15,
+    ttlSec: 3600,
+    now: () => now,
+  });
+  const issued = tickets.issue();
+  now = 1_700_000_010;
+  const early = await scores.handleScores({
+    method: 'POST',
+    body: JSON.stringify({ name: 'ACE', score: 100, ticket: issued.ticket }),
+  }, memoryStore(), tickets);
+  assert.equal(early.statusCode, 403);
+  now = 1_700_000_020;
+  const ok = await scores.handleScores({
+    method: 'POST',
+    body: JSON.stringify({ name: 'ACE', score: 100, ticket: issued.ticket }),
+  }, memoryStore(), tickets);
+  assert.equal(ok.statusCode, 200);
 });

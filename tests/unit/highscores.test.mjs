@@ -70,6 +70,7 @@ describe("BlockDropScores.load and save", () => {
       assert.match(options.headers["x-amz-content-sha256"], /^[a-f0-9]{64}$/);
       assert.equal(JSON.parse(options.body).name, "ACE");
       assert.equal(JSON.parse(options.body).score, 420);
+      assert.equal(JSON.parse(options.body).ticket, "v1.test-ticket");
       return {
         ok: true,
         json: async () => ({
@@ -79,10 +80,24 @@ describe("BlockDropScores.load and save", () => {
         }),
       };
     });
-    const result = await BlockDropScores.save("ACE", 420);
+    const result = await BlockDropScores.save("ACE", 420, "v1.test-ticket");
     assert.equal(sawPost, true);
     assert.equal(result.saved, true);
     assert.equal(result.index, 0);
     assert.equal(result.list[0].name, "ACE");
+  });
+
+  it("issues a play ticket", async () => {
+    const { BlockDropScores } = loadScores(async (url, options) => {
+      assert.equal(url, "/api/scores");
+      assert.equal(options.method, "POST");
+      assert.deepEqual(JSON.parse(options.body), { op: "ticket" });
+      assert.match(options.headers["x-amz-content-sha256"], /^[a-f0-9]{64}$/);
+      return {
+        ok: true,
+        json: async () => ({ ticket: "v1.abc", expiresAt: 123 }),
+      };
+    });
+    assert.equal(await BlockDropScores.issueTicket(), "v1.abc");
   });
 });

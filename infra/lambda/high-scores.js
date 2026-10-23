@@ -1,7 +1,15 @@
+var crypto = require('node:crypto');
+
 var MAX_SCORES = 10;
 var NAME_LENGTH = 3;
-var MAX_SCORE = 99999999;
+// Cap at a long skilled human run (line clears × level + drops). Not a speedrun WR.
+var MAX_SCORE = 500000;
 var WRITE_ATTEMPTS = 5;
+var MAX_BODY_BYTES = 512;
+var TICKET_TTL_SEC = 7200;
+var TICKET_MIN_AGE_SEC = 15;
+var TICKET_SECRET_KEY = 'ticket-secret';
+var TICKETS_PREFIX = 'tickets/';
 
 function normalizeName(name) {
   var cleaned = String(name || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
@@ -28,12 +36,12 @@ function parseScores(document) {
   } else if (document && Array.isArray(document.scores)) {
     source = document.scores;
   }
+  // No upper bound on read so lowering MAX_SCORE does not hide historical rows.
   return source.filter(function (entry) {
     return entry
       && typeof entry.name === 'string'
       && Number.isInteger(entry.score)
-      && entry.score >= 1
-      && entry.score <= MAX_SCORE;
+      && entry.score >= 1;
   }).slice(0, MAX_SCORES).map(function (entry) {
     return {
       name: normalizeName(entry.name),
@@ -98,6 +106,104 @@ function parseScore(score) {
   return score;
 }
 
+function signTicket(secret, jti, iat, exp) {
+  return crypto
+    .createHmac('sha256', secret)
+    .update(jti + '.' + iat + '.' + exp)
+    .digest('base64url');
+}
+
+function formatTicket(secret, jti, iat, exp) {
+  return 'v1.' + jti + '.' + iat + '.' + exp + '.' + signTicket(secret, jti, iat, exp);
+}
+
+function parseTicket(ticket) {
+  var parts;
+  var iat;
+  var exp;
+  if (typeof ticket !== 'string') {
+    return null;
+  }
+  parts = ticket.split('.');
+  if (parts.length !== 5 || parts[0] !== 'v1') {
+    return null;
+  }
+  if (!/^[a-f0-9]{32}$/.test(parts[1])) {
+    return null;
+  }
+  iat = Number(parts[2]);
+  exp = Number(parts[3]);
+  if (!Number.isInteger(iat) || !Number.isInteger(exp) || !parts[4]) {
+    return null;
+  }
+  return {
+    jti: parts[1],
+    iat: iat,
+    exp: exp,
+    sig: parts[4],
+  };
+}
+
+function createTicketService(secret, ticketStore, options) {
+  var minAgeSec = options && typeof options.minAgeSec === 'number'
+    ? options.minAgeSec
+    : TICKET_MIN_AGE_SEC;
+  var ttlSec = options && typeof options.ttlSec === 'number'
+    ? options.ttlSec
+    : TICKET_TTL_SEC;
+  var nowFn = options && typeof options.now === 'function'
+    ? options.now
+    : function () { return Math.floor(Date.now() / 1000); };
+
+  return {
+    issue: function () {
+      var now = nowFn();
+      var jti = crypto.randomBytes(16).toString('hex');
+      var iat = now;
+      var exp = now + ttlSec;
+      return {
+        ticket: formatTicket(secret, jti, iat, exp),
+        expiresAt: exp,
+      };
+    },
+    consume: async function (ticket) {
+      var parsed = parseTicket(ticket);
+      var now;
+      var expected;
+      if (!parsed) {
+        return { ok: false, reason: 'invalid' };
+      }
+      expected = signTicket(secret, parsed.jti, parsed.iat, parsed.exp);
+      try {
+        if (
+          parsed.sig.length !== expected.length
+          || !crypto.timingSafeEqual(Buffer.from(parsed.sig), Buffer.from(expected))
+        ) {
+          return { ok: false, reason: 'invalid' };
+        }
+      } catch (error) {
+        return { ok: false, reason: 'invalid' };
+      }
+      now = nowFn();
+      if (now < parsed.iat + minAgeSec) {
+        return { ok: false, reason: 'too-new' };
+      }
+      if (now > parsed.exp) {
+        return { ok: false, reason: 'expired' };
+      }
+      try {
+        await ticketStore.burn(parsed.jti);
+      } catch (error) {
+        if (isConflict(error)) {
+          return { ok: false, reason: 'used' };
+        }
+        throw error;
+      }
+      return { ok: true, jti: parsed.jti };
+    },
+  };
+}
+
 async function readScores(store) {
   var loaded = await store.read();
   return {
@@ -136,11 +242,13 @@ async function saveScore(store, name, score) {
   throw new Error('Could not save high scores.');
 }
 
-async function handleScores(request, store) {
+async function handleScores(request, store, tickets) {
   var method = request && request.method;
   var body;
   var score;
   var saved;
+  var issued;
+  var consumed;
   if (method === 'GET') {
     try {
       saved = await readScores(store);
@@ -152,7 +260,7 @@ async function handleScores(request, store) {
   if (method !== 'POST') {
     return jsonResponse(405, { error: 'Method not allowed.' });
   }
-  if (!request.body || request.body.length > 256) {
+  if (!request.body || request.body.length > MAX_BODY_BYTES) {
     return jsonResponse(400, { error: 'Invalid score.' });
   }
   try {
@@ -160,9 +268,27 @@ async function handleScores(request, store) {
   } catch (error) {
     return jsonResponse(400, { error: 'Invalid score.' });
   }
+  if (body && body.op === 'ticket') {
+    if (!tickets) {
+      return jsonResponse(500, { error: 'Could not issue ticket.' });
+    }
+    issued = tickets.issue();
+    return jsonResponse(200, issued);
+  }
   score = parseScore(body && body.score);
   if (score === null) {
     return jsonResponse(400, { error: 'Invalid score.' });
+  }
+  if (!tickets) {
+    return jsonResponse(500, { error: 'Could not save high scores.' });
+  }
+  try {
+    consumed = await tickets.consume(body && body.ticket);
+  } catch (error) {
+    return jsonResponse(500, { error: 'Could not save high scores.' });
+  }
+  if (!consumed.ok) {
+    return jsonResponse(403, { error: 'Invalid ticket.' });
   }
   try {
     saved = await saveScore(store, body.name, score);
@@ -180,18 +306,43 @@ function decodeBody(event) {
   return body;
 }
 
-async function handler(event) {
-  var method = event
-    && event.requestContext
-    && event.requestContext.http
-    && event.requestContext.http.method;
+async function loadOrCreateSecret(client, bucket, key) {
   var sdk = require('@aws-sdk/client-s3');
-  var client = new sdk.S3Client({});
-  var store = createS3Store(client, process.env.SCORES_BUCKET, process.env.SCORES_KEY);
-  return handleScores({
-    method: method,
-    body: decodeBody(event),
-  }, store);
+  var output;
+  var generated;
+  try {
+    output = await client.send(new sdk.GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    }));
+    return await output.Body.transformToString();
+  } catch (error) {
+    if (!(error && (error.name === 'NoSuchKey' || error.name === 'NotFound'
+      || (error.$metadata && error.$metadata.httpStatusCode === 404)))) {
+      throw error;
+    }
+  }
+  generated = crypto.randomBytes(32).toString('base64url');
+  try {
+    await client.send(new sdk.PutObjectCommand({
+      Bucket: bucket,
+      Key: key,
+      Body: generated,
+      ContentType: 'text/plain',
+      CacheControl: 'no-store',
+      IfNoneMatch: '*',
+    }));
+    return generated;
+  } catch (error) {
+    if (!isConflict(error)) {
+      throw error;
+    }
+    output = await client.send(new sdk.GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    }));
+    return await output.Body.transformToString();
+  }
 }
 
 function createS3Store(client, bucket, key) {
@@ -234,11 +385,57 @@ function createS3Store(client, bucket, key) {
   };
 }
 
+function createS3TicketStore(client, bucket, prefix) {
+  var sdk = require('@aws-sdk/client-s3');
+  return {
+    burn: async function (jti) {
+      await client.send(new sdk.PutObjectCommand({
+        Bucket: bucket,
+        Key: prefix + jti,
+        Body: '1',
+        ContentType: 'text/plain',
+        CacheControl: 'no-store',
+        IfNoneMatch: '*',
+      }));
+    },
+  };
+}
+
+async function handler(event) {
+  var method = event
+    && event.requestContext
+    && event.requestContext.http
+    && event.requestContext.http.method;
+  var sdk = require('@aws-sdk/client-s3');
+  var client = new sdk.S3Client({});
+  var bucket = process.env.SCORES_BUCKET;
+  var secret = await loadOrCreateSecret(
+    client,
+    bucket,
+    process.env.TICKET_SECRET_KEY || TICKET_SECRET_KEY,
+  );
+  var store = createS3Store(client, bucket, process.env.SCORES_KEY);
+  var ticketStore = createS3TicketStore(
+    client,
+    bucket,
+    process.env.TICKETS_PREFIX || TICKETS_PREFIX,
+  );
+  var tickets = createTicketService(secret, ticketStore);
+  return handleScores({
+    method: method,
+    body: decodeBody(event),
+  }, store, tickets);
+}
+
 module.exports = {
   MAX_SCORES: MAX_SCORES,
+  MAX_SCORE: MAX_SCORE,
+  TICKET_MIN_AGE_SEC: TICKET_MIN_AGE_SEC,
   handler: handler,
   handleScores: handleScores,
   normalizeName: normalizeName,
   qualifies: qualifies,
   insertScore: insertScore,
+  createTicketService: createTicketService,
+  formatTicket: formatTicket,
 };

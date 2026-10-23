@@ -35,8 +35,10 @@ resource "aws_lambda_function" "high_scores" {
 
   environment {
     variables = {
-      SCORES_BUCKET = aws_s3_bucket.high_scores.bucket
-      SCORES_KEY    = local.high_scores_object_key
+      SCORES_BUCKET     = aws_s3_bucket.high_scores.bucket
+      SCORES_KEY        = local.high_scores_object_key
+      TICKET_SECRET_KEY = local.score_ticket_secret_key
+      TICKETS_PREFIX    = local.score_tickets_prefix
     }
   }
 

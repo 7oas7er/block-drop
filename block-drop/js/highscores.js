@@ -30,15 +30,6 @@ var BlockDropScores = window.BlockDropScores || {};
     return payload.scores;
   }
 
-  function load() {
-    return fetch(SCORES_URL, { cache: "no-store" }).then(function (response) {
-      if (!response.ok) {
-        throw new Error("Could not load high scores.");
-      }
-      return response.json();
-    }).then(readScores);
-  }
-
   function sha256Hex(text) {
     var bytes = new TextEncoder().encode(text);
     return crypto.subtle.digest("SHA-256", bytes).then(function (buffer) {
@@ -54,11 +45,8 @@ var BlockDropScores = window.BlockDropScores || {};
     });
   }
 
-  function save(name, score) {
-    var body = JSON.stringify({
-      name: name,
-      score: score
-    });
+  function postJson(bodyObject) {
+    var body = JSON.stringify(bodyObject);
     // CloudFront signs a POST only when the viewer sends the body hash.
     return sha256Hex(body).then(function (hash) {
       return fetch(SCORES_URL, {
@@ -70,7 +58,41 @@ var BlockDropScores = window.BlockDropScores || {};
         cache: "no-store",
         body: body
       });
+    });
+  }
+
+  function load() {
+    return fetch(SCORES_URL, { cache: "no-store" }).then(function (response) {
+      if (!response.ok) {
+        throw new Error("Could not load high scores.");
+      }
+      return response.json();
+    }).then(readScores);
+  }
+
+  function issueTicket() {
+    return postJson({ op: "ticket" }).then(function (response) {
+      if (!response.ok) {
+        throw new Error("Could not start score session.");
+      }
+      return response.json();
+    }).then(function (payload) {
+      if (!payload || typeof payload.ticket !== "string") {
+        throw new Error("Could not start score session.");
+      }
+      return payload.ticket;
+    });
+  }
+
+  function save(name, score, ticket) {
+    return postJson({
+      name: name,
+      score: score,
+      ticket: ticket
     }).then(function (response) {
+      if (response.status === 403) {
+        throw new Error("Score session expired. Restart and try again.");
+      }
       if (!response.ok) {
         throw new Error("Could not save high scores.");
       }
@@ -89,5 +111,6 @@ var BlockDropScores = window.BlockDropScores || {};
   BlockDropScores.qualifies = qualifies;
   BlockDropScores.normalizeName = normalizeName;
   BlockDropScores.load = load;
+  BlockDropScores.issueTicket = issueTicket;
   BlockDropScores.save = save;
 })();
