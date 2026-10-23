@@ -8,7 +8,6 @@ var WRITE_ATTEMPTS = 5;
 var MAX_BODY_BYTES = 512;
 var TICKET_TTL_SEC = 7200;
 var TICKET_MIN_AGE_SEC = 15;
-var TICKET_SECRET_KEY = 'ticket-secret';
 var TICKETS_PREFIX = 'tickets/';
 
 function normalizeName(name) {
@@ -306,45 +305,6 @@ function decodeBody(event) {
   return body;
 }
 
-async function loadOrCreateSecret(client, bucket, key) {
-  var sdk = require('@aws-sdk/client-s3');
-  var output;
-  var generated;
-  try {
-    output = await client.send(new sdk.GetObjectCommand({
-      Bucket: bucket,
-      Key: key,
-    }));
-    return await output.Body.transformToString();
-  } catch (error) {
-    if (!(error && (error.name === 'NoSuchKey' || error.name === 'NotFound'
-      || (error.$metadata && error.$metadata.httpStatusCode === 404)))) {
-      throw error;
-    }
-  }
-  generated = crypto.randomBytes(32).toString('base64url');
-  try {
-    await client.send(new sdk.PutObjectCommand({
-      Bucket: bucket,
-      Key: key,
-      Body: generated,
-      ContentType: 'text/plain',
-      CacheControl: 'no-store',
-      IfNoneMatch: '*',
-    }));
-    return generated;
-  } catch (error) {
-    if (!isConflict(error)) {
-      throw error;
-    }
-    output = await client.send(new sdk.GetObjectCommand({
-      Bucket: bucket,
-      Key: key,
-    }));
-    return await output.Body.transformToString();
-  }
-}
-
 function createS3Store(client, bucket, key) {
   var sdk = require('@aws-sdk/client-s3');
   return {
@@ -401,6 +361,17 @@ function createS3TicketStore(client, bucket, prefix) {
   };
 }
 
+function ticketServiceFromEnv(client, bucket) {
+  var secret = process.env.TICKET_SECRET;
+  if (!secret) {
+    return null;
+  }
+  return createTicketService(
+    secret,
+    createS3TicketStore(client, bucket, process.env.TICKETS_PREFIX || TICKETS_PREFIX),
+  );
+}
+
 async function handler(event) {
   var method = event
     && event.requestContext
@@ -409,18 +380,10 @@ async function handler(event) {
   var sdk = require('@aws-sdk/client-s3');
   var client = new sdk.S3Client({});
   var bucket = process.env.SCORES_BUCKET;
-  var secret = await loadOrCreateSecret(
-    client,
-    bucket,
-    process.env.TICKET_SECRET_KEY || TICKET_SECRET_KEY,
-  );
   var store = createS3Store(client, bucket, process.env.SCORES_KEY);
-  var ticketStore = createS3TicketStore(
-    client,
-    bucket,
-    process.env.TICKETS_PREFIX || TICKETS_PREFIX,
-  );
-  var tickets = createTicketService(secret, ticketStore);
+  // GET must not touch ticket material — missing S3 keys without ListBucket
+  // surface as AccessDenied and used to 502 the leaderboard read.
+  var tickets = method === 'POST' ? ticketServiceFromEnv(client, bucket) : null;
   return handleScores({
     method: method,
     body: decodeBody(event),
