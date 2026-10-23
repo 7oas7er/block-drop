@@ -14,7 +14,7 @@ CloudWatch scrape is enabled by default (`enable_cloudwatch_scrape = true`). Org
 | Synthetic HTTP checks | Prod/stg site + `/api/scores` (prod: ≤2 EU probes @ 5m; stg: 1 probe @ 15m) |
 | Infinity data source | Cloudflare GraphQL edge traffic + firewall / rate-limit events (optional until token set) |
 | GitHub data source | Actions workflow runs / usage for deploy + terraform-plan (optional until token set) |
-| Folder + dashboard `Block Drop` | Synthetics + CloudWatch + Cloudflare edge + GitHub CI |
+| Folder + dashboards `Block Drop — Production` / `Block Drop — Staging` | Fixed-window traffic/errors/latency + synthetics + Cloudflare edge + GitHub CI |
 
 State key: `grafana/terraform.tfstate` in `shared-block-drop-terraform-state-bucket`.
 
@@ -26,7 +26,7 @@ State key: `grafana/terraform.tfstate` in `shared-block-drop-terraform-state-buc
 4. Copy `terraform.tfvars.example` → `terraform.tfvars` and fill values (never commit `terraform.tfvars`).
    - IAM trust External ID defaults to the stack `prometheus_user_id`. If account create fails with `aws_authentication_error` and CloudTrail shows no `AssumeRole`, copy the External ID from **Cloud Provider → AWS → Add account** into `grafana_aws_external_id`.
    - Cloud Provider API URL comes from the stack `cloud_provider_url` automatically (do not invent it from `region_slug`; they can differ).
-   - Terraform creates a stack service account `block-drop-terraform` to publish the Block Drop dashboard.
+   - Terraform creates a stack service account `block-drop-terraform` to publish the Block Drop Production and Staging dashboards.
 
 ### Cloudflare edge analytics (Free plan)
 
@@ -42,9 +42,38 @@ Probe script (optional) still lives under `scripts/` here, or use platform
 1. Create a fine-grained PAT for repo `7oas7er/block-drop` with **Actions: Read**, **Metadata: Read**, and **Contents: Read** if the plugin requires it.
 2. Set `github_access_token` in `terraform.tfvars` (or `GITHUB_GRAFANA_TOKEN`).
 3. The `grafana-github-datasource` **plugin** is installed by platform `shared-obs`. This root only creates DS `github-block-drop`.
-4. Dashboard panels cover `deploy-block-drop.yml` and `terraform-plan.yml`.
+4. Both env dashboards include GitHub panels for `deploy-block-drop.yml` and `terraform-plan.yml`.
+   Panel targets must put the file name in `options.workflow` (not a top-level `workflow`
+   field) — otherwise the plugin queries an empty name and returns `workflow not found`.
 
 Without the GitHub token, synthetics + CloudWatch still apply; the GitHub DS is skipped.
+
+## Dashboards
+
+Two dashboards replace the old single overview:
+
+| Dashboard | Host / CloudFront `Name` tag |
+|-----------|------------------------------|
+| Block Drop — Production | `blockdrop.7oas7er.com` / `prod-block-drop-site-distribution` |
+| Block Drop — Staging | `blockdrop-stg.7oas7er.com` / `stg-block-drop-site-distribution` |
+
+Top rows use **fixed relative ranges** (hour / day / week / month / year):
+
+- **Requests / 4xx+5xx** — Cloudflare GraphQL Adaptive for ≤30d windows; **year uses CloudWatch** (Free Adaptive max span ≈ 4w2d)
+- **Latency** — CloudFront `OriginLatency` + Cloudflare `avg.originResponseDurationMs` (Free does **not** expose edge TTFB)
+- Month window is `now-30d` with hourly buckets (`datetimeDay_ASC` is not a valid Adaptive orderBy)
+
+Below that: synthetics (env-scoped site + `/api/scores`); Cloudflare volume / cache & bots / paths & firewall; GitHub CI. CloudWatch scrape remains for year-window / OriginLatency series only (no dedicated CloudWatch dashboard section).
+
+Infinity GraphQL panels must put the query in `url_options.body_graphql_query` (or `url_options.data`). A top-level `data` field is ignored by the backend parser, so Cloudflare gets an empty query, returns `null`, and Infinity surfaces a misleading “JSONata / paths” frame error.
+
+Regenerate JSON after layout edits:
+
+```bash
+python3 infra/terraform/grafana/scripts/generate-env-dashboards.py
+```
+
+CloudWatch scrape includes `OriginLatency` (Average). After changing `cloudwatch.tf`, `terraform apply` this root so Grafana re-exports the metric before latency panels fill in.
 
 ## Apply
 
@@ -64,4 +93,4 @@ AWS profile: `7oas7er`. Tokens may also be supplied via `GRAFANA_*` env vars whe
 - Set `enable_cloudflare_edge = false` to skip Cloudflare zoneTag dashboard wiring; `enable_github_ci = false` skips DS `github-block-drop`.
 - CloudWatch scrape covers `eu-north-1` and `us-east-1` (CloudFront metrics).
 - Tagged AWS resources (`Name` tags on Block Drop) improve metric discovery.
-- Shipping CloudWatch **Logs** into Grafana Cloud Logs is a follow-up (not required for the first scrape + synthetics setup).
+- Metrics-only for now — no CloudWatch Logs shipping into Grafana.

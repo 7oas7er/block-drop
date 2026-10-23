@@ -41,9 +41,11 @@ output "synthetic_check_jobs" {
   ]
 }
 
-output "block_drop_dashboard_url" {
-  description = "URL of the Block Drop overview dashboard."
-  value       = grafana_dashboard.block_drop.url
+output "block_drop_dashboard_urls" {
+  description = "URLs of the Block Drop Production and Staging dashboards."
+  value = {
+    for env, dash in grafana_dashboard.block_drop_env : env => dash.url
+  }
 }
 
 output "block_drop_folder_uid" {
