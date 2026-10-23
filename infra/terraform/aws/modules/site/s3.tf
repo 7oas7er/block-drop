@@ -113,6 +113,20 @@ resource "aws_s3_bucket_lifecycle_configuration" "high_scores" {
       days_after_initiation = 7
     }
   }
+
+  # Burned single-use play tickets; secret + high-scores.json are outside this prefix.
+  rule {
+    id     = "expire-used-score-tickets"
+    status = "Enabled"
+
+    filter {
+      prefix = local.score_tickets_prefix
+    }
+
+    expiration {
+      days = 2
+    }
+  }
 }
 
 resource "aws_s3_bucket_policy" "high_scores" {

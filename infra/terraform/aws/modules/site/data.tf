@@ -70,6 +70,14 @@ data "aws_iam_policy_document" "high_scores" {
     ]
     resources = ["${aws_s3_bucket.high_scores.arn}/${local.high_scores_object_key}"]
   }
+
+  statement {
+    sid = "BurnSingleUseScoreTickets"
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = ["${aws_s3_bucket.high_scores.arn}/${local.score_tickets_prefix}*"]
+  }
 }
 
 data "aws_iam_policy_document" "site_bucket" {

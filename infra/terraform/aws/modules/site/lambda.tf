@@ -21,6 +21,14 @@ data "archive_file" "high_scores" {
   ]
 }
 
+# HMAC key for single-use play tickets. Kept in Lambda env (not S3) so GET
+# /api/scores never depends on creating a missing object (S3 returns
+# AccessDenied for absent keys when the role lacks s3:ListBucket).
+resource "random_password" "score_ticket_secret" {
+  length  = 48
+  special = false
+}
+
 resource "aws_lambda_function" "high_scores" {
   function_name    = local.high_scores_function_name
   description      = "Reads and writes the Block Drop high score table."
@@ -35,8 +43,10 @@ resource "aws_lambda_function" "high_scores" {
 
   environment {
     variables = {
-      SCORES_BUCKET = aws_s3_bucket.high_scores.bucket
-      SCORES_KEY    = local.high_scores_object_key
+      SCORES_BUCKET  = aws_s3_bucket.high_scores.bucket
+      SCORES_KEY     = local.high_scores_object_key
+      TICKET_SECRET  = random_password.score_ticket_secret.result
+      TICKETS_PREFIX = local.score_tickets_prefix
     }
   }
 
