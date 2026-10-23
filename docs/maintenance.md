@@ -6,8 +6,8 @@ Solo + AI cadence for this template. Automation discovers updates; you merge whe
 
 | Source | What | Target |
 |--------|------|--------|
-| [Dependabot](../.github/dependabot.yml) | GitHub Actions, `tests/` npm, `infra/lambda` npm, **Terraform providers** (per root lockfile) | Weekly PRs → `staging` |
-| CI | Tests, Checkov, npm audit (high+), CodeQL, terraform plan | Gates merges |
+| [Dependabot](../.github/dependabot.yml) | GitHub Actions (SHA pins), `tests/` npm, `infra/lambda` npm, **Terraform providers** (per root lockfile) | Weekly PRs → `staging` |
+| CI | Tests, Checkov, npm audit (high+), CodeQL, terraform plan, **Action SHA-pin check** | Gates merges |
 | Grafana | Synthetics + error views | Catches runtime/edge regressions |
 
 CI **never** runs `terraform apply` ([ADR 0003](adr/0003-local-terraform-apply.md)).

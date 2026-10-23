@@ -21,7 +21,7 @@ When **gap-analyzing or migrating** an existing repo toward this pattern: `.curs
 | `app-aws-regions.mdc` | always — `eu-north-1` default |
 | `app-observability.mdc` | always — Grafana pattern (dual-env dashboards: [`docs/grafana-dashboard-template.md`](../../docs/grafana-dashboard-template.md)) |
 | `app-terraform.mdc` | `infra/terraform/**` — roots, state, CI plan |
-| `app-deploy.mdc` | `.github/workflows/**` — OIDC deploy / promote |
+| `app-deploy.mdc` | `.github/workflows/**` — OIDC deploy / promote; Action SHA pins |
 | `block-drop-core.mdc` | always — product + pointers to platform |
 | `block-drop-frontend.mdc` | `block-drop/**` |
 | `block-drop-terraform.mdc` | `infra/terraform/**` — naming, domains, high-scores |

@@ -19,6 +19,7 @@ Instructions for Cursor (and similar) agents working in this repo. Platform rule
 - Do **not** push or merge unless Frank asks. Do **not** force-push protected branches.
 - Create commits only when asked; follow the repo’s commit / PR conventions.
 - **Security floor** (Dependabot alerts, secret scanning + push protection, ruleset, default branch `main`, read-only `GITHUB_TOKEN`): apply and API-verify per [`docs/github-branch-protection.md`](docs/github-branch-protection.md) on every new or migrated app — copying this repo’s files is not enough.
+- **Actions pins**: every workflow `uses:` is a full 40-char SHA with a version comment ([`docs/github-actions-pinning.md`](docs/github-actions-pinning.md)); do not reintroduce mutable `@v…` tags. Required CI enforces the pin script.
 
 ## Terraform
 
