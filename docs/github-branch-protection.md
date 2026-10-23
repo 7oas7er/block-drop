@@ -8,7 +8,7 @@ Target branches: **`staging`** and **`main`**. Default branch must be **`main`**
 
 | Check name | Workflow | Why |
 |------------|----------|-----|
-| `Required CI` | [`.github/workflows/required-ci.yml`](../.github/workflows/required-ci.yml) | Always reports on PRs to `staging`/`main`, so rulesets are not blocked by path filters |
+| `Required CI` | [`.github/workflows/required-ci.yml`](../.github/workflows/required-ci.yml) | Always reports on PRs to `staging`/`main`, so rulesets are not blocked by path filters; also runs the GitHub Actions SHA-pin check ([`docs/github-actions-pinning.md`](github-actions-pinning.md)) |
 
 ## Path-filtered checks (enforce when they run)
 

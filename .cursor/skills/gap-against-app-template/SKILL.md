@@ -33,7 +33,7 @@ Read from the template (when available): `docs/architecture.md`, `.cursor/rules/
 | **Observability** | Grafana-first only; Infinity + GitHub plugin in platform; no second APM SaaS; **two** env dashboards per [`docs/grafana-dashboard-template.md`](../../../docs/grafana-dashboard-template.md) |
 | **Regions** | `eu-north-1` default; `us-east-1` only when required (e.g. ACM for CloudFront) |
 | **CI gates** | Tests gate deploy; terraform fmt/validate/plan; Checkov or equivalent; npm audit high+; CodeQL or equivalent SAST |
-| **Supply chain** | Dependabot (or Renovate) → staging; Actions + app deps + Terraform providers |
+| **Supply chain** | Dependabot (or Renovate) → staging; Actions + app deps + Terraform providers; **all** workflow Actions SHA-pinned (`docs/github-actions-pinning.md` + Required CI pin check) |
 | **GitHub security floor** | Default branch `main`; Dependabot **alerts** on; secret scanning + push protection on; ruleset on `main`/`staging` (`Required CI`); Actions `GITHUB_TOKEN` read-only (no PR approve); CodeQL default setup off. **Verify via GitHub API** — do not score from docs alone (`docs/github-branch-protection.md`) |
 | **Docs / agents** | `AGENTS.md`, architecture doc, ADRs for irreversible choices, `SECURITY.md`, Cursor `app-*` rules |
 | **Maintenance** | Documented weekly/monthly cadence |
