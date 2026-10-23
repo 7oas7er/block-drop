@@ -26,8 +26,17 @@ var sawGameOver = false;
 var enteringName = false;
 var latestIndex = -1;
 var savePromise = null;
+var playTicket = null;
 var statusNode = document.getElementById("high-score-status");
 var saveButton = highScoreForm.querySelector("button");
+
+function refreshPlayTicket() {
+  return BlockDropScores.issueTicket().then(function (ticket) {
+    playTicket = ticket;
+  }).catch(function () {
+    playTicket = null;
+  });
+}
 
 function blockColor(type) {
   return BlockDrop.COLORS[type];
@@ -236,17 +245,24 @@ function commitPendingScore() {
   saveButton.disabled = true;
   saveButton.textContent = "Saving...";
   highScoreForm.classList.add("hidden");
-  savePromise = BlockDropScores.save(name, score).then(function (result) {
+  if (!playTicket) {
+    setStatus("Score session missing. Restart and try again.");
+    return Promise.resolve(false);
+  }
+  savePromise = BlockDropScores.save(name, score, playTicket).then(function (result) {
+    playTicket = null;
     scores = result.list;
     latestIndex = result.saved ? result.index : -1;
     writeHighScores();
     setStatus(result.saved ? "" : "That score did not make the table.");
     return true;
-  }).catch(function () {
+  }).catch(function (error) {
+    // Ticket may already be burned server-side; force a fresh one on restart.
+    playTicket = null;
     enteringName = true;
     nameInput.value = name;
     highScoreForm.classList.remove("hidden");
-    setStatus("Could not save this score.");
+    setStatus((error && error.message) || "Could not save this score.");
     nameInput.focus();
     return false;
   }).finally(function () {
@@ -409,6 +425,11 @@ function restartGame() {
     wasGameOver = false;
     ensureAudio();
     syncMusicToState();
+    // Keep an unused ticket across restarts so a short follow-up game
+    // is not blocked by the ticket minimum-age window.
+    if (!playTicket) {
+      return refreshPlayTicket();
+    }
   });
 }
 
@@ -585,6 +606,7 @@ BlockDropScores.load().then(function (list) {
   scoresReady = true;
   setStatus("Could not load high scores.");
 });
+refreshPlayTicket();
 requestAnimationFrame(onFrame);
 
 // Read-only handle for automated tests (Playwright). Not used by the game UI.
