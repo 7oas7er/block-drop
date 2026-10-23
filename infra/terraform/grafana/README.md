@@ -50,7 +50,8 @@ Without the GitHub token, synthetics + CloudWatch still apply; the GitHub DS is 
 
 ## Dashboards
 
-Two dashboards replace the old single overview:
+Platform template (structure / windows / Free limits / new-app checklist):
+[`docs/grafana-dashboard-template.md`](../../../docs/grafana-dashboard-template.md).
 
 | Dashboard | Host / CloudFront `Name` tag |
 |-----------|------------------------------|

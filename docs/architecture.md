@@ -21,7 +21,7 @@ Full platform write-up: [platform docs/architecture.md](https://github.com/7oas7
 | `block-drop/` | Static game |
 | `infra/terraform/aws/` | S3, CloudFront, Lambda high-scores, OIDC deploy/plan |
 | `infra/terraform/cloudflare/` | **DNS only** for Block Drop hosts |
-| `infra/terraform/grafana/` | Folder, dashboard, synthetics, CloudWatch scrape, GitHub DS `github-block-drop` |
+| `infra/terraform/grafana/` | Folder, **prod+stg** dashboards, synthetics, CloudWatch scrape, GitHub DS `github-block-drop` (layout: [`grafana-dashboard-template.md`](grafana-dashboard-template.md)) |
 | `.github/workflows/` | Tests, deploy, terraform plan (never apply) |
 
 ## What platform owns (do not recreate here)
