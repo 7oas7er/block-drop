@@ -1,1 +1,5 @@
 .DS_Store
+
+# Strix scan output (keep local; may contain vulnerability details)
+strix_runs/
+docs/security-reviews/
