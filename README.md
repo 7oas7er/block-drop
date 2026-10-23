@@ -14,7 +14,7 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`tests/`](tests/) | Node unit tests + Playwright e2e; gates deploy |
 | [`infra/terraform/aws/`](infra/terraform/aws/) | Site module + `envs/stg` / `envs/prod` + bootstrap |
 | [`infra/terraform/cloudflare/`](infra/terraform/cloudflare/) | **DNS only** for Block Drop hosts (zone rulesets → platform `shared-edge`) |
-| [`infra/terraform/grafana/`](infra/terraform/grafana/) | App synthetics, CloudWatch, dashboard, GitHub DS (Infinity + plugin → platform `shared-obs`) |
+| [`infra/terraform/grafana/`](infra/terraform/grafana/) | App synthetics, CloudWatch, **prod+stg** dashboards, GitHub DS (Infinity + plugin → platform `shared-obs`; layout [`docs/grafana-dashboard-template.md`](docs/grafana-dashboard-template.md)) |
 | [`infra/lambda/`](infra/lambda/) | High-scores Lambda source (zipped by AWS Terraform) |
 | [`.cursor/rules/`](.cursor/rules/) | Platform (`app-*`) + product (`block-drop-*`) Cursor rules — see [`.cursor/rules/README.md`](.cursor/rules/README.md) |
 | [`.cursor/skills/`](.cursor/skills/) | Project skills (`new-app-from-template`, `gap-against-app-template`) |

@@ -30,7 +30,7 @@ Read from the template (when available): `docs/architecture.md`, `.cursor/rules/
 | **Apply model** | CI plan-only; local apply; no default CI apply |
 | **Envs** | `staging` → AWS stg; `main` → AWS prod; distinct GitHub Environments |
 | **Edge** | App Cloudflare = DNS only; zone rulesets in platform; Cloudflare-only origin |
-| **Observability** | Grafana-first only; Infinity + GitHub plugin in platform; no second APM SaaS |
+| **Observability** | Grafana-first only; Infinity + GitHub plugin in platform; no second APM SaaS; **two** env dashboards per [`docs/grafana-dashboard-template.md`](../../../docs/grafana-dashboard-template.md) |
 | **Regions** | `eu-north-1` default; `us-east-1` only when required (e.g. ACM for CloudFront) |
 | **CI gates** | Tests gate deploy; terraform fmt/validate/plan; Checkov or equivalent; npm audit high+; CodeQL or equivalent SAST |
 | **Supply chain** | Dependabot (or Renovate) → staging; Actions + app deps + Terraform providers |

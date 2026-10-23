@@ -8,7 +8,7 @@ Instructions for Cursor (and similar) agents working in this repo. Platform rule
 - Keep the game under `block-drop/` as **static HTML/CSS/plain JS** — no framework, bundler, package manager, or build step for the game.
 - **Repo isolation**: this app must not become a dependency of sibling apps. Shared edge/obs → [`7oas7er/platform`](https://github.com/7oas7er/platform) (`app → platform` only).
 - **Terraform** is the source of truth for AWS / Cloudflare DNS / Grafana app objects. Do not reintroduce CDK or manage app resources with CloudFormation.
-- **Observability**: Grafana Cloud only. Do not add Checkly, Datadog, New Relic, or similar unless Frank explicitly asks to replace Grafana. Shared Infinity DS + GitHub plugin: [`7oas7er/platform`](https://github.com/7oas7er/platform) `shared-obs`.
+- **Observability**: Grafana Cloud only. Do not add Checkly, Datadog, New Relic, or similar unless Frank explicitly asks to replace Grafana. Shared Infinity DS + GitHub plugin: [`7oas7er/platform`](https://github.com/7oas7er/platform) `shared-obs`. New apps get **two** env dashboards (Production + Staging) per [`docs/grafana-dashboard-template.md`](docs/grafana-dashboard-template.md) — copy/adapt `infra/terraform/grafana/scripts/generate-env-dashboards.py`, do not invent a one-off layout.
 - **Cloudflare** app root is DNS only; zone rulesets live in platform `shared-edge`. Do not turn Cloudflare into a second monitoring product or default Workers platform for this app.
 - Public apps must **only accept Cloudflare-fronted traffic**; reject direct origin access.
 

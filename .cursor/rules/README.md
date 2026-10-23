@@ -19,7 +19,7 @@ When **gap-analyzing or migrating** an existing repo toward this pattern: `.curs
 |------|--------|
 | `app-core.mdc` | always — hosting, envs, secrets, Cloudflare-only, agents |
 | `app-aws-regions.mdc` | always — `eu-north-1` default |
-| `app-observability.mdc` | always — Grafana pattern |
+| `app-observability.mdc` | always — Grafana pattern (dual-env dashboards: [`docs/grafana-dashboard-template.md`](../../docs/grafana-dashboard-template.md)) |
 | `app-terraform.mdc` | `infra/terraform/**` — roots, state, CI plan |
 | `app-deploy.mdc` | `.github/workflows/**` — OIDC deploy / promote |
 | `block-drop-core.mdc` | always — product + pointers to platform |

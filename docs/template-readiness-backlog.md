@@ -25,7 +25,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
   - Env model: `staging` → AWS stg; `main` → AWS prod; promote via PR
   - CI: tests + deploy; Terraform **fmt/validate/plan only** (apply stays local)
   - Secrets: never commit `terraform.tfvars` / state; profiles `7oas7er`; OIDC in Actions
-  - Observability: Grafana only; Cloudflare = DNS/edge (+ analytics pulled into Grafana)
+  - Observability: Grafana only; Cloudflare = DNS/edge (+ analytics pulled into Grafana); dual-env dashboards per `docs/grafana-dashboard-template.md`
   - Pointer to this backlog and to `.cursor/rules/`
 - [x] Link existing runbooks (`infra/terraform/docs/*`) from that README
 - [x] Document **isolated apps + [`7oas7er/platform`](https://github.com/7oas7er/platform)** (`docs/architecture.md`, ADR 0007); app Cloudflare DNS-only; shared-edge / shared-obs outside this repo
@@ -79,7 +79,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
   - Static game delivery (no framework/bundler)
   - Terraform not CDK
   - Local `terraform apply` (not CI apply)
-  - Grafana-first observability; Cloudflare not a second APM
+  - Grafana-first observability; Cloudflare not a second APM; dual-env dashboard template documented
   - Cloudflare-only origin traffic
   - GitHub env separation (`staging` / `production`)
 - [x] Rule of thumb: new irreversible choice → ½-page ADR
