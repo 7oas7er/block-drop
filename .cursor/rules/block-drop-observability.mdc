@@ -10,6 +10,6 @@ Platform pattern: `app-observability`.
 - Project label: `project=block-drop`.
 - Critical API synthetic: `/api/scores` (stg + prod).
 - Scrape: `AWS/Lambda`, `AWS/CloudFront`.
-- Dashboard JSON: `infra/terraform/grafana/dashboards/block-drop.json`.
+- Dashboard JSON: `infra/terraform/grafana/dashboards/block-drop-prod.json` and `block-drop-stg.json` (generate via `scripts/generate-env-dashboards.py`).
 - Stack service account name used for publish: `block-drop-terraform`.
 - Probe script: `infra/terraform/grafana/scripts/probe-cloudflare-graphql.sh`.
