@@ -13,4 +13,5 @@ alwaysApply: false
 - Environments `staging` / `production` hold distinct vars (role, region, bucket, distribution, site host, Cloudflare zone) and secrets (`CLOUDFLARE_API_TOKEN`, etc.).
 - After renaming roles/buckets in Terraform, update GitHub Environment vars before the next deploy.
 - Dependabot: weekly PRs to `staging` for Actions and app npm trees; require green CI before merge.
+- **Action pins (mandatory):** every workflow `uses:` is `owner/action@<40-char-sha> # vX.Y.Z` — including GitHub-owned `actions/*` and `github/codeql-action/*`. No mutable tags. Enforced by `.github/scripts/check-github-action-pins.sh` in Required CI; see `docs/github-actions-pinning.md`.
 - Do not wire deploy to CloudFormation outputs — Terraform outputs / variables only.

@@ -80,11 +80,15 @@ In [`7oas7er/platform`](https://github.com/7oas7er/platform):
 
 ### 6. Grafana (app root only)
 
-- New folder + dashboard; label `project=<slug>`.
-- Synthetics for site + critical API paths.
+Follow [`docs/grafana-dashboard-template.md`](../../../docs/grafana-dashboard-template.md) (same layout as Block Drop / Netrunner):
+
+- New folder; **two** dashboards — `<Product> — Production` and `<Product> — Staging` (not one mixed overview).
+- Copy/adapt `infra/terraform/grafana/scripts/generate-env-dashboards.py` → emit `<slug>-prod.json` / `<slug>-stg.json`; wire `for_each` in `dashboard.tf`. Parameterize hosts, probe jobs, CloudFront `Name` tags, GitHub DS uid, workflow file names, `project=<slug>` PromQL labels.
+- Synthetics for site + critical API paths (labels `project`, `environment`, `kind`).
+- CloudWatch scrape includes CloudFront **OriginLatency**; regions `eu-north-1` + `us-east-1` when CloudFront is used.
 - New stack service account name if publishing via Terraform.
 - Set `cloudflare_zone_tag`; use shared Infinity uid from platform — **do not** create Infinity or install the GitHub plugin.
-- Create per-app GitHub DS only (plugin already installed by `shared-obs`).
+- Create per-app GitHub DS only (plugin already installed by `shared-obs`); CI panels use `options.workflow` = workflow file name.
 
 ### 7. GitHub Environments
 
@@ -95,6 +99,12 @@ In [`7oas7er/platform`](https://github.com/7oas7er/platform):
 | `terraform` | plan role + plan-time vars/secrets |
 
 OIDC trust subjects must match `environment:…`. Distinct resources per env — see `docs/adr/0006-github-env-separation.md`.
+
+### 7a. GitHub Actions SHA pins (mandatory)
+
+- Every workflow `uses:` must be `owner/action@<40-char-sha> # vX.Y.Z` (GitHub-owned and third-party). See `docs/github-actions-pinning.md`.
+- Keep `.github/scripts/check-github-action-pins.sh` and the **Require SHA-pinned Actions** step in Required CI.
+- Dependabot `package-ecosystem: github-actions` → `staging` so SHAs stay current.
 
 ### 7b. GitHub security floor (mandatory — new **and** migrated repos)
 
@@ -141,6 +151,8 @@ Confirm Cloudflare-only gate (raw CloudFront URL 403; custom domain 200).
 
 - Pointing `staging` and `production` GitHub Environments at the same role/bucket.
 - Adding a second monitoring SaaS or CI `terraform apply` without a new ADR.
+- Shipping a single Grafana “overview” dashboard instead of the dual-env template in `docs/grafana-dashboard-template.md`.
+- Leaving GitHub Actions on mutable tags (`@v4`, `@v7.0.1`) — pin to full SHAs (`docs/github-actions-pinning.md`).
 - Copying `terraform.tfvars` or state between apps.
 - Recreating zone rulesets / Infinity / GitHub plugin inside the new app.
 - Making the new app depend on Block Drop (or any sibling) for edge/obs.

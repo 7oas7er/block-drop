@@ -15,3 +15,4 @@ Multiple monitoring SaaS products (Checkly, Datadog, New Relic, Cloudflare as a 
 
 - Terraform for observability lives under `infra/terraform/grafana/`.
 - Agents must not “helpfully” add Checkly/Datadog/etc. or turn Cloudflare into application monitoring.
+- App dashboards follow the dual-env template in [`docs/grafana-dashboard-template.md`](../grafana-dashboard-template.md) (Production + Staging; fixed-window traffic/errors/latency; synthetics; Cloudflare edge; GitHub CI) — same pattern as Block Drop and Netrunner.

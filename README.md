@@ -14,7 +14,7 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`tests/`](tests/) | Node unit tests + Playwright e2e; gates deploy |
 | [`infra/terraform/aws/`](infra/terraform/aws/) | Site module + `envs/stg` / `envs/prod` + bootstrap |
 | [`infra/terraform/cloudflare/`](infra/terraform/cloudflare/) | **DNS only** for Block Drop hosts (zone rulesets → platform `shared-edge`) |
-| [`infra/terraform/grafana/`](infra/terraform/grafana/) | App synthetics, CloudWatch, dashboard, GitHub DS (Infinity + plugin → platform `shared-obs`) |
+| [`infra/terraform/grafana/`](infra/terraform/grafana/) | App synthetics, CloudWatch, **prod+stg** dashboards, GitHub DS (Infinity + plugin → platform `shared-obs`; layout [`docs/grafana-dashboard-template.md`](docs/grafana-dashboard-template.md)) |
 | [`infra/lambda/`](infra/lambda/) | High-scores Lambda source (zipped by AWS Terraform) |
 | [`.cursor/rules/`](.cursor/rules/) | Platform (`app-*`) + product (`block-drop-*`) Cursor rules — see [`.cursor/rules/README.md`](.cursor/rules/README.md) |
 | [`.cursor/skills/`](.cursor/skills/) | Project skills (`new-app-from-template`, `gap-against-app-template`) |
@@ -40,7 +40,7 @@ The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-
 | [`.github/workflows/required-ci.yml`](.github/workflows/required-ci.yml) | Always-on PR check (`Required CI`) for branch rulesets |
 | [`.github/workflows/codeql.yml`](.github/workflows/codeql.yml) | CodeQL SAST for `block-drop/`, `infra/lambda/`, and Actions workflows |
 
-Deploy auth is GitHub OIDC → env-specific IAM roles (no long-lived AWS keys in GitHub). Dependabot opens weekly PRs to `staging` for Actions, Playwright, the Lambda AWS SDK, and **Terraform providers** (per root). Ongoing cadence: [`docs/maintenance.md`](docs/maintenance.md). Branch rules: [`docs/github-branch-protection.md`](docs/github-branch-protection.md). Checkov: [`docs/iac-policy.md`](docs/iac-policy.md). CodeQL: [`docs/codeql.md`](docs/codeql.md). Security headers: [`docs/security-headers.md`](docs/security-headers.md).
+Deploy auth is GitHub OIDC → env-specific IAM roles (no long-lived AWS keys in GitHub). Dependabot opens weekly PRs to `staging` for Actions, Playwright, the Lambda AWS SDK, and **Terraform providers** (per root). Ongoing cadence: [`docs/maintenance.md`](docs/maintenance.md). Branch rules: [`docs/github-branch-protection.md`](docs/github-branch-protection.md). Action SHA pins: [`docs/github-actions-pinning.md`](docs/github-actions-pinning.md). Checkov: [`docs/iac-policy.md`](docs/iac-policy.md). CodeQL: [`docs/codeql.md`](docs/codeql.md). Security headers: [`docs/security-headers.md`](docs/security-headers.md).
 
 ## Terraform (local apply)
 

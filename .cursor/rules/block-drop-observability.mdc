@@ -5,11 +5,11 @@ alwaysApply: true
 
 # Block Drop — observability overlay
 
-Platform pattern: `app-observability`.
+Platform pattern: `app-observability`. Dashboard layout: [`docs/grafana-dashboard-template.md`](../../docs/grafana-dashboard-template.md).
 
 - Project label: `project=block-drop`.
 - Critical API synthetic: `/api/scores` (stg + prod).
-- Scrape: `AWS/Lambda`, `AWS/CloudFront`.
-- Dashboard JSON: `infra/terraform/grafana/dashboards/block-drop.json`.
+- Scrape: `AWS/Lambda`, `AWS/CloudFront` (incl. OriginLatency).
+- Dashboards: `Block Drop — Production` / `Block Drop — Staging` — JSON at `infra/terraform/grafana/dashboards/block-drop-prod.json` and `block-drop-stg.json` (regenerate with `python3 infra/terraform/grafana/scripts/generate-env-dashboards.py`).
 - Stack service account name used for publish: `block-drop-terraform`.
 - Probe script: `infra/terraform/grafana/scripts/probe-cloudflare-graphql.sh`.
