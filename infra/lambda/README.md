@@ -13,8 +13,8 @@ Node.js 18+ Lambda runtimes do **not** include the AWS SDK. This package vendors
 | `{"name","score","ticket"}` | Verify + burn the ticket, then insert the score if it qualifies. |
 
 `GET /api/scores` still returns `{ scores }`. New scores must be ≤ `MAX_SCORE` (500000).
-Ticket secret lives in the high-scores bucket as `ticket-secret` (created on first use);
-burned ticket ids are `tickets/{jti}` (lifecycle-expired).
+The HMAC ticket secret is injected as Lambda env `TICKET_SECRET` (Terraform
+`random_password`). Burned ticket ids are `tickets/{jti}` (lifecycle-expired).
 
 ## Setup (before `terraform plan` / `apply`)
 
