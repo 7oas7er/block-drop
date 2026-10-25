@@ -25,6 +25,15 @@ resource "aws_cloudfront_function" "origin_verify" {
   })
 }
 
+# Strip AWS fingerprinting headers on /api/scores (Strix M2). Policy remove_headers
+# cannot delete X-Amzn-RequestId / X-Amzn-ErrorType; this viewer-response can.
+resource "aws_cloudfront_function" "strip_aws_headers" {
+  name    = local.strip_aws_headers_function_name
+  runtime = "cloudfront-js-2.0"
+  publish = true
+  code    = file("${path.module}/strip_aws_headers.js.tftpl")
+}
+
 # Custom policy: managed SecurityHeadersPolicy equivalents + CSP + Permissions-Policy.
 # Header ownership: docs/security-headers.md (CloudFront SoT; Cloudflare does not duplicate these).
 resource "aws_cloudfront_response_headers_policy" "site" {
@@ -36,6 +45,31 @@ resource "aws_cloudfront_response_headers_policy" "site" {
       header   = "permissions-policy"
       override = true
       value    = local.permissions_policy
+    }
+
+    items {
+      header   = "cross-origin-opener-policy"
+      override = true
+      value    = "same-origin"
+    }
+
+    items {
+      header   = "cross-origin-resource-policy"
+      override = true
+      value    = "same-origin"
+    }
+  }
+
+  # x-amzn-trace-id is removable here; requestid/errortype are not (AWS deny list).
+  # x-xss-protection: omit from security_headers_config alone does not strip a
+  # value added earlier in the path (or by edge defaults) — remove explicitly.
+  remove_headers_config {
+    items {
+      header = "x-amzn-trace-id"
+    }
+
+    items {
+      header = "x-xss-protection"
     }
   }
 
@@ -67,11 +101,8 @@ resource "aws_cloudfront_response_headers_policy" "site" {
       override = true
     }
 
-    xss_protection {
-      mode_block = true
-      protection = true
-      override   = true
-    }
+    # Intentionally omit xss_protection — legacy X-XSS-Protection is ignored by
+    # modern browsers (Strix L1); do not emit 0/1 via this block.
   }
 }
 
@@ -132,6 +163,11 @@ resource "aws_cloudfront_distribution" "site" {
     function_association {
       event_type   = "viewer-request"
       function_arn = aws_cloudfront_function.origin_verify.arn
+    }
+
+    function_association {
+      event_type   = "viewer-response"
+      function_arn = aws_cloudfront_function.strip_aws_headers.arn
     }
   }
 
