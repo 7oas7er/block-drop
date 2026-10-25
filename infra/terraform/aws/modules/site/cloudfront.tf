@@ -61,9 +61,15 @@ resource "aws_cloudfront_response_headers_policy" "site" {
   }
 
   # x-amzn-trace-id is removable here; requestid/errortype are not (AWS deny list).
+  # x-xss-protection: omit from security_headers_config alone does not strip a
+  # value added earlier in the path (or by edge defaults) — remove explicitly.
   remove_headers_config {
     items {
       header = "x-amzn-trace-id"
+    }
+
+    items {
+      header = "x-xss-protection"
     }
   }
 
