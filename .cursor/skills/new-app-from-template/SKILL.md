@@ -34,7 +34,7 @@ New app progress:
 - [ ] 5. Platform shared-edge: origin-verify (+ cache hosts) for new domains
 - [ ] 6. Grafana labels / folder / dashboard (no Infinity / no GitHub plugin)
 - [ ] 7. GitHub Environments + OIDC subjects
-- [ ] 7b. GitHub security floor (apply + API-verify — see docs/github-branch-protection.md)
+- [ ] 7b. GitHub security floor incl. **require signed commits** (apply + API-verify — see docs/github-branch-protection.md)
 - [ ] 8. First local applies (bootstrap → stg → cloudflare DNS → grafana; platform edge secrets)
 - [ ] 9. First PR → staging
 - [ ] 10. First promote staging → main
@@ -113,10 +113,12 @@ Repo Settings are **not** copied with git. Old public repos often lack create-ti
 1. Default branch = **`main`** (template tree + `SECURITY.md`).
 2. Enable **Dependabot alerts** (`PUT …/vulnerability-alerts`).
 3. Enable **secret scanning** + **push protection**.
-4. Create/update ruleset `default` on `main` + `staging` (PR required, no force-push/delete, required check **`Required CI`** only).
+4. Create/update ruleset `default` on `main` + `staging` (PR required, no force-push/delete, required check **`Required CI`** only, **`required_signatures`** / require signed commits — hard requirement).
 5. Actions workflow permissions: `GITHUB_TOKEN` **read**, cannot approve PRs.
 6. CodeQL **default** setup stays **off** (in-repo advanced workflow only).
 7. Prefer Issues/Wiki/Projects **off** for static apps.
+
+**Signed commits (hard rule):** ruleset must include `{ "type": "required_signatures" }`. Frank’s GPG key (`frank@schlesinger.com` / `413A590799A3CF31AB2C9ECDE27E5FD506790203`) must be on the GitHub account; local `commit.gpgsign` / `tag.gpgsign` must be on before the first push. Verify via API: ruleset rules contain `required_signatures`.
 
 **Verify via `gh api` before checking this box.** Do not copy Block Drop checklist text that says controls “were already on.”
 
