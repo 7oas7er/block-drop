@@ -21,11 +21,17 @@ The HMAC ticket secret is injected as Lambda env `TICKET_SECRET` (Terraform
 ```bash
 cd infra/lambda
 npm ci --omit=dev
+npm test   # includes verify-package.js (require @aws-sdk/client-s3 + @smithy/*)
 ```
 
-`node_modules/` is gitignored (`infra/.gitignore`). Commit `package.json` and
-`package-lock.json` when changing dependencies. Dependabot opens weekly PRs against
-`staging` for `@aws-sdk/*` updates in this directory.
+`node_modules/` is gitignored (`infra/.gitignore`). Terraform zips whatever is on
+disk under this directory (minus a few excludes). A partial tree can pass a shallow
+`client-s3/package.json` check and still 502 at runtime (`Cannot find module
+'@smithy/types'`). Always re-run `npm ci --omit=dev` after Dependabot SDK bumps
+**before** `terraform apply` on `aws/envs/stg` or `prod`.
+
+Commit `package.json` and `package-lock.json` when changing dependencies.
+Dependabot opens weekly PRs against `staging` for `@aws-sdk/*` updates here.
 
 ## Tests
 
@@ -33,4 +39,5 @@ npm ci --omit=dev
 npm test
 ```
 
-Unit tests use an in-memory store and do not need AWS credentials.
+`verify-package.js` resolves the vendored SDK graph; unit tests use an in-memory
+store and do not need AWS credentials.

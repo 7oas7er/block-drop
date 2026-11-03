@@ -4,8 +4,12 @@ locals {
 
 check "high_scores_sdk_vendored" {
   assert {
-    condition     = fileexists("${local.high_scores_lambda_dir}/node_modules/@aws-sdk/client-s3/package.json")
-    error_message = "Missing vendored @aws-sdk/client-s3. Run: cd infra/lambda && npm ci --omit=dev"
+    condition = (
+      fileexists("${local.high_scores_lambda_dir}/node_modules/@aws-sdk/client-s3/package.json")
+      && fileexists("${local.high_scores_lambda_dir}/node_modules/@smithy/types/package.json")
+      && fileexists("${local.high_scores_lambda_dir}/node_modules/@smithy/core/package.json")
+    )
+    error_message = "Incomplete Lambda node_modules (need @aws-sdk/client-s3 + @smithy/types + @smithy/core). Run: cd infra/lambda && npm ci --omit=dev && npm test"
   }
 }
 
@@ -15,6 +19,7 @@ data "archive_file" "high_scores" {
   output_path = "${path.module}/build/high-scores.zip"
   excludes = [
     "high-scores.test.js",
+    "verify-package.js",
     "package.json",
     "package-lock.json",
     "README.md",
