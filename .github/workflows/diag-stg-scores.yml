@@ -70,27 +70,30 @@ jobs:
             --order-by LastEventTime --descending --max-items 5 \
             --region "$AWS_REGION" --output json || true
 
-          echo '=== filter-log-events last 2h (errors/REPORT) ==='
+          echo '=== filter-log-events since apply (no pattern) ==='
+          # Function LastModified ~ 2026-11-03T13:59:59Z
           aws logs filter-log-events \
             --log-group-name "$LOG_GROUP" \
-            --start-time $(( ($(date +%s) - 7200) * 1000 )) \
-            --filter-pattern '?ERROR ?Error ?Task ?REPORT ?Init ?timeout ?Runtime' \
-            --limit 50 \
-            --region "$AWS_REGION" --output json || true
+            --start-time 1793714400000 \
+            --limit 100 \
+            --region "$AWS_REGION" \
+            --query 'events[*].message' --output text || true
 
-          echo '=== last 30 log events (any) ==='
-          STREAM=$(aws logs describe-log-streams \
+          echo '=== dump 5 newest streams (messages only) ==='
+          mapfile -t STREAMS < <(aws logs describe-log-streams \
             --log-group-name "$LOG_GROUP" \
-            --order-by LastEventTime --descending --max-items 1 \
-            --query 'logStreams[0].logStreamName' --output text --region "$AWS_REGION" || true)
-          echo "stream=$STREAM"
-          if [ -n "$STREAM" ] && [ "$STREAM" != "None" ]; then
+            --order-by LastEventTime --descending --max-items 5 \
+            --query 'logStreams[*].logStreamName' --output text --region "$AWS_REGION" \
+            | tr '\t' '\n' | sed '/^None$/d' | sed '/^$/d')
+          for STREAM in "${STREAMS[@]}"; do
+            echo "----- stream: $STREAM -----"
             aws logs get-log-events \
               --log-group-name "$LOG_GROUP" \
               --log-stream-name "$STREAM" \
-              --limit 30 \
-              --region "$AWS_REGION" --output json || true
-          fi
+              --limit 40 \
+              --region "$AWS_REGION" \
+              --query 'events[*].message' --output text || true
+          done
 
           echo '=== cloudfront distribution (stg alias) ==='
           aws cloudfront list-distributions \
