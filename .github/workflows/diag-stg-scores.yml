@@ -1,0 +1,112 @@
+name: Diag stg high-scores
+
+# Temporary read-only probe for staging /api/scores 502 after terraform apply.
+# Uses terraform plan role (ReadOnlyAccess). Remove after HP-14.
+on:
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  probe:
+    name: Probe Lambda + logs
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment: terraform
+    env:
+      AWS_REGION: eu-north-1
+      FUNCTION_NAME: stg-block-drop-high-scores-function
+      LOG_GROUP: /aws/lambda/stg-block-drop-high-scores-function
+    steps:
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_TERRAFORM_PLAN_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Describe function + URL + recent logs
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '=== lambda get-function-configuration ==='
+          aws lambda get-function-configuration --function-name "$FUNCTION_NAME" --region "$AWS_REGION" \
+            --query '{State:State,LastUpdateStatus:LastUpdateStatus,LastUpdateStatusReason:LastUpdateStatusReason,Runtime:Runtime,Handler:Handler,Memory:MemorySize,Timeout:Timeout,CodeSize:CodeSize,LastModified:LastModified,Role:Role,Arch:Architectures,Env:Environment.Variables}' \
+            --output json
+
+          echo '=== lambda get-function-url-config ==='
+          aws lambda get-function-url-config --function-name "$FUNCTION_NAME" --region "$AWS_REGION" --output json || true
+
+          echo '=== lambda get-policy (resource policy) ==='
+          aws lambda get-policy --function-name "$FUNCTION_NAME" --region "$AWS_REGION" --output json || true
+
+          echo '=== cloudwatch metric Errors (1h) ==='
+          START=$(date -u -d '2 hours ago' +%Y-%m-%dT%H:%M:%SZ)
+          END=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          aws cloudwatch get-metric-statistics \
+            --namespace AWS/Lambda \
+            --metric-name Errors \
+            --dimensions Name=FunctionName,Value="$FUNCTION_NAME" \
+            --start-time "$START" --end-time "$END" \
+            --period 300 --statistics Sum \
+            --region "$AWS_REGION" --output json
+
+          echo '=== cloudwatch metric Invocations (1h) ==='
+          aws cloudwatch get-metric-statistics \
+            --namespace AWS/Lambda \
+            --metric-name Invocations \
+            --dimensions Name=FunctionName,Value="$FUNCTION_NAME" \
+            --start-time "$START" --end-time "$END" \
+            --period 300 --statistics Sum \
+            --region "$AWS_REGION" --output json
+
+          echo '=== recent log streams ==='
+          aws logs describe-log-streams \
+            --log-group-name "$LOG_GROUP" \
+            --order-by LastEventTime --descending --max-items 5 \
+            --region "$AWS_REGION" --output json || true
+
+          echo '=== filter-log-events last 2h (errors/REPORT) ==='
+          aws logs filter-log-events \
+            --log-group-name "$LOG_GROUP" \
+            --start-time $(( ($(date +%s) - 7200) * 1000 )) \
+            --filter-pattern '?ERROR ?Error ?Task ?REPORT ?Init ?timeout ?Runtime' \
+            --limit 50 \
+            --region "$AWS_REGION" --output json || true
+
+          echo '=== last 30 log events (any) ==='
+          STREAM=$(aws logs describe-log-streams \
+            --log-group-name "$LOG_GROUP" \
+            --order-by LastEventTime --descending --max-items 1 \
+            --query 'logStreams[0].logStreamName' --output text --region "$AWS_REGION" || true)
+          echo "stream=$STREAM"
+          if [ -n "$STREAM" ] && [ "$STREAM" != "None" ]; then
+            aws logs get-log-events \
+              --log-group-name "$LOG_GROUP" \
+              --log-stream-name "$STREAM" \
+              --limit 30 \
+              --region "$AWS_REGION" --output json || true
+          fi
+
+          echo '=== cloudfront distribution (stg alias) ==='
+          aws cloudfront list-distributions \
+            --query "DistributionList.Items[?Aliases.Items && contains(Aliases.Items, 'blockdrop-stg.7oas7er.com')].{Id:Id,Domain:DomainName,Status:Status,Origins:Origins.Items[*].{Id:Id,DomainName:DomainName,OAC:OriginAccessControlId}}" \
+            --output json
+
+          echo '=== invoke lambda directly (GET-shaped Function URL event) ==='
+          PAYLOAD='{"version":"2.0","routeKey":"$default","rawPath":"/","requestContext":{"http":{"method":"GET","path":"/"}},"isBase64Encoded":false}'
+          echo "$PAYLOAD" > /tmp/evt.json
+          set +e
+          aws lambda invoke \
+            --function-name "$FUNCTION_NAME" \
+            --cli-binary-format raw-in-base64-out \
+            --payload file:///tmp/evt.json \
+            --region "$AWS_REGION" \
+            /tmp/out.json
+          INVOKE_RC=$?
+          set -e
+          echo "invoke_exit=$INVOKE_RC"
+          echo '--- payload ---'
+          cat /tmp/out.json || true
+          echo
