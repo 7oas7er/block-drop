@@ -3,6 +3,9 @@ name: Diag stg high-scores
 # Temporary read-only probe for staging /api/scores 502 after terraform apply.
 # Uses terraform plan role (ReadOnlyAccess). Remove after HP-14.
 on:
+  pull_request:
+    paths:
+      - ".github/workflows/diag-stg-scores.yml"
   workflow_dispatch:
 
 permissions:
