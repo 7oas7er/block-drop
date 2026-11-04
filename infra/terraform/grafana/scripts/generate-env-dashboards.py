@@ -22,6 +22,11 @@ day / week / month share a comparable scale:
   CF Adaptive:  req/s = count / bucket_seconds
                 datetimeMinute → /60 ; datetimeHour → /3600
   CloudWatch year: sum(rate(aws_cloudfront_requests_sum{…}[1h]))  # Prom rate = /s
+
+Errors y-axis is % of total requests (0–100), not absolute 4xx/5xx counts:
+  CF Adaptive:  4xx % = 100 * count(4xx) / count(total)   (same for 5xx)
+                via joinByField + calculateField (no timeshift / timeCompare)
+  CloudWatch year: avg(aws_cloudfront_{4,5}xx_error_rate_average{…})  # already %
 """
 
 from __future__ import annotations
@@ -320,6 +325,65 @@ def traffic_rate_transform(bucket_seconds: int) -> list[dict]:
     ]
 
 
+def error_pct_transform() -> list[dict]:
+    """Convert CF Adaptive 4xx/5xx counts to % of total requests per time bucket.
+
+    Expects three Infinity frames with number columns named total / 4xx / 5xx
+    (plus Time). No timeshift — prior-period overlays break calculateField name
+    matching (see Traffic timeshift notes).
+    """
+    steps: list[dict] = [
+        {"id": "joinByField", "options": {"byField": "Time", "mode": "outer"}},
+    ]
+    for src in ("4xx", "5xx"):
+        steps.append(
+            {
+                "id": "calculateField",
+                "options": {
+                    "mode": "binary",
+                    "binary": {
+                        "left": src,
+                        "operator": "/",
+                        "right": "total",
+                    },
+                    "replaceFields": False,
+                    "alias": f"{src} ratio",
+                },
+            }
+        )
+        steps.append(
+            {
+                "id": "calculateField",
+                "options": {
+                    "mode": "binary",
+                    "binary": {
+                        "left": f"{src} ratio",
+                        "operator": "*",
+                        "right": "100",
+                    },
+                    "replaceFields": False,
+                    "alias": f"{src} %",
+                },
+            }
+        )
+    steps.append(
+        {
+            "id": "filterFieldsByName",
+            "options": {"include": {"pattern": "^(Time|4xx %|5xx %)$"}},
+        }
+    )
+    return steps
+
+
+def error_pct_field() -> dict:
+    """Y-axis 0–100% for error-rate bars (CF Adaptive + CloudWatch year)."""
+    field = ts_field("percent", bars=True)
+    field["defaults"]["min"] = 0
+    field["defaults"]["max"] = 100
+    field["overrides"] = error_series_colors()
+    return field
+
+
 def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
     host, cf_name = cfg["host"], cfg["cf_name"]
     title, time_from = win["title"], win["time_from"]
@@ -423,21 +487,19 @@ def errors_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
     host, cf_name = cfg["host"], cfg["cf_name"]
     title, time_from = win["title"], win["time_from"]
     if win["source"] == "cw":
-        field = ts_field("percent", bars=True)
-        field["overrides"] = error_series_colors()
         return {
             "id": panel_id,
             "type": "timeseries",
             "title": title,
             "description": (
-                f"CloudFront 4xx/5xx error rates ({cf_name}) via CloudWatch scrape → "
-                "Prometheus (rates %, not counts). Grafana Cloud Free metrics retention "
+                f"CloudFront 4xx/5xx as % of requests ({cf_name}) via CloudWatch scrape → "
+                "Prometheus (already rates 0–100%). Grafana Cloud Free metrics retention "
                 "is 14 days — year history needs native CloudWatch DS or Pro."
             ),
             "gridPos": grid_pos,
             "timeFrom": time_from,
             "datasource": {"type": "prometheus", "uid": "${datasource}"},
-            "fieldConfig": field,
+            "fieldConfig": error_pct_field(),
             "options": ts_options(),
             "targets": [
                 {
@@ -467,21 +529,25 @@ def errors_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
             {"selector": "count", "text": label, "type": "number"},
         ]
 
-    field = ts_field(bars=True)
-    field["overrides"] = error_series_colors()
     return {
         "id": panel_id,
         "type": "timeseries",
         "title": title,
-        "description": f"Cloudflare edge 4xx and 5xx counts ({host}), fixed range {time_from}.",
+        "description": (
+            f"Cloudflare edge 4xx/5xx as % of total requests ({host}), fixed range "
+            f"{time_from}. 4xx % = 100 × count(4xx) / count(total) per {dim} bucket "
+            "(same for 5xx). No timeshift."
+        ),
         "gridPos": grid_pos,
         "timeFrom": time_from,
         "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "${infinity}"},
-        "fieldConfig": field,
+        "fieldConfig": error_pct_field(),
         "options": ts_options(),
+        "transformations": error_pct_transform(),
         "targets": [
+            cf_graphql("A", host, dim, order_by, cols("total")),
             cf_graphql(
-                "A",
+                "B",
                 host,
                 dim,
                 order_by,
@@ -492,7 +558,7 @@ def errors_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
                 ),
             ),
             cf_graphql(
-                "B",
+                "C",
                 host,
                 dim,
                 order_by,
@@ -612,7 +678,11 @@ def build_dashboard(env_key: str) -> dict:
     y += metric_section_height()
 
     panels.append(
-        row(nid(), "Errors — 4xx / 5xx (CF counts ≤30d; year = CloudWatch rates)", y)
+        row(
+            nid(),
+            "Errors — 4xx / 5xx (% of requests; CF Adaptive ≤30d; year = CloudWatch)",
+            y,
+        )
     )
     y += 1
     for i, win in enumerate(WINDOWS):
