@@ -2,9 +2,18 @@
 
 Private falling-block puzzle game, plus the **app-owned** AWS / DNS / Grafana stack that hosts and observes it. This repo is the working reference for a **solo + AI** app template (see [docs/template-readiness-backlog.md](docs/template-readiness-backlog.md)).
 
-**Fundamental design:** each app is an **isolated repository**. Shared Cloudflare zone rulesets and shared Grafana Free objects (Infinity DS, GitHub plugin) live in [`7oas7er/platform`](https://github.com/7oas7er/platform). Apps depend on platform — **never on each other**. Architecture: [`docs/architecture.md`](docs/architecture.md).
+**Fundamental design:** each app is an **isolated repository**. Shared Cloudflare zone rulesets and shared Grafana Free objects (Infinity DS, GitHub plugin) live in [`7oas7er/platform`](https://github.com/7oas7er/platform). Apps depend on platform — **never on each other**.
 
-The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-drop/`](block-drop/). How to play and how scripts are wired: [`block-drop/README.md`](block-drop/README.md).
+The game itself is a static site: HTML, CSS, and plain JavaScript under [`block-drop/`](block-drop/).
+
+- **Architecture:** [`docs/architecture.md`](docs/architecture.md)
+- **ADRs:** [`docs/adr/`](docs/adr/)
+- **Agents:** [`AGENTS.md`](AGENTS.md)
+- **Secrets:** [`SECURITY.md`](SECURITY.md)
+- **Security floor:** [`docs/github-branch-protection.md`](docs/github-branch-protection.md)
+- **Maintenance:** [`docs/maintenance.md`](docs/maintenance.md)
+- **Dashboard template:** [`docs/grafana-dashboard-template.md`](docs/grafana-dashboard-template.md)
+- **Game:** [`block-drop/README.md`](block-drop/README.md)
 
 ## Layout
 
