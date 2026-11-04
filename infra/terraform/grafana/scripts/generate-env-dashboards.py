@@ -21,12 +21,18 @@ Traffic y-axis is request rate (req/s), not absolute bucket counts, so Last hour
 day / week / month share a comparable scale:
   CF Adaptive:  req/s = count / bucket_seconds
                 datetimeMinute → /60 ; datetimeHour → /3600
+                (Infinity backend computed_columns — NOT panel calculateField)
   CloudWatch year: sum(rate(aws_cloudfront_requests_sum{…}[1h]))  # Prom rate = /s
 
 Traffic hour/day/week/month panels overlay the previous equal window via Grafana
 panel timeCompare "__previousPeriod" (native query time offset + timestamp
 alignment). Current series = bars; prior = line (A-compare override). Last year
 has no YoY / prior-period compare.
+
+Do NOT convert count→req/s with a panel calculateField transform when timeCompare
+is on: calculateField matches by display name, timeCompare suffixes compare
+fields with " (comparison)", and replaceFields then drops frames → flash of
+bars then "No data". Compute req/s in the Infinity query instead.
 """
 
 from __future__ import annotations
@@ -180,9 +186,10 @@ def cf_infinity(
     query_body: str,
     root_selector: str,
     fmt: str = "timeseries",
+    computed_columns: list[dict] | None = None,
 ) -> dict:
     """Infinity GraphQL target. Query must live in url_options.body_graphql_query."""
-    return {
+    target: dict = {
         "refId": ref_id,
         "type": "graphql",
         "source": "url",
@@ -201,6 +208,11 @@ def cf_infinity(
         "filters": [],
         "data": "",
     }
+    if computed_columns:
+        # Backend parser: per-row expressions (e.g. requests / 60 → req/s).
+        # Applied inside each query response before timeCompare merges frames.
+        target["computed_columns"] = computed_columns
+    return target
 
 
 def cf_graphql(
@@ -216,6 +228,7 @@ def cf_graphql(
     limit: int = 2000,
     fmt: str = "timeseries",
     eyeball: bool = False,
+    computed_columns: list[dict] | None = None,
 ) -> dict:
     avg_block = ""
     if avg_fields:
@@ -257,6 +270,7 @@ def cf_graphql(
         query_body=data,
         root_selector="data.viewer.zones.0.httpRequestsAdaptiveGroups",
         fmt=fmt,
+        computed_columns=computed_columns,
     )
 
 
@@ -306,23 +320,9 @@ def cf_firewall_events(ref_id: str, host: str) -> dict:
     )
 
 
-def traffic_rate_transform(bucket_seconds: int) -> list[dict]:
-    """Convert CF Adaptive bucket counts to req/s (count / bucket_seconds)."""
-    return [
-        {
-            "id": "calculateField",
-            "options": {
-                "mode": "binary",
-                "binary": {
-                    "left": "requests",
-                    "operator": "/",
-                    "right": str(bucket_seconds),
-                },
-                "replaceFields": True,
-                "alias": "req/s",
-            },
-        }
-    ]
+def traffic_rate_computed_columns(bucket_seconds: int) -> list[dict]:
+    """Infinity backend: req/s = requests / bucket_seconds (per query, pre-timeCompare)."""
+    return [{"selector": f"requests / {bucket_seconds}", "text": "req/s"}]
 
 
 # Grafana panel timeCompare sentinel: shift by the panel range's own duration so
@@ -331,8 +331,21 @@ TRAFFIC_TIME_COMPARE_PREVIOUS = "__previousPeriod"
 
 
 def traffic_prior_period_overrides() -> list[dict]:
-    """Current = bars (ref A); prior equal window = line (Grafana A-compare frame)."""
+    """Current = bars (ref A); prior equal window = line (Grafana A-compare frame).
+
+    Hide the raw Adaptive `requests` count (kept only as input to computed req/s).
+    Match by regexp so both `requests` and `requests (comparison)` stay hidden.
+    """
+    hide_requests = {
+        "tooltip": True,
+        "viz": True,
+        "legend": True,
+    }
     return [
+        {
+            "matcher": {"id": "byRegexp", "options": "^requests"},
+            "properties": [{"id": "custom.hideFrom", "value": hide_requests}],
+        },
         {
             "matcher": {"id": "byFrameRefID", "options": "A"},
             "properties": [
@@ -400,9 +413,9 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         "title": title,
         "description": (
             f"Cloudflare edge request rate ({host}), fixed range {time_from}. "
-            f"req/s = Adaptive count / {bucket_seconds} ({dim} bucket). "
-            "Bars = current window; dashed line = previous equal window "
-            f"(Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS})."
+            f"req/s = Adaptive count / {bucket_seconds} ({dim} bucket) via Infinity "
+            "computed_columns. Bars = current window; dashed line = previous equal "
+            f"window (Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS})."
         ),
         "gridPos": grid_pos,
         "timeFrom": time_from,
@@ -410,7 +423,6 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "${infinity}"},
         "fieldConfig": field,
         "options": ts_options(),
-        "transformations": traffic_rate_transform(bucket_seconds),
         "targets": [
             cf_graphql(
                 "A",
@@ -421,6 +433,7 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
                     {"selector": f"dimensions.{dim}", "text": "Time", "type": "timestamp"},
                     {"selector": "count", "text": "requests", "type": "number"},
                 ],
+                computed_columns=traffic_rate_computed_columns(bucket_seconds),
             )
         ],
     }

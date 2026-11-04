@@ -145,7 +145,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Last hour",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -171,6 +171,22 @@
           }
         },
         "overrides": [
+          {
+            "matcher": {
+              "id": "byRegexp",
+              "options": "^requests"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "tooltip": true,
+                  "viz": true,
+                  "legend": true
+                }
+              }
+            ]
+          },
           {
             "matcher": {
               "id": "byFrameRefID",
@@ -246,21 +262,6 @@
           "sort": "none"
         }
       },
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {
-            "mode": "binary",
-            "binary": {
-              "left": "requests",
-              "operator": "/",
-              "right": "60"
-            },
-            "replaceFields": true,
-            "alias": "req/s"
-          }
-        }
-      ],
       "targets": [
         {
           "refId": "A",
@@ -290,7 +291,13 @@
             }
           ],
           "filters": [],
-          "data": ""
+          "data": "",
+          "computed_columns": [
+            {
+              "selector": "requests / 60",
+              "text": "req/s"
+            }
+          ]
         }
       ]
     },
@@ -298,7 +305,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Last day",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -326,6 +333,22 @@
         "overrides": [
           {
             "matcher": {
+              "id": "byRegexp",
+              "options": "^requests"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "tooltip": true,
+                  "viz": true,
+                  "legend": true
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
               "id": "byFrameRefID",
               "options": "A"
             },
@@ -399,21 +422,6 @@
           "sort": "none"
         }
       },
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {
-            "mode": "binary",
-            "binary": {
-              "left": "requests",
-              "operator": "/",
-              "right": "3600"
-            },
-            "replaceFields": true,
-            "alias": "req/s"
-          }
-        }
-      ],
       "targets": [
         {
           "refId": "A",
@@ -443,7 +451,13 @@
             }
           ],
           "filters": [],
-          "data": ""
+          "data": "",
+          "computed_columns": [
+            {
+              "selector": "requests / 3600",
+              "text": "req/s"
+            }
+          ]
         }
       ]
     },
@@ -451,7 +465,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "Last week",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -479,6 +493,22 @@
         "overrides": [
           {
             "matcher": {
+              "id": "byRegexp",
+              "options": "^requests"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "tooltip": true,
+                  "viz": true,
+                  "legend": true
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
               "id": "byFrameRefID",
               "options": "A"
             },
@@ -552,21 +582,6 @@
           "sort": "none"
         }
       },
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {
-            "mode": "binary",
-            "binary": {
-              "left": "requests",
-              "operator": "/",
-              "right": "3600"
-            },
-            "replaceFields": true,
-            "alias": "req/s"
-          }
-        }
-      ],
       "targets": [
         {
           "refId": "A",
@@ -596,7 +611,13 @@
             }
           ],
           "filters": [],
-          "data": ""
+          "data": "",
+          "computed_columns": [
+            {
+              "selector": "requests / 3600",
+              "text": "req/s"
+            }
+          ]
         }
       ]
     },
@@ -604,7 +625,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Last month",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -632,6 +653,22 @@
         "overrides": [
           {
             "matcher": {
+              "id": "byRegexp",
+              "options": "^requests"
+            },
+            "properties": [
+              {
+                "id": "custom.hideFrom",
+                "value": {
+                  "tooltip": true,
+                  "viz": true,
+                  "legend": true
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
               "id": "byFrameRefID",
               "options": "A"
             },
@@ -705,21 +742,6 @@
           "sort": "none"
         }
       },
-      "transformations": [
-        {
-          "id": "calculateField",
-          "options": {
-            "mode": "binary",
-            "binary": {
-              "left": "requests",
-              "operator": "/",
-              "right": "3600"
-            },
-            "replaceFields": true,
-            "alias": "req/s"
-          }
-        }
-      ],
       "targets": [
         {
           "refId": "A",
@@ -749,7 +771,13 @@
             }
           ],
           "filters": [],
-          "data": ""
+          "data": "",
+          "computed_columns": [
+            {
+              "selector": "requests / 3600",
+              "text": "req/s"
+            }
+          ]
         }
       ]
     },
