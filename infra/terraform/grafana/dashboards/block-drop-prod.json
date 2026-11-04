@@ -145,7 +145,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Last hour",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket) via Infinity computed_columns; convertFieldType forces number after filter (Infinity backend ignores computed_columns.type). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -190,6 +190,13 @@
                 "value": 1
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "current"
               }
@@ -228,6 +235,13 @@
                 "value": "never"
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -239,7 +253,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "mode": "multi",
@@ -248,16 +262,26 @@
       },
       "transformations": [
         {
-          "id": "calculateField",
+          "id": "filterFieldsByName",
           "options": {
-            "mode": "binary",
-            "binary": {
-              "left": "requests",
-              "operator": "/",
-              "right": "60"
-            },
-            "replaceFields": true,
-            "alias": "req/s"
+            "include": {
+              "pattern": "^(Time|req/s)"
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "req/s",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "req/s (comparison)",
+                "destinationType": "number"
+              }
+            ]
           }
         }
       ],
@@ -290,7 +314,14 @@
             }
           ],
           "filters": [],
-          "data": ""
+          "data": "",
+          "computed_columns": [
+            {
+              "selector": "requests / 60",
+              "text": "req/s",
+              "type": "number"
+            }
+          ]
         }
       ]
     },
@@ -298,7 +329,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Last day",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns; convertFieldType forces number after filter (Infinity backend ignores computed_columns.type). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -343,6 +374,13 @@
                 "value": 1
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "current"
               }
@@ -381,6 +419,13 @@
                 "value": "never"
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -392,7 +437,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "mode": "multi",
@@ -401,16 +446,26 @@
       },
       "transformations": [
         {
-          "id": "calculateField",
+          "id": "filterFieldsByName",
           "options": {
-            "mode": "binary",
-            "binary": {
-              "left": "requests",
-              "operator": "/",
-              "right": "3600"
-            },
-            "replaceFields": true,
-            "alias": "req/s"
+            "include": {
+              "pattern": "^(Time|req/s)"
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "req/s",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "req/s (comparison)",
+                "destinationType": "number"
+              }
+            ]
           }
         }
       ],
@@ -443,7 +498,14 @@
             }
           ],
           "filters": [],
-          "data": ""
+          "data": "",
+          "computed_columns": [
+            {
+              "selector": "requests / 3600",
+              "text": "req/s",
+              "type": "number"
+            }
+          ]
         }
       ]
     },
@@ -451,7 +513,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "Last week",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns; convertFieldType forces number after filter (Infinity backend ignores computed_columns.type). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -496,6 +558,13 @@
                 "value": 1
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "current"
               }
@@ -534,6 +603,13 @@
                 "value": "never"
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -545,7 +621,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "mode": "multi",
@@ -554,16 +630,26 @@
       },
       "transformations": [
         {
-          "id": "calculateField",
+          "id": "filterFieldsByName",
           "options": {
-            "mode": "binary",
-            "binary": {
-              "left": "requests",
-              "operator": "/",
-              "right": "3600"
-            },
-            "replaceFields": true,
-            "alias": "req/s"
+            "include": {
+              "pattern": "^(Time|req/s)"
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "req/s",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "req/s (comparison)",
+                "destinationType": "number"
+              }
+            ]
           }
         }
       ],
@@ -596,7 +682,14 @@
             }
           ],
           "filters": [],
-          "data": ""
+          "data": "",
+          "computed_columns": [
+            {
+              "selector": "requests / 3600",
+              "text": "req/s",
+              "type": "number"
+            }
+          ]
         }
       ]
     },
@@ -604,7 +697,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Last month",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns; convertFieldType forces number after filter (Infinity backend ignores computed_columns.type). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -649,6 +742,13 @@
                 "value": 1
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "current"
               }
@@ -687,6 +787,13 @@
                 "value": "never"
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -698,7 +805,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "mode": "multi",
@@ -707,16 +814,26 @@
       },
       "transformations": [
         {
-          "id": "calculateField",
+          "id": "filterFieldsByName",
           "options": {
-            "mode": "binary",
-            "binary": {
-              "left": "requests",
-              "operator": "/",
-              "right": "3600"
-            },
-            "replaceFields": true,
-            "alias": "req/s"
+            "include": {
+              "pattern": "^(Time|req/s)"
+            }
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "req/s",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "req/s (comparison)",
+                "destinationType": "number"
+              }
+            ]
           }
         }
       ],
@@ -749,7 +866,14 @@
             }
           ],
           "filters": [],
-          "data": ""
+          "data": "",
+          "computed_columns": [
+            {
+              "selector": "requests / 3600",
+              "text": "req/s",
+              "type": "number"
+            }
+          ]
         }
       ]
     },
