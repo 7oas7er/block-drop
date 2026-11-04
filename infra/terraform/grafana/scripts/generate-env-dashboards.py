@@ -25,7 +25,9 @@ day / week / month share a comparable scale:
 
 Errors y-axis is % of total requests (0–100), not absolute 4xx/5xx counts:
   CF Adaptive:  4xx % = 100 * count(4xx) / count(total)   (same for 5xx)
-                via joinByField + calculateField (no timeshift / timeCompare)
+                table format + joinByField(outerTabular) + calculateField
+                (timeseries format leaves generic Value names so /total never
+                matches — bars pin at y-max 100%. No timeshift / timeCompare.)
   CloudWatch year: avg(aws_cloudfront_{4,5}xx_error_rate_average{…})  # already %
 """
 
@@ -328,12 +330,23 @@ def traffic_rate_transform(bucket_seconds: int) -> list[dict]:
 def error_pct_transform() -> list[dict]:
     """Convert CF Adaptive 4xx/5xx counts to % of total requests per time bucket.
 
-    Expects three Infinity frames with number columns named total / 4xx / 5xx
-    (plus Time). No timeshift — prior-period overlays break calculateField name
-    matching (see Traffic timeshift notes).
+    Expects three Infinity *table* frames with number columns named total / 4xx /
+    5xx (plus Time). Must use outerTabular — timeseries + mode=outer leaves
+    generic Value field names, so calculateField never resolves ``total`` and the
+    percent unit (max 100) pins raw counts at 100%. No timeshift.
     """
     steps: list[dict] = [
-        {"id": "joinByField", "options": {"byField": "Time", "mode": "outer"}},
+        {"id": "joinByField", "options": {"byField": "Time", "mode": "outerTabular"}},
+        {
+            "id": "convertFieldType",
+            "options": {
+                "conversions": [
+                    {"targetField": "total", "destinationType": "number"},
+                    {"targetField": "4xx", "destinationType": "number"},
+                    {"targetField": "5xx", "destinationType": "number"},
+                ]
+            },
+        },
     ]
     for src in ("4xx", "5xx"):
         steps.append(
@@ -447,34 +460,17 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
 
 
 def error_series_colors() -> list[dict]:
-    """4xx = yellow (ref A), 5xx = red (ref B).
+    """4xx = yellow, 5xx = red (by legend / field name).
 
-    Infinity timeseries frames often expose a generic value field name, so name/regexp
-    matchers miss; byFrameRefID matches the query targets reliably. byName covers the
-    CloudWatch year panel legend formats as a fallback.
+    CF Adaptive panels keep only ``4xx %`` / ``5xx %`` after transforms; CloudWatch
+    year legends use the same names. byFrameRefID is not used — query A is total.
     """
     yellow = {"mode": "fixed", "fixedColor": "yellow"}
     red = {"mode": "fixed", "fixedColor": "red"}
     return [
         {
-            "matcher": {"id": "byFrameRefID", "options": "A"},
-            "properties": [{"id": "color", "value": yellow}],
-        },
-        {
-            "matcher": {"id": "byFrameRefID", "options": "B"},
-            "properties": [{"id": "color", "value": red}],
-        },
-        {
-            "matcher": {"id": "byName", "options": "4xx"},
-            "properties": [{"id": "color", "value": yellow}],
-        },
-        {
             "matcher": {"id": "byName", "options": "4xx %"},
             "properties": [{"id": "color", "value": yellow}],
-        },
-        {
-            "matcher": {"id": "byName", "options": "5xx"},
-            "properties": [{"id": "color", "value": red}],
         },
         {
             "matcher": {"id": "byName", "options": "5xx %"},
@@ -544,8 +540,10 @@ def errors_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         "fieldConfig": error_pct_field(),
         "options": ts_options(),
         "transformations": error_pct_transform(),
+        # table (not timeseries): column text becomes real field names so
+        # joinByField(outerTabular) + calculateField can divide by ``total``.
         "targets": [
-            cf_graphql("A", host, dim, order_by, cols("total")),
+            cf_graphql("A", host, dim, order_by, cols("total"), fmt="table"),
             cf_graphql(
                 "B",
                 host,
@@ -556,6 +554,7 @@ def errors_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
                     "          edgeResponseStatus_geq: 400\n"
                     "          edgeResponseStatus_leq: 499\n"
                 ),
+                fmt="table",
             ),
             cf_graphql(
                 "C",
@@ -567,6 +566,7 @@ def errors_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
                     "          edgeResponseStatus_geq: 500\n"
                     "          edgeResponseStatus_leq: 599\n"
                 ),
+                fmt="table",
             ),
         ],
     }
