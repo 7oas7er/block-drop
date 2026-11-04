@@ -21,34 +21,7 @@ Traffic y-axis is request rate (req/s), not absolute bucket counts, so Last hour
 day / week / month share a comparable scale:
   CF Adaptive:  req/s = count / bucket_seconds
                 datetimeMinute → /60 ; datetimeHour → /3600
-                (Infinity backend computed_columns — NOT panel calculateField)
   CloudWatch year: sum(rate(aws_cloudfront_requests_sum{…}[1h]))  # Prom rate = /s
-
-Traffic hour/day/week/month panels overlay the previous equal window via Grafana
-panel timeCompare "__previousPeriod" (native query time offset + timestamp
-alignment). Current series = bars; prior = line (A-compare override). Last year
-has no YoY / prior-period compare.
-
-Do NOT convert count→req/s with a panel calculateField transform when timeCompare
-is on: calculateField matches by display name, timeCompare suffixes compare
-fields with " (comparison)", and replaceFields then drops frames → flash of
-bars then "No data". Compute req/s in the Infinity query instead.
-
-Infinity computed_columns keep the Adaptive `requests` count alongside `req/s`.
-With timeCompare that yields four series (current/prior × count/rate) — yellow
-bars + orange prior line on top of the intended green bars + blue prior line.
-Drop the count via filterFieldsByName (keep Time + req/s only; pattern also
-matches `req/s (comparison)`). Hide the Traffic legend (two series, tooltip
-enough). Do not add a second query for the prior window — timeCompare owns that.
-
-Infinity backend PostProcessFrame IGNORES computed_columns.type (only selector +
-text reach GetFrameWithComputedColumns). Typing comes from expression results;
-EmptyField falls back to string when every row is nil. After filterFieldsByName
-drops numeric `requests`, a string-typed `req/s` (common once timeCompare adds
-the A-compare frame) makes timeseries flash green bars then settle on
-"Data is missing a number field". Force number with a panel convertFieldType
-transform on `req/s` and `req/s (comparison)` after the filter — do not rely on
-computed_columns.type or fieldConfig overrides (overrides are display-only).
 """
 
 from __future__ import annotations
@@ -202,10 +175,9 @@ def cf_infinity(
     query_body: str,
     root_selector: str,
     fmt: str = "timeseries",
-    computed_columns: list[dict] | None = None,
 ) -> dict:
     """Infinity GraphQL target. Query must live in url_options.body_graphql_query."""
-    target: dict = {
+    return {
         "refId": ref_id,
         "type": "graphql",
         "source": "url",
@@ -224,11 +196,6 @@ def cf_infinity(
         "filters": [],
         "data": "",
     }
-    if computed_columns:
-        # Backend parser: per-row expressions (e.g. requests / 60 → req/s).
-        # Applied inside each query response before timeCompare merges frames.
-        target["computed_columns"] = computed_columns
-    return target
 
 
 def cf_graphql(
@@ -244,7 +211,6 @@ def cf_graphql(
     limit: int = 2000,
     fmt: str = "timeseries",
     eyeball: bool = False,
-    computed_columns: list[dict] | None = None,
 ) -> dict:
     avg_block = ""
     if avg_fields:
@@ -286,7 +252,6 @@ def cf_graphql(
         query_body=data,
         root_selector="data.viewer.zones.0.httpRequestsAdaptiveGroups",
         fmt=fmt,
-        computed_columns=computed_columns,
     )
 
 
@@ -336,101 +301,22 @@ def cf_firewall_events(ref_id: str, host: str) -> dict:
     )
 
 
-def traffic_rate_computed_columns(bucket_seconds: int) -> list[dict]:
-    """Infinity backend: req/s = requests / bucket_seconds (per query, pre-timeCompare).
-
-    type: "number" is documentary only — Infinity backend ignores it (selector +
-    text only). Panel convertFieldType (see traffic_reqps_transforms) is what
-    guarantees FieldType.number after filterFieldsByName + timeCompare.
-    """
+def traffic_rate_transform(bucket_seconds: int) -> list[dict]:
+    """Convert CF Adaptive bucket counts to req/s (count / bucket_seconds)."""
     return [
         {
-            "selector": f"requests / {bucket_seconds}",
-            "text": "req/s",
-            "type": "number",
-        }
-    ]
-
-
-# Grafana panel timeCompare sentinel: shift by the panel range's own duration so
-# the prior series is the previous equal window (not a fixed 1d/1w/1M preset).
-TRAFFIC_TIME_COMPARE_PREVIOUS = "__previousPeriod"
-
-# timeCompare may suffix the compare series display name; convert both.
-TRAFFIC_REQPS_FIELD_NAMES = ("req/s", "req/s (comparison)")
-
-
-def traffic_ts_options() -> dict:
-    """Traffic compare tiles: no legend (current bars + one prior line; tooltip only)."""
-    return {
-        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": False},
-        "tooltip": {"mode": "multi", "sort": "none"},
-    }
-
-
-def traffic_reqps_transforms() -> list[dict]:
-    """Drop Adaptive count, then force req/s fields to number for bars + timeCompare.
-
-    Order matters: filter first (so requests cannot plot), then convertFieldType so
-    string-typed Infinity computed columns become FieldType.number on both the
-    current and A-compare frames.
-    """
-    return [
-        {
-            "id": "filterFieldsByName",
+            "id": "calculateField",
             "options": {
-                "include": {
-                    # Also matches timeCompare-renamed "req/s (comparison)".
-                    "pattern": "^(Time|req/s)",
-                }
-            },
-        },
-        {
-            "id": "convertFieldType",
-            "options": {
-                "conversions": [
-                    {"targetField": name, "destinationType": "number"}
-                    for name in TRAFFIC_REQPS_FIELD_NAMES
-                ]
-            },
-        },
-    ]
-
-
-def traffic_prior_period_overrides() -> list[dict]:
-    """Current = green bars (ref A); prior equal window = blue dashed line (A-compare).
-
-    Raw Adaptive `requests` is removed by traffic_reqps_transforms() so only one
-    value field remains per frame — avoids yellow/orange palette extras.
-    """
-    green = {"mode": "fixed", "fixedColor": "green"}
-    blue = {"mode": "fixed", "fixedColor": "blue"}
-    return [
-        {
-            "matcher": {"id": "byFrameRefID", "options": "A"},
-            "properties": [
-                {"id": "custom.drawStyle", "value": "bars"},
-                {"id": "custom.fillOpacity", "value": 80},
-                {"id": "custom.lineWidth", "value": 1},
-                {"id": "color", "value": green},
-                {"id": "displayName", "value": "current"},
-            ],
-        },
-        {
-            "matcher": {"id": "byFrameRefID", "options": "A-compare"},
-            "properties": [
-                {"id": "custom.drawStyle", "value": "line"},
-                {"id": "custom.fillOpacity", "value": 0},
-                {"id": "custom.lineWidth", "value": 2},
-                {
-                    "id": "custom.lineStyle",
-                    "value": {"fill": "dash", "dash": [5, 5]},
+                "mode": "binary",
+                "binary": {
+                    "left": "requests",
+                    "operator": "/",
+                    "right": str(bucket_seconds),
                 },
-                {"id": "custom.showPoints", "value": "never"},
-                {"id": "color", "value": blue},
-                {"id": "displayName", "value": "prior period"},
-            ],
-        },
+                "replaceFields": True,
+                "alias": "req/s",
+            },
+        }
     ]
 
 
@@ -438,7 +324,6 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
     host, cf_name = cfg["host"], cfg["cf_name"]
     title, time_from = win["title"], win["time_from"]
     if win["source"] == "cw":
-        # Last year: no YoY / prior-period overlay (Grafana Free retention + skip YoY).
         return {
             "id": panel_id,
             "type": "timeseries",
@@ -447,7 +332,7 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
                 f"CloudFront request rate ({cf_name}) via CloudWatch scrape → Prometheus "
                 "(PromQL rate → req/s). Grafana Cloud Free retains metrics for 14 days "
                 "only — a full year needs a native CloudWatch data source or Pro "
-                "retention (not scrape-to-Prom). No year-over-year compare."
+                "retention (not scrape-to-Prom)."
             ),
             "gridPos": grid_pos,
             "timeFrom": time_from,
@@ -467,28 +352,21 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         }
     dim, order_by = win["dim"], win["order_by"]
     bucket_seconds = win["bucket_seconds"]
-    field = ts_field("reqps", bars=True)
-    field["overrides"] = traffic_prior_period_overrides()
     return {
         "id": panel_id,
         "type": "timeseries",
         "title": title,
         "description": (
             f"Cloudflare edge request rate ({host}), fixed range {time_from}. "
-            f"req/s = Adaptive count / {bucket_seconds} ({dim} bucket) via Infinity "
-            "computed_columns; convertFieldType forces number after filter (Infinity "
-            "backend ignores computed_columns.type). Bars = current window; dashed line = "
-            f"previous equal window (Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS}). "
-            "filterFieldsByName keeps Time + req/s only (drops Adaptive count so "
-            "timeCompare does not plot a second current/prior pair)."
+            f"req/s = Adaptive count / {bucket_seconds} "
+            f"({dim} bucket)."
         ),
         "gridPos": grid_pos,
         "timeFrom": time_from,
-        "timeCompare": TRAFFIC_TIME_COMPARE_PREVIOUS,
         "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "${infinity}"},
-        "fieldConfig": field,
-        "options": traffic_ts_options(),
-        "transformations": traffic_reqps_transforms(),
+        "fieldConfig": ts_field("reqps", bars=True),
+        "options": ts_options(),
+        "transformations": traffic_rate_transform(bucket_seconds),
         "targets": [
             cf_graphql(
                 "A",
@@ -499,7 +377,6 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
                     {"selector": f"dimensions.{dim}", "text": "Time", "type": "timestamp"},
                     {"selector": "count", "text": "requests", "type": "number"},
                 ],
-                computed_columns=traffic_rate_computed_columns(bucket_seconds),
             )
         ],
     }
@@ -725,7 +602,7 @@ def build_dashboard(env_key: str) -> dict:
     panels.append(
         row(
             nid(),
-            "Traffic — req/s + prior equal window (CF ≤30d; year = CloudWatch, no YoY)",
+            "Traffic — request rate req/s (CF Adaptive ≤30d; year = CloudWatch)",
             y,
         )
     )

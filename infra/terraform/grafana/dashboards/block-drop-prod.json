@@ -131,7 +131,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Traffic \u2014 req/s + prior equal window (CF \u226430d; year = CloudWatch, no YoY)",
+      "title": "Traffic \u2014 request rate req/s (CF Adaptive \u226430d; year = CloudWatch)",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -145,7 +145,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Last hour",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket) via Infinity computed_columns; convertFieldType forces number after filter (Infinity backend ignores computed_columns.type). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -153,7 +153,6 @@
         "y": 1
       },
       "timeFrom": "now-1h",
-      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -170,90 +169,13 @@
             "barAlignment": 0
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "custom.drawStyle",
-                "value": "bars"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 80
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 1
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "current"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A-compare"
-            },
-            "properties": [
-              {
-                "id": "custom.drawStyle",
-                "value": "line"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    5,
-                    5
-                  ]
-                }
-              },
-              {
-                "id": "custom.showPoints",
-                "value": "never"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "prior period"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -262,26 +184,16 @@
       },
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "calculateField",
           "options": {
-            "include": {
-              "pattern": "^(Time|req/s)"
-            }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "targetField": "req/s",
-                "destinationType": "number"
-              },
-              {
-                "targetField": "req/s (comparison)",
-                "destinationType": "number"
-              }
-            ]
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "60"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
           }
         }
       ],
@@ -314,14 +226,7 @@
             }
           ],
           "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 60",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
+          "data": ""
         }
       ]
     },
@@ -329,7 +234,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Last day",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns; convertFieldType forces number after filter (Infinity backend ignores computed_columns.type). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -337,7 +242,6 @@
         "y": 1
       },
       "timeFrom": "now-1d",
-      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -354,90 +258,13 @@
             "barAlignment": 0
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "custom.drawStyle",
-                "value": "bars"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 80
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 1
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "current"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A-compare"
-            },
-            "properties": [
-              {
-                "id": "custom.drawStyle",
-                "value": "line"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    5,
-                    5
-                  ]
-                }
-              },
-              {
-                "id": "custom.showPoints",
-                "value": "never"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "prior period"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -446,26 +273,16 @@
       },
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "calculateField",
           "options": {
-            "include": {
-              "pattern": "^(Time|req/s)"
-            }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "targetField": "req/s",
-                "destinationType": "number"
-              },
-              {
-                "targetField": "req/s (comparison)",
-                "destinationType": "number"
-              }
-            ]
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
           }
         }
       ],
@@ -498,14 +315,7 @@
             }
           ],
           "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
+          "data": ""
         }
       ]
     },
@@ -513,7 +323,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "Last week",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns; convertFieldType forces number after filter (Infinity backend ignores computed_columns.type). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -521,7 +331,6 @@
         "y": 1
       },
       "timeFrom": "now-7d",
-      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -538,90 +347,13 @@
             "barAlignment": 0
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "custom.drawStyle",
-                "value": "bars"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 80
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 1
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "current"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A-compare"
-            },
-            "properties": [
-              {
-                "id": "custom.drawStyle",
-                "value": "line"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    5,
-                    5
-                  ]
-                }
-              },
-              {
-                "id": "custom.showPoints",
-                "value": "never"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "prior period"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -630,26 +362,16 @@
       },
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "calculateField",
           "options": {
-            "include": {
-              "pattern": "^(Time|req/s)"
-            }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "targetField": "req/s",
-                "destinationType": "number"
-              },
-              {
-                "targetField": "req/s (comparison)",
-                "destinationType": "number"
-              }
-            ]
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
           }
         }
       ],
@@ -682,14 +404,7 @@
             }
           ],
           "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
+          "data": ""
         }
       ]
     },
@@ -697,7 +412,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Last month",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns; convertFieldType forces number after filter (Infinity backend ignores computed_columns.type). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -705,7 +420,6 @@
         "y": 5
       },
       "timeFrom": "now-29d",
-      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -722,90 +436,13 @@
             "barAlignment": 0
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "custom.drawStyle",
-                "value": "bars"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 80
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 1
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "current"
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "A-compare"
-            },
-            "properties": [
-              {
-                "id": "custom.drawStyle",
-                "value": "line"
-              },
-              {
-                "id": "custom.fillOpacity",
-                "value": 0
-              },
-              {
-                "id": "custom.lineWidth",
-                "value": 2
-              },
-              {
-                "id": "custom.lineStyle",
-                "value": {
-                  "fill": "dash",
-                  "dash": [
-                    5,
-                    5
-                  ]
-                }
-              },
-              {
-                "id": "custom.showPoints",
-                "value": "never"
-              },
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              },
-              {
-                "id": "displayName",
-                "value": "prior period"
-              }
-            ]
-          }
-        ]
+        "overrides": []
       },
       "options": {
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -814,26 +451,16 @@
       },
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "calculateField",
           "options": {
-            "include": {
-              "pattern": "^(Time|req/s)"
-            }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "targetField": "req/s",
-                "destinationType": "number"
-              },
-              {
-                "targetField": "req/s (comparison)",
-                "destinationType": "number"
-              }
-            ]
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
           }
         }
       ],
@@ -866,14 +493,7 @@
             }
           ],
           "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
+          "data": ""
         }
       ]
     },
@@ -881,7 +501,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Last year",
-      "description": "CloudFront request rate (prod-block-drop-site-distribution) via CloudWatch scrape \u2192 Prometheus (PromQL rate \u2192 req/s). Grafana Cloud Free retains metrics for 14 days only \u2014 a full year needs a native CloudWatch data source or Pro retention (not scrape-to-Prom). No year-over-year compare.",
+      "description": "CloudFront request rate (prod-block-drop-site-distribution) via CloudWatch scrape \u2192 Prometheus (PromQL rate \u2192 req/s). Grafana Cloud Free retains metrics for 14 days only \u2014 a full year needs a native CloudWatch data source or Pro retention (not scrape-to-Prom).",
       "gridPos": {
         "h": 4,
         "w": 8,

@@ -45,7 +45,7 @@ distribution `Name` tag, and synthetic probe jobs. Do not mix prod and stg serie
 
 Keep this order and these row titles (env-specific hostnames/jobs inside panels):
 
-1. **Traffic — request rate (req/s)** — five fixed windows (see below). CF Adaptive: `count / bucket_seconds` (`datetimeMinute` → `/60`, `datetimeHour` → `/3600`) via Infinity backend **`computed_columns`** (not a panel `calculateField` — that breaks under `timeCompare` because compare fields get a ` (comparison)` display-name suffix and `replaceFields` then drops frames → brief bars then “No data”). Infinity backend **ignores** `computed_columns.type`; after `filterFieldsByName` drops numeric `requests`, a string-typed `req/s` (especially once `timeCompare` adds `A-compare`) yields brief green bars then **“Data is missing a number field”**. Force number with panel **`convertFieldType`** on `req/s` and `req/s (comparison)` after the filter — fieldConfig overrides are display-only and will not fix this. Year CloudWatch: PromQL `rate(…[1h])` (already /s). Use rate, not absolute bucket counts, so hour/day/month y-scales are comparable. Hour/day/week/month Traffic tiles overlay the **previous equal window** via Grafana panel `timeCompare: "__previousPeriod"` (query time offset + timestamp alignment): **green bars = current**, **blue dashed line = prior** — one query only (`A`; prior is `A-compare`). Drop Adaptive `requests` with `filterFieldsByName` include `^(Time|req/s)` so timeCompare does not also plot count as yellow bars / orange prior; hide the panel legend. Do **not** add YoY / prior-period compare on Last year.
+1. **Traffic — request rate (req/s)** — five fixed windows (see below). CF Adaptive: `count / bucket_seconds` (`datetimeMinute` → `/60`, `datetimeHour` → `/3600`); year CloudWatch: PromQL `rate(…[1h])` (already /s). Use rate, not absolute bucket counts, so hour/day/month y-scales are comparable.
 2. **Errors — 4xx / 5xx (CF counts ≤30d; year = CloudWatch rates)**
 3. **Latency — origin (CloudFront) + CF `originResponseDurationMs`**
 4. **Synthetics — availability** — site + critical API uptime stats, success/latency charts, check logs
@@ -66,7 +66,7 @@ Metric tiles use **panel `timeFrom`**, not the dashboard picker alone — so hou
 | Last day | `now-1d` | Cloudflare Adaptive (`datetimeHour`) |
 | Last week | `now-7d` | Cloudflare Adaptive (`datetimeHour`) |
 | Last month | `now-29d` | Cloudflare Adaptive (`datetimeHour`) — Free max span ≈ 30d; use **29d** so inclusive bounds stay under `maxDuration`; **no** `datetimeDay_ASC` |
-| Last year | `now-365d` | Intended CloudWatch history — **but** scrape→Prometheus on Grafana Cloud Free only retains **14 days**, so year tiles stay empty unless you add a native CloudWatch DS or upgrade retention. **No** `timeCompare` / YoY overlay on this tile. |
+| Last year | `now-365d` | Intended CloudWatch history — **but** scrape→Prometheus on Grafana Cloud Free only retains **14 days**, so year tiles stay empty unless you add a native CloudWatch DS or upgrade retention |
 
 ## Formatting / layout
 
