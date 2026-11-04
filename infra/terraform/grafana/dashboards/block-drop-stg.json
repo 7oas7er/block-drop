@@ -145,7 +145,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Last hour",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket). Two Infinity backend queries (no timeCompare, no UQL): A = current ${__timeFrom}/${__timeTo}; B = prior equal window (datetime_leq=${__timeFrom}, limit+orderBy DESC, JSONata root_selector shifts timestamps +1h for overlay). Bars = current (A); dashed line = prior (B). filterFieldsByName keeps Time + req/s only; convertFieldType forces number for bars (Infinity backend ignores computed_columns.type).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -153,6 +153,7 @@
         "y": 1
       },
       "timeFrom": "now-1h",
+      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -189,13 +190,6 @@
                 "value": 1
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              },
-              {
                 "id": "displayName",
                 "value": "current"
               }
@@ -204,7 +198,7 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "B"
+              "options": "A-compare"
             },
             "properties": [
               {
@@ -234,13 +228,6 @@
                 "value": "never"
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              },
-              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -252,7 +239,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -261,22 +248,16 @@
       },
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "calculateField",
           "options": {
-            "include": {
-              "pattern": "^(Time|req/s)"
-            }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "targetField": "req/s",
-                "destinationType": "number"
-              }
-            ]
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "60"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
           }
         }
       ],
@@ -309,51 +290,7 @@
             }
           ],
           "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 60",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
-        },
-        {
-          "refId": "B",
-          "type": "graphql",
-          "source": "url",
-          "format": "timeseries",
-          "url": "https://api.cloudflare.com/client/v4/graphql",
-          "url_options": {
-            "method": "POST",
-            "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 60\n        orderBy: [datetimeMinute_DESC]\n        filter: {\n          datetime_geq: \"${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z\"\n          datetime_leq: \"${__timeFrom:date:iso}\"\n          clientRequestHTTPHost: \"blockdrop-stg.7oas7er.com\"\n        }\n      ) {\n        count\n        dimensions { datetimeMinute }\n      }\n    }\n  }\n}",
-            "body_type": "graphql",
-            "body_content_type": "application/json",
-            "body_graphql_query": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 60\n        orderBy: [datetimeMinute_DESC]\n        filter: {\n          datetime_geq: \"${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z\"\n          datetime_leq: \"${__timeFrom:date:iso}\"\n          clientRequestHTTPHost: \"blockdrop-stg.7oas7er.com\"\n        }\n      ) {\n        count\n        dimensions { datetimeMinute }\n      }\n    }\n  }\n}"
-          },
-          "parser": "backend",
-          "root_selector": "data.viewer.zones.0.httpRequestsAdaptiveGroups[$toMillis(dimensions.datetimeMinute) >= (${__timeFrom:date:seconds} - 3600) * 1000 and $toMillis(dimensions.datetimeMinute) < ${__timeFrom:date:seconds} * 1000].{\"count\": count, \"dimensions\": {\"datetimeMinute\": $fromMillis($toMillis(dimensions.datetimeMinute) + 3600000)}}",
-          "columns": [
-            {
-              "selector": "dimensions.datetimeMinute",
-              "text": "Time",
-              "type": "timestamp"
-            },
-            {
-              "selector": "count",
-              "text": "requests",
-              "type": "number"
-            }
-          ],
-          "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 60",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
+          "data": ""
         }
       ]
     },
@@ -361,7 +298,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Last day",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket). Two Infinity backend queries (no timeCompare, no UQL): A = current ${__timeFrom}/${__timeTo}; B = prior equal window (datetime_leq=${__timeFrom}, limit+orderBy DESC, JSONata root_selector shifts timestamps +1d for overlay). Bars = current (A); dashed line = prior (B). filterFieldsByName keeps Time + req/s only; convertFieldType forces number for bars (Infinity backend ignores computed_columns.type).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -369,6 +306,7 @@
         "y": 1
       },
       "timeFrom": "now-1d",
+      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -405,13 +343,6 @@
                 "value": 1
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              },
-              {
                 "id": "displayName",
                 "value": "current"
               }
@@ -420,7 +351,7 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "B"
+              "options": "A-compare"
             },
             "properties": [
               {
@@ -450,13 +381,6 @@
                 "value": "never"
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              },
-              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -468,7 +392,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -477,22 +401,16 @@
       },
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "calculateField",
           "options": {
-            "include": {
-              "pattern": "^(Time|req/s)"
-            }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "targetField": "req/s",
-                "destinationType": "number"
-              }
-            ]
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
           }
         }
       ],
@@ -525,51 +443,7 @@
             }
           ],
           "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
-        },
-        {
-          "refId": "B",
-          "type": "graphql",
-          "source": "url",
-          "format": "timeseries",
-          "url": "https://api.cloudflare.com/client/v4/graphql",
-          "url_options": {
-            "method": "POST",
-            "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 24\n        orderBy: [datetimeHour_DESC]\n        filter: {\n          datetime_geq: \"${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z\"\n          datetime_leq: \"${__timeFrom:date:iso}\"\n          clientRequestHTTPHost: \"blockdrop-stg.7oas7er.com\"\n        }\n      ) {\n        count\n        dimensions { datetimeHour }\n      }\n    }\n  }\n}",
-            "body_type": "graphql",
-            "body_content_type": "application/json",
-            "body_graphql_query": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 24\n        orderBy: [datetimeHour_DESC]\n        filter: {\n          datetime_geq: \"${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z\"\n          datetime_leq: \"${__timeFrom:date:iso}\"\n          clientRequestHTTPHost: \"blockdrop-stg.7oas7er.com\"\n        }\n      ) {\n        count\n        dimensions { datetimeHour }\n      }\n    }\n  }\n}"
-          },
-          "parser": "backend",
-          "root_selector": "data.viewer.zones.0.httpRequestsAdaptiveGroups[$toMillis(dimensions.datetimeHour) >= (${__timeFrom:date:seconds} - 86400) * 1000 and $toMillis(dimensions.datetimeHour) < ${__timeFrom:date:seconds} * 1000].{\"count\": count, \"dimensions\": {\"datetimeHour\": $fromMillis($toMillis(dimensions.datetimeHour) + 86400000)}}",
-          "columns": [
-            {
-              "selector": "dimensions.datetimeHour",
-              "text": "Time",
-              "type": "timestamp"
-            },
-            {
-              "selector": "count",
-              "text": "requests",
-              "type": "number"
-            }
-          ],
-          "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
+          "data": ""
         }
       ]
     },
@@ -577,7 +451,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "Last week",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket). Two Infinity backend queries (no timeCompare, no UQL): A = current ${__timeFrom}/${__timeTo}; B = prior equal window (datetime_leq=${__timeFrom}, limit+orderBy DESC, JSONata root_selector shifts timestamps +7d for overlay). Bars = current (A); dashed line = prior (B). filterFieldsByName keeps Time + req/s only; convertFieldType forces number for bars (Infinity backend ignores computed_columns.type).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -585,6 +459,7 @@
         "y": 1
       },
       "timeFrom": "now-7d",
+      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -621,13 +496,6 @@
                 "value": 1
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              },
-              {
                 "id": "displayName",
                 "value": "current"
               }
@@ -636,7 +504,7 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "B"
+              "options": "A-compare"
             },
             "properties": [
               {
@@ -666,13 +534,6 @@
                 "value": "never"
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              },
-              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -684,7 +545,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -693,22 +554,16 @@
       },
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "calculateField",
           "options": {
-            "include": {
-              "pattern": "^(Time|req/s)"
-            }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "targetField": "req/s",
-                "destinationType": "number"
-              }
-            ]
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
           }
         }
       ],
@@ -741,51 +596,7 @@
             }
           ],
           "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
-        },
-        {
-          "refId": "B",
-          "type": "graphql",
-          "source": "url",
-          "format": "timeseries",
-          "url": "https://api.cloudflare.com/client/v4/graphql",
-          "url_options": {
-            "method": "POST",
-            "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 168\n        orderBy: [datetimeHour_DESC]\n        filter: {\n          datetime_geq: \"${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z\"\n          datetime_leq: \"${__timeFrom:date:iso}\"\n          clientRequestHTTPHost: \"blockdrop-stg.7oas7er.com\"\n        }\n      ) {\n        count\n        dimensions { datetimeHour }\n      }\n    }\n  }\n}",
-            "body_type": "graphql",
-            "body_content_type": "application/json",
-            "body_graphql_query": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 168\n        orderBy: [datetimeHour_DESC]\n        filter: {\n          datetime_geq: \"${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z\"\n          datetime_leq: \"${__timeFrom:date:iso}\"\n          clientRequestHTTPHost: \"blockdrop-stg.7oas7er.com\"\n        }\n      ) {\n        count\n        dimensions { datetimeHour }\n      }\n    }\n  }\n}"
-          },
-          "parser": "backend",
-          "root_selector": "data.viewer.zones.0.httpRequestsAdaptiveGroups[$toMillis(dimensions.datetimeHour) >= (${__timeFrom:date:seconds} - 604800) * 1000 and $toMillis(dimensions.datetimeHour) < ${__timeFrom:date:seconds} * 1000].{\"count\": count, \"dimensions\": {\"datetimeHour\": $fromMillis($toMillis(dimensions.datetimeHour) + 604800000)}}",
-          "columns": [
-            {
-              "selector": "dimensions.datetimeHour",
-              "text": "Time",
-              "type": "timestamp"
-            },
-            {
-              "selector": "count",
-              "text": "requests",
-              "type": "number"
-            }
-          ],
-          "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
+          "data": ""
         }
       ]
     },
@@ -793,7 +604,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Last month",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket). Two Infinity backend queries (no timeCompare, no UQL): A = current ${__timeFrom}/${__timeTo}; B = prior equal window (datetime_leq=${__timeFrom}, limit+orderBy DESC, JSONata root_selector shifts timestamps +29d for overlay). Bars = current (A); dashed line = prior (B). filterFieldsByName keeps Time + req/s only; convertFieldType forces number for bars (Infinity backend ignores computed_columns.type).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -801,6 +612,7 @@
         "y": 5
       },
       "timeFrom": "now-29d",
+      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -837,13 +649,6 @@
                 "value": 1
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "green"
-                }
-              },
-              {
                 "id": "displayName",
                 "value": "current"
               }
@@ -852,7 +657,7 @@
           {
             "matcher": {
               "id": "byFrameRefID",
-              "options": "B"
+              "options": "A-compare"
             },
             "properties": [
               {
@@ -882,13 +687,6 @@
                 "value": "never"
               },
               {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "blue"
-                }
-              },
-              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -900,7 +698,7 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": false
+          "showLegend": true
         },
         "tooltip": {
           "mode": "multi",
@@ -909,22 +707,16 @@
       },
       "transformations": [
         {
-          "id": "filterFieldsByName",
+          "id": "calculateField",
           "options": {
-            "include": {
-              "pattern": "^(Time|req/s)"
-            }
-          }
-        },
-        {
-          "id": "convertFieldType",
-          "options": {
-            "conversions": [
-              {
-                "targetField": "req/s",
-                "destinationType": "number"
-              }
-            ]
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
           }
         }
       ],
@@ -957,51 +749,7 @@
             }
           ],
           "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
-        },
-        {
-          "refId": "B",
-          "type": "graphql",
-          "source": "url",
-          "format": "timeseries",
-          "url": "https://api.cloudflare.com/client/v4/graphql",
-          "url_options": {
-            "method": "POST",
-            "data": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 696\n        orderBy: [datetimeHour_DESC]\n        filter: {\n          datetime_geq: \"${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z\"\n          datetime_leq: \"${__timeFrom:date:iso}\"\n          clientRequestHTTPHost: \"blockdrop-stg.7oas7er.com\"\n        }\n      ) {\n        count\n        dimensions { datetimeHour }\n      }\n    }\n  }\n}",
-            "body_type": "graphql",
-            "body_content_type": "application/json",
-            "body_graphql_query": "query {\n  viewer {\n    zones(filter: { zoneTag: \"${cf_zone}\" }) {\n      httpRequestsAdaptiveGroups(\n        limit: 696\n        orderBy: [datetimeHour_DESC]\n        filter: {\n          datetime_geq: \"${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z\"\n          datetime_leq: \"${__timeFrom:date:iso}\"\n          clientRequestHTTPHost: \"blockdrop-stg.7oas7er.com\"\n        }\n      ) {\n        count\n        dimensions { datetimeHour }\n      }\n    }\n  }\n}"
-          },
-          "parser": "backend",
-          "root_selector": "data.viewer.zones.0.httpRequestsAdaptiveGroups[$toMillis(dimensions.datetimeHour) >= (${__timeFrom:date:seconds} - 2505600) * 1000 and $toMillis(dimensions.datetimeHour) < ${__timeFrom:date:seconds} * 1000].{\"count\": count, \"dimensions\": {\"datetimeHour\": $fromMillis($toMillis(dimensions.datetimeHour) + 2505600000)}}",
-          "columns": [
-            {
-              "selector": "dimensions.datetimeHour",
-              "text": "Time",
-              "type": "timestamp"
-            },
-            {
-              "selector": "count",
-              "text": "requests",
-              "type": "number"
-            }
-          ],
-          "filters": [],
-          "data": "",
-          "computed_columns": [
-            {
-              "selector": "requests / 3600",
-              "text": "req/s",
-              "type": "number"
-            }
-          ]
+          "data": ""
         }
       ]
     },
