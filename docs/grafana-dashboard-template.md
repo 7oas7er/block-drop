@@ -45,7 +45,7 @@ distribution `Name` tag, and synthetic probe jobs. Do not mix prod and stg serie
 
 Keep this order and these row titles (env-specific hostnames/jobs inside panels):
 
-1. **Traffic — request rate (req/s)** — five fixed windows (see below). CF Adaptive: `count / bucket_seconds` (`datetimeMinute` → `/60`, `datetimeHour` → `/3600`). **Do not use panel `timeCompare`** for the prior overlay — with Infinity it repeatedly caused “No data” / **“Data is missing a number field”** (compare frames + string-typed computed `req/s` after `filterFieldsByName` drops numeric `requests`; `convertFieldType` on `req/s (comparison)` did not fix it after apply). Instead use **two Infinity backend queries** (avoid frontend UQL for B — #149’s UQL prior path left the blue line empty and blanked week/month when B errored): **A = current** (`${__timeFrom:date:iso}` / `${__timeTo:date:iso}`, backend `computed_columns` for `req/s`); **B = prior equal window** (`datetime_leq: ${__timeFrom:date:iso}`, loose month-start `datetime_geq`, `limit` = bucket count, `orderBy` DESC; JSONata `root_selector` shifts dimension timestamps forward by `prior_shift_ms` for overlay; same columns + `computed_columns` as A). **Green bars = A (current)**, **blue dashed line = B (prior)**. Drop Adaptive `requests` with `filterFieldsByName` include `^(Time|req/s)`; panel `convertFieldType` → number on `req/s` (Infinity backend ignores `computed_columns.type`; fieldConfig overrides are display-only). Hide the panel legend. Year CloudWatch: PromQL `rate(…[1h])` (already /s). Do **not** add YoY / prior-period compare on Last year.
+1. **Traffic — request rate (req/s)** — five fixed windows (see below). CF Adaptive: `count / bucket_seconds` (`datetimeMinute` → `/60`, `datetimeHour` → `/3600`); year CloudWatch: PromQL `rate(…[1h])` (already /s). Use rate, not absolute bucket counts, so hour/day/month y-scales are comparable. Hour/day/week/month Traffic tiles overlay the **previous equal window** via Grafana panel `timeCompare: "__previousPeriod"` (query time offset + timestamp alignment): **bars = current**, **dashed line = prior**. Do **not** add YoY / prior-period compare on Last year.
 2. **Errors — 4xx / 5xx (CF counts ≤30d; year = CloudWatch rates)**
 3. **Latency — origin (CloudFront) + CF `originResponseDurationMs`**
 4. **Synthetics — availability** — site + critical API uptime stats, success/latency charts, check logs
@@ -66,7 +66,7 @@ Metric tiles use **panel `timeFrom`**, not the dashboard picker alone — so hou
 | Last day | `now-1d` | Cloudflare Adaptive (`datetimeHour`) |
 | Last week | `now-7d` | Cloudflare Adaptive (`datetimeHour`) |
 | Last month | `now-29d` | Cloudflare Adaptive (`datetimeHour`) — Free max span ≈ 30d; use **29d** so inclusive bounds stay under `maxDuration`; **no** `datetimeDay_ASC` |
-| Last year | `now-365d` | Intended CloudWatch history — **but** scrape→Prometheus on Grafana Cloud Free only retains **14 days**, so year tiles stay empty unless you add a native CloudWatch DS or upgrade retention. **No** prior-period / YoY overlay on this tile. |
+| Last year | `now-365d` | Intended CloudWatch history — **but** scrape→Prometheus on Grafana Cloud Free only retains **14 days**, so year tiles stay empty unless you add a native CloudWatch DS or upgrade retention. **No** `timeCompare` / YoY overlay on this tile. |
 
 ## Formatting / layout
 
