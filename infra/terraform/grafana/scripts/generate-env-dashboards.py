@@ -40,6 +40,10 @@ bars + orange prior line on top of the intended green bars + blue prior line.
 Drop the count via filterFieldsByName (keep Time + req/s only; pattern also
 matches `req/s (comparison)`). Hide the Traffic legend (two series, tooltip
 enough). Do not add a second query for the prior window — timeCompare owns that.
+
+computed_columns MUST set type: "number" on req/s. Infinity defaults omitted
+types to string; after filterFieldsByName drops numeric `requests`, bars +
+timeCompare then fail with "Data is missing a number field".
 """
 
 from __future__ import annotations
@@ -328,8 +332,18 @@ def cf_firewall_events(ref_id: str, host: str) -> dict:
 
 
 def traffic_rate_computed_columns(bucket_seconds: int) -> list[dict]:
-    """Infinity backend: req/s = requests / bucket_seconds (per query, pre-timeCompare)."""
-    return [{"selector": f"requests / {bucket_seconds}", "text": "req/s"}]
+    """Infinity backend: req/s = requests / bucket_seconds (per query, pre-timeCompare).
+
+    type must be "number" — Infinity treats omitted type as string, and bars /
+    timeCompare need a numeric field once filterFieldsByName drops `requests`.
+    """
+    return [
+        {
+            "selector": f"requests / {bucket_seconds}",
+            "text": "req/s",
+            "type": "number",
+        }
+    ]
 
 
 # Grafana panel timeCompare sentinel: shift by the panel range's own duration so
@@ -439,8 +453,8 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         "description": (
             f"Cloudflare edge request rate ({host}), fixed range {time_from}. "
             f"req/s = Adaptive count / {bucket_seconds} ({dim} bucket) via Infinity "
-            "computed_columns. Bars = current window; dashed line = previous equal "
-            f"window (Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS}). "
+            'computed_columns (type: "number"). Bars = current window; dashed line = '
+            f"previous equal window (Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS}). "
             "filterFieldsByName keeps Time + req/s only (drops Adaptive count so "
             "timeCompare does not plot a second current/prior pair)."
         ),
