@@ -145,7 +145,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Last hour",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -173,22 +173,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^requests"
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "tooltip": true,
-                  "viz": true,
-                  "legend": true
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byFrameRefID",
               "options": "A"
             },
@@ -204,6 +188,13 @@
               {
                 "id": "custom.lineWidth",
                 "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
               },
               {
                 "id": "displayName",
@@ -244,6 +235,13 @@
                 "value": "never"
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -255,13 +253,23 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "mode": "multi",
           "sort": "none"
         }
       },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "pattern": "^(Time|req/s)"
+            }
+          }
+        }
+      ],
       "targets": [
         {
           "refId": "A",
@@ -305,7 +313,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Last day",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -333,22 +341,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^requests"
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "tooltip": true,
-                  "viz": true,
-                  "legend": true
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byFrameRefID",
               "options": "A"
             },
@@ -364,6 +356,13 @@
               {
                 "id": "custom.lineWidth",
                 "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
               },
               {
                 "id": "displayName",
@@ -404,6 +403,13 @@
                 "value": "never"
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -415,13 +421,23 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "mode": "multi",
           "sort": "none"
         }
       },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "pattern": "^(Time|req/s)"
+            }
+          }
+        }
+      ],
       "targets": [
         {
           "refId": "A",
@@ -465,7 +481,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "Last week",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -493,22 +509,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^requests"
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "tooltip": true,
-                  "viz": true,
-                  "legend": true
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byFrameRefID",
               "options": "A"
             },
@@ -524,6 +524,13 @@
               {
                 "id": "custom.lineWidth",
                 "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
               },
               {
                 "id": "displayName",
@@ -564,6 +571,13 @@
                 "value": "never"
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -575,13 +589,23 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "mode": "multi",
           "sort": "none"
         }
       },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "pattern": "^(Time|req/s)"
+            }
+          }
+        }
+      ],
       "targets": [
         {
           "refId": "A",
@@ -625,7 +649,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Last month",
-      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
+      "description": "Cloudflare edge request rate (blockdrop-stg.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket) via Infinity computed_columns. Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod). filterFieldsByName keeps Time + req/s only (drops Adaptive count so timeCompare does not plot a second current/prior pair).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -653,22 +677,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byRegexp",
-              "options": "^requests"
-            },
-            "properties": [
-              {
-                "id": "custom.hideFrom",
-                "value": {
-                  "tooltip": true,
-                  "viz": true,
-                  "legend": true
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byFrameRefID",
               "options": "A"
             },
@@ -684,6 +692,13 @@
               {
                 "id": "custom.lineWidth",
                 "value": 1
+              },
+              {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "green"
+                }
               },
               {
                 "id": "displayName",
@@ -724,6 +739,13 @@
                 "value": "never"
               },
               {
+                "id": "color",
+                "value": {
+                  "mode": "fixed",
+                  "fixedColor": "blue"
+                }
+              },
+              {
                 "id": "displayName",
                 "value": "prior period"
               }
@@ -735,13 +757,23 @@
         "legend": {
           "displayMode": "list",
           "placement": "bottom",
-          "showLegend": true
+          "showLegend": false
         },
         "tooltip": {
           "mode": "multi",
           "sort": "none"
         }
       },
+      "transformations": [
+        {
+          "id": "filterFieldsByName",
+          "options": {
+            "include": {
+              "pattern": "^(Time|req/s)"
+            }
+          }
+        }
+      ],
       "targets": [
         {
           "refId": "A",

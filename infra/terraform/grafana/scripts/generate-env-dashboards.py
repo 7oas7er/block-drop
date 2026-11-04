@@ -33,6 +33,13 @@ Do NOT convert count→req/s with a panel calculateField transform when timeComp
 is on: calculateField matches by display name, timeCompare suffixes compare
 fields with " (comparison)", and replaceFields then drops frames → flash of
 bars then "No data". Compute req/s in the Infinity query instead.
+
+Infinity computed_columns keep the Adaptive `requests` count alongside `req/s`.
+With timeCompare that yields four series (current/prior × count/rate) — yellow
+bars + orange prior line on top of the intended green bars + blue prior line.
+Drop the count via filterFieldsByName (keep Time + req/s only; pattern also
+matches `req/s (comparison)`). Hide the Traffic legend (two series, tooltip
+enough). Do not add a second query for the prior window — timeCompare owns that.
 """
 
 from __future__ import annotations
@@ -330,28 +337,45 @@ def traffic_rate_computed_columns(bucket_seconds: int) -> list[dict]:
 TRAFFIC_TIME_COMPARE_PREVIOUS = "__previousPeriod"
 
 
-def traffic_prior_period_overrides() -> list[dict]:
-    """Current = bars (ref A); prior equal window = line (Grafana A-compare frame).
-
-    Hide the raw Adaptive `requests` count (kept only as input to computed req/s).
-    Match by regexp so both `requests` and `requests (comparison)` stay hidden.
-    """
-    hide_requests = {
-        "tooltip": True,
-        "viz": True,
-        "legend": True,
+def traffic_ts_options() -> dict:
+    """Traffic compare tiles: no legend (current bars + one prior line; tooltip only)."""
+    return {
+        "legend": {"displayMode": "list", "placement": "bottom", "showLegend": False},
+        "tooltip": {"mode": "multi", "sort": "none"},
     }
+
+
+def traffic_reqps_field_filter() -> list[dict]:
+    """Keep Time + req/s only (drops Adaptive count that timeCompare would also plot)."""
     return [
         {
-            "matcher": {"id": "byRegexp", "options": "^requests"},
-            "properties": [{"id": "custom.hideFrom", "value": hide_requests}],
-        },
+            "id": "filterFieldsByName",
+            "options": {
+                "include": {
+                    # Also matches timeCompare-renamed "req/s (comparison)".
+                    "pattern": "^(Time|req/s)",
+                }
+            },
+        }
+    ]
+
+
+def traffic_prior_period_overrides() -> list[dict]:
+    """Current = green bars (ref A); prior equal window = blue dashed line (A-compare).
+
+    Raw Adaptive `requests` is removed by traffic_reqps_field_filter() so only one
+    value field remains per frame — avoids yellow/orange palette extras.
+    """
+    green = {"mode": "fixed", "fixedColor": "green"}
+    blue = {"mode": "fixed", "fixedColor": "blue"}
+    return [
         {
             "matcher": {"id": "byFrameRefID", "options": "A"},
             "properties": [
                 {"id": "custom.drawStyle", "value": "bars"},
                 {"id": "custom.fillOpacity", "value": 80},
                 {"id": "custom.lineWidth", "value": 1},
+                {"id": "color", "value": green},
                 {"id": "displayName", "value": "current"},
             ],
         },
@@ -366,6 +390,7 @@ def traffic_prior_period_overrides() -> list[dict]:
                     "value": {"fill": "dash", "dash": [5, 5]},
                 },
                 {"id": "custom.showPoints", "value": "never"},
+                {"id": "color", "value": blue},
                 {"id": "displayName", "value": "prior period"},
             ],
         },
@@ -415,14 +440,17 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
             f"Cloudflare edge request rate ({host}), fixed range {time_from}. "
             f"req/s = Adaptive count / {bucket_seconds} ({dim} bucket) via Infinity "
             "computed_columns. Bars = current window; dashed line = previous equal "
-            f"window (Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS})."
+            f"window (Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS}). "
+            "filterFieldsByName keeps Time + req/s only (drops Adaptive count so "
+            "timeCompare does not plot a second current/prior pair)."
         ),
         "gridPos": grid_pos,
         "timeFrom": time_from,
         "timeCompare": TRAFFIC_TIME_COMPARE_PREVIOUS,
         "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "${infinity}"},
         "fieldConfig": field,
-        "options": ts_options(),
+        "options": traffic_ts_options(),
+        "transformations": traffic_reqps_field_filter(),
         "targets": [
             cf_graphql(
                 "A",
