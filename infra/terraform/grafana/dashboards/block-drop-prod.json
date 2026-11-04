@@ -131,7 +131,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Traffic \u2014 requests (CF Adaptive \u226430d; year = CloudWatch)",
+      "title": "Traffic \u2014 request rate req/s (CF Adaptive \u226430d; year = CloudWatch)",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -145,7 +145,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Last hour",
-      "description": "Cloudflare edge requests (blockdrop.7oas7er.com), fixed range now-1h.",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -159,7 +159,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "reqps",
           "custom": {
             "drawStyle": "bars",
             "lineWidth": 1,
@@ -182,6 +182,21 @@
           "sort": "none"
         }
       },
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "60"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
+          }
+        }
+      ],
       "targets": [
         {
           "refId": "A",
@@ -219,7 +234,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Last day",
-      "description": "Cloudflare edge requests (blockdrop.7oas7er.com), fixed range now-1d.",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -233,7 +248,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "reqps",
           "custom": {
             "drawStyle": "bars",
             "lineWidth": 1,
@@ -256,6 +271,21 @@
           "sort": "none"
         }
       },
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
+          }
+        }
+      ],
       "targets": [
         {
           "refId": "A",
@@ -293,7 +323,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "Last week",
-      "description": "Cloudflare edge requests (blockdrop.7oas7er.com), fixed range now-7d.",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -307,7 +337,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "reqps",
           "custom": {
             "drawStyle": "bars",
             "lineWidth": 1,
@@ -330,6 +360,21 @@
           "sort": "none"
         }
       },
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
+          }
+        }
+      ],
       "targets": [
         {
           "refId": "A",
@@ -367,7 +412,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Last month",
-      "description": "Cloudflare edge requests (blockdrop.7oas7er.com), fixed range now-29d.",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -381,7 +426,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "reqps",
           "custom": {
             "drawStyle": "bars",
             "lineWidth": 1,
@@ -404,6 +449,21 @@
           "sort": "none"
         }
       },
+      "transformations": [
+        {
+          "id": "calculateField",
+          "options": {
+            "mode": "binary",
+            "binary": {
+              "left": "requests",
+              "operator": "/",
+              "right": "3600"
+            },
+            "replaceFields": true,
+            "alias": "req/s"
+          }
+        }
+      ],
       "targets": [
         {
           "refId": "A",
@@ -441,7 +501,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Last year",
-      "description": "CloudFront requests (prod-block-drop-site-distribution) via CloudWatch scrape \u2192 Prometheus. Grafana Cloud Free retains metrics for 14 days only \u2014 a full year needs a native CloudWatch data source or Pro retention (not scrape-to-Prom).",
+      "description": "CloudFront request rate (prod-block-drop-site-distribution) via CloudWatch scrape \u2192 Prometheus (PromQL rate \u2192 req/s). Grafana Cloud Free retains metrics for 14 days only \u2014 a full year needs a native CloudWatch data source or Pro retention (not scrape-to-Prom).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -455,7 +515,7 @@
       },
       "fieldConfig": {
         "defaults": {
-          "unit": "short",
+          "unit": "reqps",
           "custom": {
             "drawStyle": "bars",
             "lineWidth": 1,
@@ -482,7 +542,7 @@
         {
           "refId": "A",
           "expr": "sum(rate(aws_cloudfront_requests_sum{project=\"block-drop\", Name=\"prod-block-drop-site-distribution\"}[1h]))",
-          "legendFormat": "requests"
+          "legendFormat": "req/s"
         }
       ]
     },

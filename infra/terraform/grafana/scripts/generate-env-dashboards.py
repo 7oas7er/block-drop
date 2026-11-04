@@ -16,6 +16,12 @@ Cloudflare Free Adaptive Analytics limits (verified against the zone):
 Infinity fixed-window panels MUST use ${__timeFrom}/${__timeTo} (backend macros that
 honor panel timeFrom). Grafana ${__from}/${__to} are dashboard-picker only — using them
 makes Last month/year look empty while hour/day/week still appear to work.
+
+Traffic y-axis is request rate (req/s), not absolute bucket counts, so Last hour /
+day / week / month share a comparable scale:
+  CF Adaptive:  req/s = count / bucket_seconds
+                datetimeMinute → /60 ; datetimeHour → /3600
+  CloudWatch year: sum(rate(aws_cloudfront_requests_sum{…}[1h]))  # Prom rate = /s
 """
 
 from __future__ import annotations
@@ -26,6 +32,7 @@ from pathlib import Path
 OUT_DIR = Path(__file__).resolve().parents[1] / "dashboards"
 
 # source: "cf" = Infinity GraphQL; "cw" = CloudWatch via Prometheus (Grafana Free retention)
+# bucket_seconds: CF Adaptive group width — used to convert count → req/s.
 WINDOWS = [
     {
         "title": "Last hour",
@@ -33,6 +40,7 @@ WINDOWS = [
         "source": "cf",
         "dim": "datetimeMinute",
         "order_by": "datetimeMinute_ASC",
+        "bucket_seconds": 60,
     },
     {
         "title": "Last day",
@@ -40,6 +48,7 @@ WINDOWS = [
         "source": "cf",
         "dim": "datetimeHour",
         "order_by": "datetimeHour_ASC",
+        "bucket_seconds": 3600,
     },
     {
         "title": "Last week",
@@ -47,6 +56,7 @@ WINDOWS = [
         "source": "cf",
         "dim": "datetimeHour",
         "order_by": "datetimeHour_ASC",
+        "bucket_seconds": 3600,
     },
     {
         # CF Free maxDuration ≈ 30d; stay under inclusive-bound edge (now-30d can exceed).
@@ -55,6 +65,7 @@ WINDOWS = [
         "source": "cf",
         "dim": "datetimeHour",
         "order_by": "datetimeHour_ASC",
+        "bucket_seconds": 3600,
     },
     {
         # Grafana Cloud Free metrics retention is 14d — year panels stay empty on Free
@@ -65,6 +76,7 @@ WINDOWS = [
         "source": "cw",
         "dim": None,
         "order_by": None,
+        "bucket_seconds": None,
     },
 ]
 
@@ -289,6 +301,25 @@ def cf_firewall_events(ref_id: str, host: str) -> dict:
     )
 
 
+def traffic_rate_transform(bucket_seconds: int) -> list[dict]:
+    """Convert CF Adaptive bucket counts to req/s (count / bucket_seconds)."""
+    return [
+        {
+            "id": "calculateField",
+            "options": {
+                "mode": "binary",
+                "binary": {
+                    "left": "requests",
+                    "operator": "/",
+                    "right": str(bucket_seconds),
+                },
+                "replaceFields": True,
+                "alias": "req/s",
+            },
+        }
+    ]
+
+
 def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
     host, cf_name = cfg["host"], cfg["cf_name"]
     title, time_from = win["title"], win["time_from"]
@@ -298,14 +329,15 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
             "type": "timeseries",
             "title": title,
             "description": (
-                f"CloudFront requests ({cf_name}) via CloudWatch scrape → Prometheus. "
-                "Grafana Cloud Free retains metrics for 14 days only — a full year needs "
-                "a native CloudWatch data source or Pro retention (not scrape-to-Prom)."
+                f"CloudFront request rate ({cf_name}) via CloudWatch scrape → Prometheus "
+                "(PromQL rate → req/s). Grafana Cloud Free retains metrics for 14 days "
+                "only — a full year needs a native CloudWatch data source or Pro "
+                "retention (not scrape-to-Prom)."
             ),
             "gridPos": grid_pos,
             "timeFrom": time_from,
             "datasource": {"type": "prometheus", "uid": "${datasource}"},
-            "fieldConfig": ts_field(bars=True),
+            "fieldConfig": ts_field("reqps", bars=True),
             "options": ts_options(),
             "targets": [
                 {
@@ -314,21 +346,27 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
                         f'sum(rate(aws_cloudfront_requests_sum{{project="block-drop", '
                         f'Name="{cf_name}"}}[1h]))'
                     ),
-                    "legendFormat": "requests",
+                    "legendFormat": "req/s",
                 }
             ],
         }
     dim, order_by = win["dim"], win["order_by"]
+    bucket_seconds = win["bucket_seconds"]
     return {
         "id": panel_id,
         "type": "timeseries",
         "title": title,
-        "description": f"Cloudflare edge requests ({host}), fixed range {time_from}.",
+        "description": (
+            f"Cloudflare edge request rate ({host}), fixed range {time_from}. "
+            f"req/s = Adaptive count / {bucket_seconds} "
+            f"({dim} bucket)."
+        ),
         "gridPos": grid_pos,
         "timeFrom": time_from,
         "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "${infinity}"},
-        "fieldConfig": ts_field(bars=True),
+        "fieldConfig": ts_field("reqps", bars=True),
         "options": ts_options(),
+        "transformations": traffic_rate_transform(bucket_seconds),
         "targets": [
             cf_graphql(
                 "A",
@@ -564,7 +602,7 @@ def build_dashboard(env_key: str) -> dict:
     panels.append(
         row(
             nid(),
-            "Traffic — requests (CF Adaptive ≤30d; year = CloudWatch)",
+            "Traffic — request rate req/s (CF Adaptive ≤30d; year = CloudWatch)",
             y,
         )
     )
