@@ -30,17 +30,21 @@ what produced the recurring “Data is missing a number field” / “No data”
 (#144–#148): compare frames rename fields, string-typed computed `req/s`, and
 filter/convert transforms cannot reliably yield FieldType.number for bars.
 
-  Query A — current window: `${__timeFrom:date:iso}` / `${__timeTo:date:iso}`
-  Query B — prior equal window: `datetime_leq: ${__timeFrom:date:iso}` (prior
-            ends where current starts), loose `datetime_geq` (start of that
-            calendar month, within CF Free ~30d), `limit` = bucket count,
-            `orderBy` DESC so the newest N buckets are exactly the prior
-            window; UQL `add_datetime(+shift)` aligns timestamps onto the
-            current x-axis and `tonumber` makes `req/s` a real number field.
+  Query A — current window: `${__timeFrom:date:iso}` / `${__timeTo:date:iso}`,
+            backend parser + `computed_columns` for `req/s`.
+  Query B — prior equal window: same **backend** parser (do **not** use UQL —
+            #149's frontend UQL path left prior empty on all tiles and broke
+            week/month entirely when B errored). `datetime_leq: ${__timeFrom}`,
+            loose month-start `datetime_geq` (within CF Free ~30d), `limit` =
+            bucket count, `orderBy` DESC → newest N buckets = prior window;
+            JSONata `root_selector` shifts dimension timestamps forward by
+            `prior_shift_ms` so prior overlays the current x-axis; then the
+            same `computed_columns` / column mapping as A.
 
 Bars = A (current); dashed line = B (prior). Only those two series (drop raw
 Adaptive count via filterFieldsByName). Hide the Traffic legend. Last year has
-no YoY / prior-period compare.
+no YoY / prior-period compare. Month prior may be partial near CF Free
+`notOlderThan` (~31d).
 
 Infinity backend PostProcessFrame IGNORES computed_columns.type (selector + text
 only). After filterFieldsByName drops numeric `requests`, force `req/s` to
@@ -64,8 +68,9 @@ WINDOWS = [
         "dim": "datetimeMinute",
         "order_by": "datetimeMinute_ASC",
         "bucket_seconds": 60,
-        # Prior equal window: shift timestamps forward by this duration for overlay.
+        # Prior equal window: JSONata root_selector shifts timestamps by prior_shift_ms.
         "prior_shift": "1h",
+        "prior_shift_ms": 60 * 60 * 1000,
         "prior_buckets": 60,
     },
     {
@@ -76,6 +81,7 @@ WINDOWS = [
         "order_by": "datetimeHour_ASC",
         "bucket_seconds": 3600,
         "prior_shift": "1d",
+        "prior_shift_ms": 24 * 60 * 60 * 1000,
         "prior_buckets": 24,
     },
     {
@@ -86,6 +92,7 @@ WINDOWS = [
         "order_by": "datetimeHour_ASC",
         "bucket_seconds": 3600,
         "prior_shift": "7d",
+        "prior_shift_ms": 7 * 24 * 60 * 60 * 1000,
         "prior_buckets": 168,
     },
     {
@@ -97,6 +104,7 @@ WINDOWS = [
         "order_by": "datetimeHour_ASC",
         "bucket_seconds": 3600,
         "prior_shift": "29d",
+        "prior_shift_ms": 29 * 24 * 60 * 60 * 1000,
         "prior_buckets": 696,  # 29 * 24
     },
     {
@@ -110,6 +118,7 @@ WINDOWS = [
         "order_by": None,
         "bucket_seconds": None,
         "prior_shift": None,
+        "prior_shift_ms": None,
         "prior_buckets": None,
     },
 ]
@@ -382,8 +391,7 @@ def traffic_reqps_transforms() -> list[dict]:
 
     Order matters: filter first (so Adaptive count cannot plot), then
     convertFieldType so string-typed Infinity computed columns become
-    FieldType.number. Dual-query prior (ref B) already emits number via UQL
-    tonumber; convertFieldType is a no-op when already numeric.
+    FieldType.number on both A and B frames.
     """
     return [
         {
@@ -438,53 +446,72 @@ def traffic_prior_period_overrides() -> list[dict]:
     ]
 
 
-def traffic_prior_uql(dim: str, bucket_seconds: int, prior_shift: str) -> str:
-    """UQL for Query B: tonumber req/s + shift timestamps onto the current x-axis.
+def traffic_prior_root_selector(dim: str, prior_shift_ms: int) -> str:
+    """JSONata: keep prior-window rows, shift dimension timestamps forward.
 
-    Prior buckets are fetched ending at ${__timeFrom}; add_datetime(+shift) moves
-    them into the panel's visible current window (same role as timeCompare
-    alignment, without timeCompare frames).
+    Backend parser (not UQL): keeps Query B on the same Infinity path as A so
+    `req/s` stays a real number field and a failing frontend UQL parse cannot
+    blank the whole tile. Filter uses Grafana-expanded `${__timeFrom:date:seconds}`
+    so the prior equal window is exact even when GraphQL datetime_geq is loose.
+    Shift places those points onto the current x-axis.
     """
+    prior_shift_sec = prior_shift_ms // 1000
+    # Predicate: timeFrom - prior_shift <= t < timeFrom (seconds macros → ms).
+    # JSONata `.{}` then remaps each surviving group with +prior_shift_ms.
     return (
-        "parse-json\n"
-        '| jsonata "data.viewer.zones[0].httpRequestsAdaptiveGroups"\n'
-        f'| extend "Time"=todatetime("dimensions.{dim}")\n'
-        f'| extend "Time"=add_datetime("Time",\'{prior_shift}\')\n'
-        '| extend "requests"=tonumber("count")\n'
-        f'| extend "req/s"=div("requests",{bucket_seconds})\n'
-        '| project "Time", "req/s"'
+        "data.viewer.zones.0.httpRequestsAdaptiveGroups["
+        f"$toMillis(dimensions.{dim}) >= (${{__timeFrom:date:seconds}} - {prior_shift_sec}) * 1000 "
+        f"and $toMillis(dimensions.{dim}) < ${{__timeFrom:date:seconds}} * 1000"
+        "].{"
+        f'"count": count, '
+        f'"dimensions": {{'
+        f'"{dim}": $fromMillis($toMillis(dimensions.{dim}) + {prior_shift_ms})'
+        f"}}"
+        "}"
     )
 
 
+def traffic_prior_geq(_win: dict) -> str:
+    """Loose GraphQL lower bound for Query B (exact window applied in JSONata).
+
+    Month-start of __timeFrom is early enough for hour/day/week lookbacks while
+    staying under CF Free maxDuration (~30d) in normal cases. DESC+limit pulls
+    the newest prior_buckets; JSONata then keeps only the exact prior equal
+    window. Month prior may be partial near CF Free notOlderThan (~31d).
+    """
+    return "${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z"
+
+
 def traffic_prior_target(host: str, win: dict) -> dict:
-    """Infinity Query B: prior equal window via shifted time bounds + UQL align.
+    """Infinity Query B: prior equal window via DESC+limit + JSONata time shift.
 
     Infinity macros have no date arithmetic, so prior is fetched as the newest
     `prior_buckets` Adaptive groups with datetime_leq=${__timeFrom:date:iso}
-    (prior ends where current starts) and a loose datetime_geq (start of that
-    calendar month, stays under CF Free ~30d). orderBy DESC + limit selects the
-    prior equal window; UQL shifts timestamps forward by prior_shift for overlay.
+    (prior ends where current starts) and a loose datetime_geq. orderBy DESC +
+    limit selects candidates; backend JSONata root_selector keeps the exact
+    prior equal window and shifts timestamps forward by prior_shift_ms for
+    overlay. Same columns + computed_columns as Query A (no UQL).
     """
     dim = win["dim"]
-    prior_shift = win["prior_shift"]
+    prior_shift_ms = win["prior_shift_ms"]
     prior_buckets = win["prior_buckets"]
     bucket_seconds = win["bucket_seconds"]
     order_by_desc = win["order_by"].replace("_ASC", "_DESC")
-    # Start of calendar month of __timeFrom — early enough for hour/day/week
-    # lookbacks; month prior may be partial near the 1st (CF Free edge).
-    prior_geq = "${__timeFrom:date:YYYY-MM}-01T00:00:00.000Z"
     return cf_graphql(
         "B",
         host,
         dim,
         order_by_desc,
-        columns=[],  # UQL projects Time + req/s
+        [
+            {"selector": f"dimensions.{dim}", "text": "Time", "type": "timestamp"},
+            {"selector": "count", "text": "requests", "type": "number"},
+        ],
         limit=prior_buckets,
-        datetime_geq=prior_geq,
+        datetime_geq=traffic_prior_geq(win),
         datetime_leq="${__timeFrom:date:iso}",
-        parser="uql",
-        uql=traffic_prior_uql(dim, bucket_seconds, prior_shift),
-        root_selector="",
+        parser="backend",
+        computed_columns=traffic_rate_computed_columns(bucket_seconds),
+        root_selector=traffic_prior_root_selector(dim, prior_shift_ms),
     )
 
 
@@ -531,10 +558,10 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         "description": (
             f"Cloudflare edge request rate ({host}), fixed range {time_from}. "
             f"req/s = Adaptive count / {bucket_seconds} ({dim} bucket). "
-            "Two Infinity queries (no timeCompare): A = current "
+            "Two Infinity backend queries (no timeCompare, no UQL): A = current "
             "${__timeFrom}/${__timeTo}; B = prior equal window "
-            f"(datetime_leq=${{__timeFrom}}, limit+orderBy DESC, UQL "
-            f"add_datetime(+{prior_shift}) for overlay + tonumber). "
+            f"(datetime_leq=${{__timeFrom}}, limit+orderBy DESC, JSONata "
+            f"root_selector shifts timestamps +{prior_shift} for overlay). "
             "Bars = current (A); dashed line = prior (B). "
             "filterFieldsByName keeps Time + req/s only; convertFieldType "
             "forces number for bars (Infinity backend ignores computed_columns.type)."
