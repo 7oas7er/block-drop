@@ -41,9 +41,14 @@ Drop the count via filterFieldsByName (keep Time + req/s only; pattern also
 matches `req/s (comparison)`). Hide the Traffic legend (two series, tooltip
 enough). Do not add a second query for the prior window — timeCompare owns that.
 
-computed_columns MUST set type: "number" on req/s. Infinity defaults omitted
-types to string; after filterFieldsByName drops numeric `requests`, bars +
-timeCompare then fail with "Data is missing a number field".
+Infinity backend PostProcessFrame IGNORES computed_columns.type (only selector +
+text reach GetFrameWithComputedColumns). Typing comes from expression results;
+EmptyField falls back to string when every row is nil. After filterFieldsByName
+drops numeric `requests`, a string-typed `req/s` (common once timeCompare adds
+the A-compare frame) makes timeseries flash green bars then settle on
+"Data is missing a number field". Force number with a panel convertFieldType
+transform on `req/s` and `req/s (comparison)` after the filter — do not rely on
+computed_columns.type or fieldConfig overrides (overrides are display-only).
 """
 
 from __future__ import annotations
@@ -334,8 +339,9 @@ def cf_firewall_events(ref_id: str, host: str) -> dict:
 def traffic_rate_computed_columns(bucket_seconds: int) -> list[dict]:
     """Infinity backend: req/s = requests / bucket_seconds (per query, pre-timeCompare).
 
-    type must be "number" — Infinity treats omitted type as string, and bars /
-    timeCompare need a numeric field once filterFieldsByName drops `requests`.
+    type: "number" is documentary only — Infinity backend ignores it (selector +
+    text only). Panel convertFieldType (see traffic_reqps_transforms) is what
+    guarantees FieldType.number after filterFieldsByName + timeCompare.
     """
     return [
         {
@@ -350,6 +356,9 @@ def traffic_rate_computed_columns(bucket_seconds: int) -> list[dict]:
 # the prior series is the previous equal window (not a fixed 1d/1w/1M preset).
 TRAFFIC_TIME_COMPARE_PREVIOUS = "__previousPeriod"
 
+# timeCompare may suffix the compare series display name; convert both.
+TRAFFIC_REQPS_FIELD_NAMES = ("req/s", "req/s (comparison)")
+
 
 def traffic_ts_options() -> dict:
     """Traffic compare tiles: no legend (current bars + one prior line; tooltip only)."""
@@ -359,8 +368,13 @@ def traffic_ts_options() -> dict:
     }
 
 
-def traffic_reqps_field_filter() -> list[dict]:
-    """Keep Time + req/s only (drops Adaptive count that timeCompare would also plot)."""
+def traffic_reqps_transforms() -> list[dict]:
+    """Drop Adaptive count, then force req/s fields to number for bars + timeCompare.
+
+    Order matters: filter first (so requests cannot plot), then convertFieldType so
+    string-typed Infinity computed columns become FieldType.number on both the
+    current and A-compare frames.
+    """
     return [
         {
             "id": "filterFieldsByName",
@@ -370,14 +384,23 @@ def traffic_reqps_field_filter() -> list[dict]:
                     "pattern": "^(Time|req/s)",
                 }
             },
-        }
+        },
+        {
+            "id": "convertFieldType",
+            "options": {
+                "conversions": [
+                    {"targetField": name, "destinationType": "number"}
+                    for name in TRAFFIC_REQPS_FIELD_NAMES
+                ]
+            },
+        },
     ]
 
 
 def traffic_prior_period_overrides() -> list[dict]:
     """Current = green bars (ref A); prior equal window = blue dashed line (A-compare).
 
-    Raw Adaptive `requests` is removed by traffic_reqps_field_filter() so only one
+    Raw Adaptive `requests` is removed by traffic_reqps_transforms() so only one
     value field remains per frame — avoids yellow/orange palette extras.
     """
     green = {"mode": "fixed", "fixedColor": "green"}
@@ -453,7 +476,8 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         "description": (
             f"Cloudflare edge request rate ({host}), fixed range {time_from}. "
             f"req/s = Adaptive count / {bucket_seconds} ({dim} bucket) via Infinity "
-            'computed_columns (type: "number"). Bars = current window; dashed line = '
+            "computed_columns; convertFieldType forces number after filter (Infinity "
+            "backend ignores computed_columns.type). Bars = current window; dashed line = "
             f"previous equal window (Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS}). "
             "filterFieldsByName keeps Time + req/s only (drops Adaptive count so "
             "timeCompare does not plot a second current/prior pair)."
@@ -464,7 +488,7 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "${infinity}"},
         "fieldConfig": field,
         "options": traffic_ts_options(),
-        "transformations": traffic_reqps_field_filter(),
+        "transformations": traffic_reqps_transforms(),
         "targets": [
             cf_graphql(
                 "A",
