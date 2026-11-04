@@ -131,7 +131,7 @@
   "panels": [
     {
       "type": "row",
-      "title": "Traffic \u2014 request rate req/s (CF Adaptive \u226430d; year = CloudWatch)",
+      "title": "Traffic \u2014 req/s + prior equal window (CF \u226430d; year = CloudWatch, no YoY)",
       "gridPos": {
         "h": 1,
         "w": 24,
@@ -145,7 +145,7 @@
       "id": 2,
       "type": "timeseries",
       "title": "Last hour",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1h. req/s = Adaptive count / 60 (datetimeMinute bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -153,6 +153,7 @@
         "y": 1
       },
       "timeFrom": "now-1h",
+      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -169,7 +170,70 @@
             "barAlignment": 0
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 80
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "displayName",
+                "value": "current"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A-compare"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              },
+              {
+                "id": "displayName",
+                "value": "prior period"
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -234,7 +298,7 @@
       "id": 3,
       "type": "timeseries",
       "title": "Last day",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-1d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -242,6 +306,7 @@
         "y": 1
       },
       "timeFrom": "now-1d",
+      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -258,7 +323,70 @@
             "barAlignment": 0
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 80
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "displayName",
+                "value": "current"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A-compare"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              },
+              {
+                "id": "displayName",
+                "value": "prior period"
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -323,7 +451,7 @@
       "id": 4,
       "type": "timeseries",
       "title": "Last week",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-7d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -331,6 +459,7 @@
         "y": 1
       },
       "timeFrom": "now-7d",
+      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -347,7 +476,70 @@
             "barAlignment": 0
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 80
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "displayName",
+                "value": "current"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A-compare"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              },
+              {
+                "id": "displayName",
+                "value": "prior period"
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -412,7 +604,7 @@
       "id": 5,
       "type": "timeseries",
       "title": "Last month",
-      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket).",
+      "description": "Cloudflare edge request rate (blockdrop.7oas7er.com), fixed range now-29d. req/s = Adaptive count / 3600 (datetimeHour bucket). Bars = current window; dashed line = previous equal window (Grafana timeCompare __previousPeriod).",
       "gridPos": {
         "h": 4,
         "w": 8,
@@ -420,6 +612,7 @@
         "y": 5
       },
       "timeFrom": "now-29d",
+      "timeCompare": "__previousPeriod",
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "${infinity}"
@@ -436,7 +629,70 @@
             "barAlignment": 0
           }
         },
-        "overrides": []
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 80
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              },
+              {
+                "id": "displayName",
+                "value": "current"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byFrameRefID",
+              "options": "A-compare"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 0
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 2
+              },
+              {
+                "id": "custom.lineStyle",
+                "value": {
+                  "fill": "dash",
+                  "dash": [
+                    5,
+                    5
+                  ]
+                }
+              },
+              {
+                "id": "custom.showPoints",
+                "value": "never"
+              },
+              {
+                "id": "displayName",
+                "value": "prior period"
+              }
+            ]
+          }
+        ]
       },
       "options": {
         "legend": {
@@ -501,7 +757,7 @@
       "id": 6,
       "type": "timeseries",
       "title": "Last year",
-      "description": "CloudFront request rate (prod-block-drop-site-distribution) via CloudWatch scrape \u2192 Prometheus (PromQL rate \u2192 req/s). Grafana Cloud Free retains metrics for 14 days only \u2014 a full year needs a native CloudWatch data source or Pro retention (not scrape-to-Prom).",
+      "description": "CloudFront request rate (prod-block-drop-site-distribution) via CloudWatch scrape \u2192 Prometheus (PromQL rate \u2192 req/s). Grafana Cloud Free retains metrics for 14 days only \u2014 a full year needs a native CloudWatch data source or Pro retention (not scrape-to-Prom). No year-over-year compare.",
       "gridPos": {
         "h": 4,
         "w": 8,

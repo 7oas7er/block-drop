@@ -22,6 +22,11 @@ day / week / month share a comparable scale:
   CF Adaptive:  req/s = count / bucket_seconds
                 datetimeMinute → /60 ; datetimeHour → /3600
   CloudWatch year: sum(rate(aws_cloudfront_requests_sum{…}[1h]))  # Prom rate = /s
+
+Traffic hour/day/week/month panels overlay the previous equal window via Grafana
+panel timeCompare "__previousPeriod" (native query time offset + timestamp
+alignment). Current series = bars; prior = line (A-compare override). Last year
+has no YoY / prior-period compare.
 """
 
 from __future__ import annotations
@@ -320,10 +325,45 @@ def traffic_rate_transform(bucket_seconds: int) -> list[dict]:
     ]
 
 
+# Grafana panel timeCompare sentinel: shift by the panel range's own duration so
+# the prior series is the previous equal window (not a fixed 1d/1w/1M preset).
+TRAFFIC_TIME_COMPARE_PREVIOUS = "__previousPeriod"
+
+
+def traffic_prior_period_overrides() -> list[dict]:
+    """Current = bars (ref A); prior equal window = line (Grafana A-compare frame)."""
+    return [
+        {
+            "matcher": {"id": "byFrameRefID", "options": "A"},
+            "properties": [
+                {"id": "custom.drawStyle", "value": "bars"},
+                {"id": "custom.fillOpacity", "value": 80},
+                {"id": "custom.lineWidth", "value": 1},
+                {"id": "displayName", "value": "current"},
+            ],
+        },
+        {
+            "matcher": {"id": "byFrameRefID", "options": "A-compare"},
+            "properties": [
+                {"id": "custom.drawStyle", "value": "line"},
+                {"id": "custom.fillOpacity", "value": 0},
+                {"id": "custom.lineWidth", "value": 2},
+                {
+                    "id": "custom.lineStyle",
+                    "value": {"fill": "dash", "dash": [5, 5]},
+                },
+                {"id": "custom.showPoints", "value": "never"},
+                {"id": "displayName", "value": "prior period"},
+            ],
+        },
+    ]
+
+
 def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
     host, cf_name = cfg["host"], cfg["cf_name"]
     title, time_from = win["title"], win["time_from"]
     if win["source"] == "cw":
+        # Last year: no YoY / prior-period overlay (Grafana Free retention + skip YoY).
         return {
             "id": panel_id,
             "type": "timeseries",
@@ -332,7 +372,7 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
                 f"CloudFront request rate ({cf_name}) via CloudWatch scrape → Prometheus "
                 "(PromQL rate → req/s). Grafana Cloud Free retains metrics for 14 days "
                 "only — a full year needs a native CloudWatch data source or Pro "
-                "retention (not scrape-to-Prom)."
+                "retention (not scrape-to-Prom). No year-over-year compare."
             ),
             "gridPos": grid_pos,
             "timeFrom": time_from,
@@ -352,19 +392,23 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         }
     dim, order_by = win["dim"], win["order_by"]
     bucket_seconds = win["bucket_seconds"]
+    field = ts_field("reqps", bars=True)
+    field["overrides"] = traffic_prior_period_overrides()
     return {
         "id": panel_id,
         "type": "timeseries",
         "title": title,
         "description": (
             f"Cloudflare edge request rate ({host}), fixed range {time_from}. "
-            f"req/s = Adaptive count / {bucket_seconds} "
-            f"({dim} bucket)."
+            f"req/s = Adaptive count / {bucket_seconds} ({dim} bucket). "
+            "Bars = current window; dashed line = previous equal window "
+            f"(Grafana timeCompare {TRAFFIC_TIME_COMPARE_PREVIOUS})."
         ),
         "gridPos": grid_pos,
         "timeFrom": time_from,
+        "timeCompare": TRAFFIC_TIME_COMPARE_PREVIOUS,
         "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "${infinity}"},
-        "fieldConfig": ts_field("reqps", bars=True),
+        "fieldConfig": field,
         "options": ts_options(),
         "transformations": traffic_rate_transform(bucket_seconds),
         "targets": [
@@ -602,7 +646,7 @@ def build_dashboard(env_key: str) -> dict:
     panels.append(
         row(
             nid(),
-            "Traffic — request rate req/s (CF Adaptive ≤30d; year = CloudWatch)",
+            "Traffic — req/s + prior equal window (CF ≤30d; year = CloudWatch, no YoY)",
             y,
         )
     )

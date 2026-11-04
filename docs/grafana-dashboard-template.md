@@ -45,7 +45,7 @@ distribution `Name` tag, and synthetic probe jobs. Do not mix prod and stg serie
 
 Keep this order and these row titles (env-specific hostnames/jobs inside panels):
 
-1. **Traffic — request rate (req/s)** — five fixed windows (see below). CF Adaptive: `count / bucket_seconds` (`datetimeMinute` → `/60`, `datetimeHour` → `/3600`); year CloudWatch: PromQL `rate(…[1h])` (already /s). Use rate, not absolute bucket counts, so hour/day/month y-scales are comparable.
+1. **Traffic — request rate (req/s)** — five fixed windows (see below). CF Adaptive: `count / bucket_seconds` (`datetimeMinute` → `/60`, `datetimeHour` → `/3600`); year CloudWatch: PromQL `rate(…[1h])` (already /s). Use rate, not absolute bucket counts, so hour/day/month y-scales are comparable. Hour/day/week/month Traffic tiles overlay the **previous equal window** via Grafana panel `timeCompare: "__previousPeriod"` (query time offset + timestamp alignment): **bars = current**, **dashed line = prior**. Do **not** add YoY / prior-period compare on Last year.
 2. **Errors — 4xx / 5xx (CF counts ≤30d; year = CloudWatch rates)**
 3. **Latency — origin (CloudFront) + CF `originResponseDurationMs`**
 4. **Synthetics — availability** — site + critical API uptime stats, success/latency charts, check logs
@@ -66,7 +66,7 @@ Metric tiles use **panel `timeFrom`**, not the dashboard picker alone — so hou
 | Last day | `now-1d` | Cloudflare Adaptive (`datetimeHour`) |
 | Last week | `now-7d` | Cloudflare Adaptive (`datetimeHour`) |
 | Last month | `now-29d` | Cloudflare Adaptive (`datetimeHour`) — Free max span ≈ 30d; use **29d** so inclusive bounds stay under `maxDuration`; **no** `datetimeDay_ASC` |
-| Last year | `now-365d` | Intended CloudWatch history — **but** scrape→Prometheus on Grafana Cloud Free only retains **14 days**, so year tiles stay empty unless you add a native CloudWatch DS or upgrade retention |
+| Last year | `now-365d` | Intended CloudWatch history — **but** scrape→Prometheus on Grafana Cloud Free only retains **14 days**, so year tiles stay empty unless you add a native CloudWatch DS or upgrade retention. **No** `timeCompare` / YoY overlay on this tile. |
 
 ## Formatting / layout
 
