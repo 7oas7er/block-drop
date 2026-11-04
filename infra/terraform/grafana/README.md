@@ -68,7 +68,7 @@ Platform template (structure / windows / Free limits / new-app checklist):
 
 Top rows use **fixed relative ranges** (hour / day / week / month / year):
 
-- **Traffic (req/s) / Errors (% of requests)** — Cloudflare GraphQL Adaptive for ≤29d windows (`${__timeFrom}`/`${__timeTo}` so panel `timeFrom` is honored); Errors = `100 × count(4xx|5xx) / count(total)` per bucket (no timeshift). **Year panels query CloudWatch scrape → Prometheus** (error rates already %; Free retains metrics **14 days** — not a real year unless native CloudWatch DS / Pro)
+- **Traffic (req/s) / Errors (% of requests)** — Cloudflare GraphQL Adaptive for ≤29d windows (`${__timeFrom}`/`${__timeTo}` so panel `timeFrom` is honored); Errors = `100 × count(4xx|5xx) / count(total)` per bucket via Infinity table + `outerTabular` join + `calculateField` (no timeshift). **Year panels query CloudWatch scrape → Prometheus** (error rates already %; Free retains metrics **14 days** — not a real year unless native CloudWatch DS / Pro)
 - **Latency** — CloudFront `OriginLatency` + Cloudflare `avg.originResponseDurationMs` (Free does **not** expose edge TTFB)
 - Month window is `now-29d` with hourly buckets (`datetimeDay_ASC` is not a valid Adaptive orderBy; `now-30d` can exceed Free `maxDuration`)
 

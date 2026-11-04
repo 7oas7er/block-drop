@@ -591,51 +591,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "4xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byName",
               "options": "4xx %"
             },
@@ -645,21 +600,6 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "5xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
                 }
               }
             ]
@@ -697,7 +637,26 @@
           "id": "joinByField",
           "options": {
             "byField": "Time",
-            "mode": "outer"
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "total",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "4xx",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "5xx",
+                "destinationType": "number"
+              }
+            ]
           }
         },
         {
@@ -766,7 +725,7 @@
           "refId": "A",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -796,7 +755,7 @@
           "refId": "B",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -826,7 +785,7 @@
           "refId": "C",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -887,51 +846,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "4xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byName",
               "options": "4xx %"
             },
@@ -941,21 +855,6 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "5xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
                 }
               }
             ]
@@ -993,7 +892,26 @@
           "id": "joinByField",
           "options": {
             "byField": "Time",
-            "mode": "outer"
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "total",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "4xx",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "5xx",
+                "destinationType": "number"
+              }
+            ]
           }
         },
         {
@@ -1062,7 +980,7 @@
           "refId": "A",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1092,7 +1010,7 @@
           "refId": "B",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1122,7 +1040,7 @@
           "refId": "C",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1183,51 +1101,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "4xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byName",
               "options": "4xx %"
             },
@@ -1237,21 +1110,6 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "5xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
                 }
               }
             ]
@@ -1289,7 +1147,26 @@
           "id": "joinByField",
           "options": {
             "byField": "Time",
-            "mode": "outer"
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "total",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "4xx",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "5xx",
+                "destinationType": "number"
+              }
+            ]
           }
         },
         {
@@ -1358,7 +1235,7 @@
           "refId": "A",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1388,7 +1265,7 @@
           "refId": "B",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1418,7 +1295,7 @@
           "refId": "C",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1479,51 +1356,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "4xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byName",
               "options": "4xx %"
             },
@@ -1533,21 +1365,6 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "5xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
                 }
               }
             ]
@@ -1585,7 +1402,26 @@
           "id": "joinByField",
           "options": {
             "byField": "Time",
-            "mode": "outer"
+            "mode": "outerTabular"
+          }
+        },
+        {
+          "id": "convertFieldType",
+          "options": {
+            "conversions": [
+              {
+                "targetField": "total",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "4xx",
+                "destinationType": "number"
+              },
+              {
+                "targetField": "5xx",
+                "destinationType": "number"
+              }
+            ]
           }
         },
         {
@@ -1654,7 +1490,7 @@
           "refId": "A",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1684,7 +1520,7 @@
           "refId": "B",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1714,7 +1550,7 @@
           "refId": "C",
           "type": "graphql",
           "source": "url",
-          "format": "timeseries",
+          "format": "table",
           "url": "https://api.cloudflare.com/client/v4/graphql",
           "url_options": {
             "method": "POST",
@@ -1775,51 +1611,6 @@
         "overrides": [
           {
             "matcher": {
-              "id": "byFrameRefID",
-              "options": "A"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byFrameRefID",
-              "options": "B"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "4xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
               "id": "byName",
               "options": "4xx %"
             },
@@ -1829,21 +1620,6 @@
                 "value": {
                   "mode": "fixed",
                   "fixedColor": "yellow"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "5xx"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "mode": "fixed",
-                  "fixedColor": "red"
                 }
               }
             ]
