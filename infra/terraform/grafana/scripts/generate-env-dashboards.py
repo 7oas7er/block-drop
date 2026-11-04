@@ -23,12 +23,17 @@ day / week / month share a comparable scale:
                 datetimeMinute → /60 ; datetimeHour → /3600
   CloudWatch year: sum(rate(aws_cloudfront_requests_sum{…}[1h]))  # Prom rate = /s
 
-Errors y-axis is % of total requests (0–100), not absolute 4xx/5xx counts:
-  CF Adaptive:  4xx % = 100 * count(4xx) / count(total)   (same for 5xx)
-                table format + joinByField(outerTabular) + calculateField
-                (timeseries format leaves generic Value names so /total never
-                matches — bars pin at y-max 100%. No timeshift / timeCompare.)
-  CloudWatch year: avg(aws_cloudfront_{4,5}xx_error_rate_average{…})  # already %
+Errors y-axis is % of total requests (0–100%), not absolute 4xx/5xx counts:
+  CF Adaptive:  one query per panel; Cloudflare computes per time bucket
+                ratio.status4xx = count(4xx) / count   (0–1; same for 5xx)
+                plotted as-is with unit percentunit — no panel transforms.
+  CloudWatch year: avg(aws_cloudfront_{4,5}xx_error_rate_average{…})  # already 0–100
+
+Do NOT split total / 4xx / 5xx into separate queries joined with joinByField +
+calculateField. The join adds a `name=<refId>` label to every joined field, so
+display names become "total A" / "4xx B" and calculateField's by-name lookup
+misses; it then falls back to parseFloat("4xx …") = 4, giving a constant 400%
+(5xx → 500%) that the 100% y-max renders as full bars.
 """
 
 from __future__ import annotations
@@ -215,6 +220,7 @@ def cf_graphql(
     avg_fields: list[str] | None = None,
     sum_fields: list[str] | None = None,
     *,
+    ratio_fields: list[str] | None = None,
     limit: int = 2000,
     fmt: str = "timeseries",
     eyeball: bool = False,
@@ -227,6 +233,10 @@ def cf_graphql(
     if sum_fields:
         inner = "\n".join(f"          {f}" for f in sum_fields)
         sum_block = f"\n        sum {{\n{inner}\n        }}"
+    ratio_block = ""
+    if ratio_fields:
+        inner = "\n".join(f"          {f}" for f in ratio_fields)
+        ratio_block = f"\n        ratio {{\n{inner}\n        }}"
     eyeball_line = '          requestSource: "eyeball"\n' if eyeball else ""
     data = (
         "query {\n"
@@ -245,7 +255,8 @@ def cf_graphql(
         "      ) {\n"
         "        count"
         f"{sum_block}"
-        f"{avg_block}\n"
+        f"{avg_block}"
+        f"{ratio_block}\n"
         f"        dimensions {{ {dim} }}\n"
         "      }\n"
         "    }\n"
@@ -327,72 +338,15 @@ def traffic_rate_transform(bucket_seconds: int) -> list[dict]:
     ]
 
 
-def error_pct_transform() -> list[dict]:
-    """Convert CF Adaptive 4xx/5xx counts to % of total requests per time bucket.
+def error_pct_field(*, ratio: bool) -> dict:
+    """Y-axis 0–100% for error-rate bars.
 
-    Expects three Infinity *table* frames with number columns named total / 4xx /
-    5xx (plus Time). Must use outerTabular — timeseries + mode=outer leaves
-    generic Value field names, so calculateField never resolves ``total`` and the
-    percent unit (max 100) pins raw counts at 100%. No timeshift.
+    ratio=True: CF ``ratio.status4xx`` / ``status5xx`` (0–1) → unit percentunit.
+    ratio=False: CloudWatch ``*_error_rate_average`` (already 0–100) → unit percent.
     """
-    steps: list[dict] = [
-        {"id": "joinByField", "options": {"byField": "Time", "mode": "outerTabular"}},
-        {
-            "id": "convertFieldType",
-            "options": {
-                "conversions": [
-                    {"targetField": "total", "destinationType": "number"},
-                    {"targetField": "4xx", "destinationType": "number"},
-                    {"targetField": "5xx", "destinationType": "number"},
-                ]
-            },
-        },
-    ]
-    for src in ("4xx", "5xx"):
-        steps.append(
-            {
-                "id": "calculateField",
-                "options": {
-                    "mode": "binary",
-                    "binary": {
-                        "left": src,
-                        "operator": "/",
-                        "right": "total",
-                    },
-                    "replaceFields": False,
-                    "alias": f"{src} ratio",
-                },
-            }
-        )
-        steps.append(
-            {
-                "id": "calculateField",
-                "options": {
-                    "mode": "binary",
-                    "binary": {
-                        "left": f"{src} ratio",
-                        "operator": "*",
-                        "right": "100",
-                    },
-                    "replaceFields": False,
-                    "alias": f"{src} %",
-                },
-            }
-        )
-    steps.append(
-        {
-            "id": "filterFieldsByName",
-            "options": {"include": {"pattern": "^(Time|4xx %|5xx %)$"}},
-        }
-    )
-    return steps
-
-
-def error_pct_field() -> dict:
-    """Y-axis 0–100% for error-rate bars (CF Adaptive + CloudWatch year)."""
-    field = ts_field("percent", bars=True)
+    field = ts_field("percentunit" if ratio else "percent", bars=True)
     field["defaults"]["min"] = 0
-    field["defaults"]["max"] = 100
+    field["defaults"]["max"] = 1 if ratio else 100
     field["overrides"] = error_series_colors()
     return field
 
@@ -462,8 +416,7 @@ def traffic_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
 def error_series_colors() -> list[dict]:
     """4xx = yellow, 5xx = red (by legend / field name).
 
-    CF Adaptive panels keep only ``4xx %`` / ``5xx %`` after transforms; CloudWatch
-    year legends use the same names. byFrameRefID is not used — query A is total.
+    CF Adaptive column text and CloudWatch year legends both use ``4xx %`` / ``5xx %``.
     """
     yellow = {"mode": "fixed", "fixedColor": "yellow"}
     red = {"mode": "fixed", "fixedColor": "red"}
@@ -495,7 +448,7 @@ def errors_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
             "gridPos": grid_pos,
             "timeFrom": time_from,
             "datasource": {"type": "prometheus", "uid": "${datasource}"},
-            "fieldConfig": error_pct_field(),
+            "fieldConfig": error_pct_field(ratio=False),
             "options": ts_options(),
             "targets": [
                 {
@@ -518,56 +471,33 @@ def errors_panel(panel_id: int, cfg: dict, win: dict, grid_pos: dict) -> dict:
         }
 
     dim, order_by = win["dim"], win["order_by"]
-
-    def cols(label: str) -> list[dict]:
-        return [
-            {"selector": f"dimensions.{dim}", "text": "Time", "type": "timestamp"},
-            {"selector": "count", "text": label, "type": "number"},
-        ]
-
     return {
         "id": panel_id,
         "type": "timeseries",
         "title": title,
         "description": (
             f"Cloudflare edge 4xx/5xx as % of total requests ({host}), fixed range "
-            f"{time_from}. 4xx % = 100 × count(4xx) / count(total) per {dim} bucket "
-            "(same for 5xx). No timeshift."
+            f"{time_from}. Cloudflare ratio.status4xx = count(4xx) / count per {dim} "
+            "bucket (same for 5xx); one query, no panel transforms."
         ),
         "gridPos": grid_pos,
         "timeFrom": time_from,
         "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "${infinity}"},
-        "fieldConfig": error_pct_field(),
+        "fieldConfig": error_pct_field(ratio=True),
         "options": ts_options(),
-        "transformations": error_pct_transform(),
-        # table (not timeseries): column text becomes real field names so
-        # joinByField(outerTabular) + calculateField can divide by ``total``.
         "targets": [
-            cf_graphql("A", host, dim, order_by, cols("total"), fmt="table"),
             cf_graphql(
-                "B",
+                "A",
                 host,
                 dim,
                 order_by,
-                cols("4xx"),
-                extra_filter=(
-                    "          edgeResponseStatus_geq: 400\n"
-                    "          edgeResponseStatus_leq: 499\n"
-                ),
-                fmt="table",
-            ),
-            cf_graphql(
-                "C",
-                host,
-                dim,
-                order_by,
-                cols("5xx"),
-                extra_filter=(
-                    "          edgeResponseStatus_geq: 500\n"
-                    "          edgeResponseStatus_leq: 599\n"
-                ),
-                fmt="table",
-            ),
+                [
+                    {"selector": f"dimensions.{dim}", "text": "Time", "type": "timestamp"},
+                    {"selector": "ratio.status4xx", "text": "4xx %", "type": "number"},
+                    {"selector": "ratio.status5xx", "text": "5xx %", "type": "number"},
+                ],
+                ratio_fields=["status4xx", "status5xx"],
+            )
         ],
     }
 
