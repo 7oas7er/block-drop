@@ -1,6 +1,6 @@
 # Block Drop tests
 
-Automated checks for the static game under `../block-drop/`. The game itself stays free of a package manager; this folder owns Node, Playwright, and a pinned `serve` for the e2e static host.
+Automated checks for the static game under `../block-drop/`. The game itself stays free of a package manager; this folder owns Node and Playwright. E2e uses a zero-dep `static-server.mjs` (not `serve`) so the lockfile stays clear of transitive minimatch advisories.
 
 ## What runs
 
@@ -21,4 +21,5 @@ npm test
 ```
 
 Unit only: `npm run test:unit`  
-E2E only: `npm run test:e2e`
+E2E only: `npm run test:e2e`  
+Local static host: `npm run serve` (port 4173)
