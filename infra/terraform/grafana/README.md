@@ -68,7 +68,7 @@ Platform template (structure / windows / Free limits / new-app checklist):
 
 Top rows use **fixed relative ranges** (hour / day / week / month / year):
 
-- **Traffic (req/s) / Errors (% of requests)** — Cloudflare GraphQL Adaptive for ≤29d windows (`${__timeFrom}`/`${__timeTo}` so panel `timeFrom` is honored); Errors = Cloudflare `ratio { status4xx status5xx }` (`count(4xx|5xx) / count` per bucket) in one query, unit `percentunit`, no panel transforms (`scripts/probe-cloudflare-graphql.sh` checks the field on the zone). **Year panels query CloudWatch scrape → Prometheus** (error rates already %; Free retains metrics **14 days** — not a real year unless native CloudWatch DS / Pro)
+- **Traffic (req/s) / Errors (% of requests)** — locked viz in [`docs/grafana-dashboard-template.md`](../../../docs/grafana-dashboard-template.md) (#143 / #158): req/s not raw counts; prior-period timeshift parked; Errors = one CF Adaptive `ratio { status4xx status5xx }` query, unit `percentunit`, no `joinByField`+`calculateField`. CF Adaptive for ≤29d (`${__timeFrom}`/`${__timeTo}`); year → CloudWatch scrape → Prometheus (Free metrics retention **14 days**). Probe: `scripts/probe-cloudflare-graphql.sh`
 - **Latency** — CloudFront `OriginLatency` + Cloudflare `avg.originResponseDurationMs` (Free does **not** expose edge TTFB)
 - Month window is `now-29d` with hourly buckets (`datetimeDay_ASC` is not a valid Adaptive orderBy; `now-30d` can exceed Free `maxDuration`)
 
