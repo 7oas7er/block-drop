@@ -41,12 +41,23 @@ distribution `Name` tag, and synthetic probe jobs. Do not mix prod and stg serie
 | `cf_zone` | textbox | Zone tag; Terraform injects from `cloudflare_zone_tag` |
 | `gh_owner` / `gh_repo` | textbox (often hidden) | Terraform injects; used by CI panels + commit annotations |
 
+## Locked viz decisions (inherit as-is)
+
+Do not reopen these in new apps or “improve” overlays without superseding the cited PRs:
+
+| Panel | Locked rule | Why / cite |
+|-------|-------------|------------|
+| **Traffic** | Plot **request rate (req/s)**, not raw Adaptive bucket counts. CF: `count / bucket_seconds` (`datetimeMinute` → `/60`, `datetimeHour` → `/3600`); year CloudWatch: PromQL `rate(…[1h])`. | Comparable y-axis across hour/day/month tiles. Locked in [#143](https://github.com/7oas7er/block-drop/pull/143). |
+| **Traffic** | **Prior-period timeshift stays parked** — no `timeCompare` / dual Infinity prior queries / `__previousPeriod` overlays. | Overlay attempts (#144–#151) were reverted; stay on [#143](https://github.com/7oas7er/block-drop/pull/143) shape. |
+| **Errors** | One CF Adaptive query per panel: `ratio { status4xx status5xx }` → columns as %; unit **`percentunit`** (0–1); **no** panel transforms. Year: CloudWatch `4xxErrorRate` / `5xxErrorRate` via Prom (already %). | Locked in [#158](https://github.com/7oas7er/block-drop/pull/158). |
+| **Errors** | **Forbid** separate total/4xx/5xx Infinity queries + `joinByField` + `calculateField`. | Join renames fields (`total A`, `4xx B`); by-name calc misses and `parseFloat("4xx…")` → flat ~400% clipped to 100%. See [#158](https://github.com/7oas7er/block-drop/pull/158) (fixes #156/#157). |
+
 ## Section order (top → bottom)
 
 Keep this order and these row titles (env-specific hostnames/jobs inside panels):
 
-1. **Traffic — request rate (req/s)** — five fixed windows (see below). CF Adaptive: `count / bucket_seconds` (`datetimeMinute` → `/60`, `datetimeHour` → `/3600`); year CloudWatch: PromQL `rate(…[1h])` (already /s). Use rate, not absolute bucket counts, so hour/day/month y-scales are comparable.
-2. **Errors — 4xx / 5xx (% of requests; CF Adaptive ≤30d; year = CloudWatch)** — y-axis 0–100%. CF Adaptive: one query per panel selecting `ratio { status4xx status5xx }` (Cloudflare's `count(4xx|5xx) / count` per time bucket, 0–1) plotted with unit `percentunit`, no panel transforms. Do **not** split total/4xx/5xx into separate queries + `joinByField` + `calculateField`: the join suffixes field display names with the refId (`total A`, `4xx B`), the by-name lookup misses, and `parseFloat("4xx…")` = 4 yields a flat 400% (pinned at 100%). Year: CloudWatch `4xxErrorRate` / `5xxErrorRate` via Prom (already %).
+1. **Traffic — request rate (req/s)** — five fixed windows (see locked table above).
+2. **Errors — 4xx / 5xx (% of requests; CF Adaptive ≤30d; year = CloudWatch)** — see locked table above.
 3. **Latency — origin (CloudFront) + CF `originResponseDurationMs`**
 4. **Synthetics — availability** — site + critical API uptime stats, success/latency charts, check logs
 5. **Cloudflare — volume** — bandwidth, visits, status mix
