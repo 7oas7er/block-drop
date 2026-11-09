@@ -164,7 +164,7 @@ jobs:
 
       - name: Checkov
         # Pin to full commit SHA (mutable tags are a supply-chain risk; CodeQL actions/unpinned-tag).
-        uses: bridgecrewio/checkov-action@c10e2438743528f9e4549758fad8b7a62052541d # v12.3136.0
+        uses: bridgecrewio/checkov-action@45edc9d8856b664db2ec251f5f8632361f0a67aa # v12.3139.0
         with:
           directory: infra/terraform
           config_file: infra/terraform/.checkov.yaml
@@ -408,8 +408,16 @@ jobs:
           TF_VAR_cloud_access_policy_token: ${{ secrets.GRAFANA_CLOUD_ACCESS_POLICY_TOKEN }}
           TF_VAR_cloud_provider_access_token: ${{ secrets.GRAFANA_CLOUD_PROVIDER_ACCESS_TOKEN }}
           TF_VAR_sm_access_token: ${{ secrets.GRAFANA_SM_ACCESS_TOKEN }}
+          # Optional — when set, plan keeps grafana_data_source.github; when unset, count→0
+          # (exit code 2 destroy proposal). Prefer Environment secret GRAFANA_GITHUB_TOKEN
+          # (GitHub forbids Actions secrets whose names start with GITHUB_).
+          GRAFANA_GITHUB_TOKEN: ${{ secrets.GRAFANA_GITHUB_TOKEN }}
         run: |
           set +e
+          # Empty Actions secrets become "" (not unset); only export a real token.
+          if [ -n "${GRAFANA_GITHUB_TOKEN}" ]; then
+            export TF_VAR_github_access_token="${GRAFANA_GITHUB_TOKEN}"
+          fi
           terraform plan -input=false -no-color -lock-timeout=5m -detailed-exitcode
           code=$?
           if [ "$code" -eq 1 ]; then

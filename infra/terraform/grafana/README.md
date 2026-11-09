@@ -39,14 +39,22 @@ Probe script (optional) still lives under `scripts/` here, or use platform
 
 ### GitHub Actions CI
 
-1. Create a fine-grained PAT for repo `7oas7er/block-drop` with **Actions: Read**, **Metadata: Read**, and **Contents: Read** if the plugin requires it.
-2. Set `github_access_token` in `terraform.tfvars` (or `GITHUB_GRAFANA_TOKEN`).
-3. The `grafana-github-datasource` **plugin** is installed by platform `shared-obs`. This root only creates DS `github-block-drop`.
-4. Both env dashboards include GitHub panels for `deploy-block-drop.yml` and `terraform-plan.yml`.
+1. Create a fine-grained PAT for repo `7oas7er/block-drop` with **Actions: Read**,
+   **Metadata: Read**, and **Contents: Read** if the plugin requires it.
+2. Set `github_access_token` in `terraform.tfvars` (or export `TF_VAR_github_access_token`).
+3. For CI Plan Grafana, also set Environment **`terraform`** secret `GRAFANA_GITHUB_TOKEN`
+   to the same PAT (see [`../docs/terraform-plan-ci.md`](../docs/terraform-plan-ci.md)).
+   Without it, every CI plan proposes destroying DS `github-block-drop` once the DS exists
+   in state (or never creates it). Actions forbids secret names starting with `GITHUB_`.
+4. The `grafana-github-datasource` **plugin** is installed by platform `shared-obs`.
+   This root only creates DS `github-block-drop`.
+5. Both env dashboards include GitHub panels for `deploy-block-drop.yml` and `terraform-plan.yml`.
    Panel targets must put the file name in `options.workflow` (not a top-level `workflow`
    field) — otherwise the plugin queries an empty name and returns `workflow not found`.
 
 Without the GitHub token, synthetics + CloudWatch still apply; the GitHub DS is skipped.
+Dashboards still reference `${github}` → `github-block-drop`, so the GitHub filter shows
+**Datasource not found** until you apply with the token.
 
 ## Dashboards
 
@@ -60,7 +68,7 @@ Platform template (structure / windows / Free limits / new-app checklist):
 
 Top rows use **fixed relative ranges** (hour / day / week / month / year):
 
-- **Requests / 4xx+5xx** — Cloudflare GraphQL Adaptive for ≤29d windows (`${__timeFrom}`/`${__timeTo}` so panel `timeFrom` is honored); **year panels query CloudWatch scrape → Prometheus** (Grafana Cloud Free retains metrics **14 days** — not a real year unless native CloudWatch DS / Pro)
+- **Traffic (req/s) / Errors (% of requests)** — locked viz in [`docs/grafana-dashboard-template.md`](../../../docs/grafana-dashboard-template.md) (#143 / #158): req/s not raw counts; prior-period timeshift parked; Errors = one CF Adaptive `ratio { status4xx status5xx }` query, unit `percentunit`, no `joinByField`+`calculateField`. CF Adaptive for ≤29d (`${__timeFrom}`/`${__timeTo}`); year → CloudWatch scrape → Prometheus (Free metrics retention **14 days**). Probe: `scripts/probe-cloudflare-graphql.sh`
 - **Latency** — CloudFront `OriginLatency` + Cloudflare `avg.originResponseDurationMs` (Free does **not** expose edge TTFB)
 - Month window is `now-29d` with hourly buckets (`datetimeDay_ASC` is not a valid Adaptive orderBy; `now-30d` can exceed Free `maxDuration`)
 
