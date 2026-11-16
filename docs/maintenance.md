@@ -33,10 +33,14 @@ One red Dependabot PR: fix or split; don’t batch-merge majors with unknowns.
     keep required_version floors in versions.tf coherent
 [ ] AWS Project= tag audit (eu-north-1; us-east-1 for CloudFront/ACM/Billing)
 [ ] GitHub security floor API verify (docs/github-branch-protection.md)
+[ ] Stale-branch prune — list remotes merged into staging (and squash orphans); delete only with Frank’s OK;
+    never delete main/staging or open Dependabot heads
 [ ] pre-commit autoupdate (then commit the config change via a normal PR)
 [ ] npm audit high+ clean where lockfiles exist (tests/, infra/lambda/)
 [ ] Secrets: rotate only if leak / offboarding / vendor forced expiry (see SECURITY.md)
 ```
+
+Optional hygiene (Settings, Frank only): enable **Automatically delete head branches** (`delete_branch_on_merge`) after a bulk prune so merged heads do not accumulate.
 
 Roots with lockfiles: `infra/terraform/aws/bootstrap`, `aws/envs/stg`, `aws/envs/prod`, `cloudflare`, `grafana`.
 
