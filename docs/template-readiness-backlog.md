@@ -123,6 +123,7 @@ Work top-down. Prefer small PRs to `staging`. Check items off as you go (`[x]`).
 ### P2.1 — SAST intentionality (CodeQL / Semgrep)
 
 - [x] Confirm CodeQL (or Semgrep) covers `block-drop/**` and `infra/lambda/**` on PRs to `staging`/`main`
+  - Template note: **public** apps use in-repo CodeQL; **private** (no GHAS) use Semgrep CE in Required CI (`docs/private-repo-github-floor.md`) — do not add Semgrep jobs to this public Block Drop Required CI
 - [x] Document expected alerts vs ignore noise
 - [x] Fix or explicitly waive findings
 

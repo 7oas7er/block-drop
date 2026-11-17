@@ -7,7 +7,7 @@ Solo + AI cadence for this template. Automation discovers updates; you merge whe
 | Source | What | Target |
 |--------|------|--------|
 | [Dependabot](../.github/dependabot.yml) | GitHub Actions (SHA pins), `tests/` npm, `infra/lambda` npm, **Terraform providers** (per root lockfile) | Weekly PRs → `staging` |
-| CI | Tests, Checkov, npm audit (high+), CodeQL, terraform plan, **Action SHA-pin check** | Gates merges |
+| CI | Tests, Checkov, npm audit (high+), CodeQL (public), terraform plan, **Action SHA-pin check** | Gates merges. Private clones: gitleaks + Semgrep CE inside Required CI instead of native secret scanning / CodeQL (`docs/private-repo-github-floor.md`) |
 | Grafana | Synthetics + error views | Catches runtime/edge regressions |
 
 CI **never** runs `terraform apply` ([ADR 0003](adr/0003-local-terraform-apply.md)).
@@ -55,7 +55,7 @@ Roots with lockfiles: `infra/terraform/aws/bootstrap`, `aws/envs/stg`, `aws/envs
 
 - Terraform / Node / Playwright **major** upgrades when pain or support ends
 - Re-read [template-readiness-backlog.md](template-readiness-backlog.md) P2.3 / P3 — only if needed
-- Confirm branch ruleset + CodeQL advanced setup + secret scanning / Dependabot alerts still as documented (`docs/github-branch-protection.md` verify commands)
+- Confirm branch ruleset + Dependabot alerts still as documented; **public:** CodeQL advanced + secret scanning; **private:** gitleaks/Semgrep in Required CI (`docs/github-branch-protection.md`, `docs/private-repo-github-floor.md`)
 
 ## Template reuse
 

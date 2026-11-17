@@ -4,11 +4,24 @@ Target branches: **`staging`** and **`main`**. Default branch must be **`main`**
 
 **Hard rule:** copying workflows / docs does **not** configure GitHub. Repo Settings → Code security and rulesets are **out-of-band**. Apply them with `gh` (below) and **verify via API** on every new or migrated app. Never mark this done because a sibling repo already had it, and never trust checklist text copied from Block Drop.
 
+## Public vs private — scanners
+
+| Visibility | Secrets | SAST | In Required CI |
+|------------|---------|------|----------------|
+| **Public** (this repo / public clones) | GitHub secret scanning + push protection | In-repo CodeQL; default setup **off** | Pin check only — **do not** add gitleaks/Semgrep jobs |
+| **Private** (no GHAS) | **gitleaks** (CI) | **Semgrep CE** (CI); no CodeQL SARIF | Embed both scanners; aggregate job fails on findings |
+
+Shared for both: Dependabot alerts, ruleset `default` on `main`+`staging` (`Required CI` + `required_signatures`), Actions `GITHUB_TOKEN` read-only, CodeQL default setup off.
+
+**Pro alone does not unlock** private secret scanning or CodeQL SARIF — that needs **GHAS**. Full private floor + apply commands: [`private-repo-github-floor.md`](private-repo-github-floor.md). Reference: [`7oas7er/long-way-home`](https://github.com/7oas7er/long-way-home) PR [#12](https://github.com/7oas7er/long-way-home/pull/12).
+
 ## Hard-required check (always runs)
 
 | Check name | Workflow | Why |
 |------------|----------|-----|
-| `Required CI` | [`.github/workflows/required-ci.yml`](../.github/workflows/required-ci.yml) | Always reports on PRs to `staging`/`main`, so rulesets are not blocked by path filters; also runs the GitHub Actions SHA-pin check ([`docs/github-actions-pinning.md`](github-actions-pinning.md)) |
+| `Required CI` | [`.github/workflows/required-ci.yml`](../.github/workflows/required-ci.yml) | Always reports on PRs to `staging`/`main`, so rulesets are not blocked by path filters; also runs the GitHub Actions SHA-pin check ([`docs/github-actions-pinning.md`](github-actions-pinning.md)). On **private** clones, this same context also aggregates gitleaks + Semgrep CE ([`private-repo-github-floor.md`](private-repo-github-floor.md)). |
+
+Do **not** add `gitleaks` / `Semgrep` / CodeQL Analyze as separate ruleset-required contexts.
 
 ## Path-filtered checks (enforce when they run)
 
@@ -21,7 +34,7 @@ These **must** pass when GitHub schedules them. Do **not** add them as ruleset-r
 | `IaC policy (Checkov)` | Terraform plan | same as Format |
 | `npm audit (tests)` | Dependency audit | `tests/package*.json` or that workflow |
 | `npm audit (lambda)` | Dependency audit | `infra/lambda/package*.json` or that workflow |
-| `Analyze (javascript-typescript)` / `Analyze (actions)` | CodeQL | `block-drop/**`, `infra/lambda/**`, workflows, or `.github/codeql/**` |
+| `Analyze (javascript-typescript)` / `Analyze (actions)` | CodeQL | **Public** only — `block-drop/**`, `infra/lambda/**`, workflows, or `.github/codeql/**`. Private clones use Semgrep CE inside Required CI instead. |
 
 Also expect Validate / Plan jobs from Terraform plan when infra changes.
 
@@ -39,16 +52,18 @@ One ruleset covering `refs/heads/staging` and `refs/heads/main`:
 
 Do **not** require linear history unless you already use squash-only merges.
 
-## Repo security floor (must match Block Drop)
+## Repo security floor (public — must match Block Drop)
+
+This table is the **public** path (Block Drop and public clones). For **private** clones, apply the shared rows here plus the compensating scanners in [`private-repo-github-floor.md`](private-repo-github-floor.md) — do not expect native secret scanning without GHAS.
 
 | Control | Expected | Notes |
 |---------|----------|--------|
 | Default branch | **`main`** | Template tree + `SECURITY.md` live here; do not leave an old product branch as default |
 | Dependabot **alerts** | **Enabled** | Distinct from Dependabot *security updates* (auto-PRs for vulns) — those stay off unless you choose otherwise |
-| Secret scanning | **Enabled** | Public repos may inherit newer-create defaults; **old repos do not** — always enable explicitly |
-| Push protection | **Enabled** | Same |
-| CodeQL **default** setup | **Off** (`not-configured`) | In-repo advanced setup only (`docs/codeql.md`) |
-| Branch ruleset `default` | **Active** on `main` + `staging` (incl. **require signed commits**) | As above |
+| Secret scanning | **Enabled** (public) | Public repos may inherit newer-create defaults; **old repos do not** — always enable explicitly. Private without GHAS: expect enable to fail → use gitleaks in Required CI |
+| Push protection | **Enabled** (public) | Same fork as secret scanning |
+| CodeQL **default** setup | **Off** (`not-configured`) | Public: in-repo advanced setup (`docs/codeql.md`). Private without GHAS: Semgrep CE in Required CI — no SARIF upload |
+| Branch ruleset `default` | **Active** on `main` + `staging` (incl. **require signed commits**) | Private Free: rulesets unavailable — need Pro or classic protection ([`private-repo-github-floor.md`](private-repo-github-floor.md)) |
 | Actions `GITHUB_TOKEN` | **Read** | Settings → Actions → General → Workflow permissions |
 | Approve PRs with `GITHUB_TOKEN` | **Off** | Same screen |
 | Issues / Wiki / Projects | **Off** (template default) | Optional product override; prefer off for static apps |

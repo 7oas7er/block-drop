@@ -3,6 +3,8 @@ name: Required CI
 # Always runs on PRs to staging/main so branch rules can require one stable check.
 # Path-filtered workflows (Deploy, Terraform plan, Dependency audit, CodeQL) still
 # enforce their own jobs when those paths change — see docs/github-branch-protection.md.
+# Public repo: GitHub-native secret scanning + CodeQL. Do NOT add gitleaks/Semgrep
+# jobs here. Private clones without GHAS: see docs/private-repo-github-floor.md.
 on:
   pull_request:
     branches:

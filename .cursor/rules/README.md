@@ -17,7 +17,7 @@ When **gap-analyzing or migrating** an existing repo toward this pattern: `.curs
 
 | Rule | Scope |
 |------|--------|
-| `app-core.mdc` | always — hosting, envs, secrets, Cloudflare-only, agents |
+| `app-core.mdc` | always — hosting, envs, secrets, Cloudflare-only, agents; GitHub security floor **public vs private** scanner fork (`docs/github-branch-protection.md`, `docs/private-repo-github-floor.md`) |
 | `app-aws-regions.mdc` | always — `eu-north-1` default |
 | `app-observability.mdc` | always — Grafana pattern (dual-env dashboards: [`docs/grafana-dashboard-template.md`](../../docs/grafana-dashboard-template.md)) |
 | `app-terraform.mdc` | `infra/terraform/**` — roots, state, CI plan |
