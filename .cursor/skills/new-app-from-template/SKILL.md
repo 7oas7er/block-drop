@@ -108,15 +108,20 @@ OIDC trust subjects must match `environment:…`. Distinct resources per env —
 
 ### 7b. GitHub security floor (mandatory — new **and** migrated repos)
 
-Repo Settings are **not** copied with git. Old public repos often lack create-time defaults that Block Drop got in 2026. **Always** apply and verify against `docs/github-branch-protection.md`:
+Repo Settings are **not** copied with git. Old public repos often lack create-time defaults that Block Drop got in 2026. **Always** apply and verify against `docs/github-branch-protection.md` (and `docs/private-repo-github-floor.md` when the clone is **private**).
+
+**Shared (all visibilities):**
 
 1. Default branch = **`main`** (template tree + `SECURITY.md`).
 2. Enable **Dependabot alerts** (`PUT …/vulnerability-alerts`).
-3. Enable **secret scanning** + **push protection**.
-4. Create/update ruleset `default` on `main` + `staging` (PR required, no force-push/delete, required check **`Required CI`** only, **`required_signatures`** / require signed commits — hard requirement).
-5. Actions workflow permissions: `GITHUB_TOKEN` **read**, cannot approve PRs.
-6. CodeQL **default** setup stays **off** (in-repo advanced workflow only).
-7. Prefer Issues/Wiki/Projects **off** for static apps.
+3. Create/update ruleset `default` on `main` + `staging` (PR required, no force-push/delete, required check **`Required CI`** only, **`required_signatures`** — hard requirement). Private Free: rulesets unavailable → need **Pro** or classic protection.
+4. Actions workflow permissions: `GITHUB_TOKEN` **read**, cannot approve PRs.
+5. CodeQL **default** setup stays **off**.
+6. Prefer Issues/Wiki/Projects **off** for static apps.
+
+**Public scanners:** enable **secret scanning** + **push protection**; keep in-repo CodeQL advanced setup. Do **not** add gitleaks/Semgrep to Required CI.
+
+**Private scanners (no GHAS):** Pro does **not** unlock secret scanning / CodeQL SARIF. Embed **gitleaks** + **Semgrep CE** in Required CI so findings fail the single `Required CI` context — copy from [`7oas7er/long-way-home`](https://github.com/7oas7er/long-way-home) (see `docs/private-repo-github-floor.md`). Do not buy GHAS solely for native private scanning unless Frank decides otherwise.
 
 **Signed commits (hard rule):** ruleset must include `{ "type": "required_signatures" }`. Frank’s GPG key (`frank@schlesinger.com` / `413A590799A3CF31AB2C9ECDE27E5FD506790203`) must be on the GitHub account; local `commit.gpgsign` / `tag.gpgsign` must be on before the first push. Verify via API: ruleset rules contain `required_signatures`.
 
@@ -167,5 +172,5 @@ Confirm Cloudflare-only gate (raw CloudFront URL 403; custom domain 200).
 - `docs/architecture.md`, platform `docs/architecture.md`
 - `.cursor/rules/README.md`
 - `docs/adr/` (especially 0003 local apply, 0005 Cloudflare-only, 0006 env separation, 0007 platform)
-- `SECURITY.md`, `docs/github-branch-protection.md`, `infra/terraform/docs/origin-verify-secret-rotation.md`
+- `SECURITY.md`, `docs/github-branch-protection.md`, `docs/private-repo-github-floor.md`, `infra/terraform/docs/origin-verify-secret-rotation.md`
 - `docs/template-readiness-backlog.md`
