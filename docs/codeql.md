@@ -3,6 +3,8 @@
 Workflow: [`.github/workflows/codeql.yml`](../.github/workflows/codeql.yml)  
 Config: [`.github/codeql/codeql-config.yml`](../.github/codeql/codeql-config.yml)
 
+**Public repos only** (this template / Block Drop). Private clones without GHAS cannot upload CodeQL SARIF — use **Semgrep CE** inside Required CI instead ([`private-repo-github-floor.md`](private-repo-github-floor.md); reference [`7oas7er/long-way-home`](https://github.com/7oas7er/long-way-home)). Do **not** add Semgrep to this public repo’s Required CI.
+
 This is **advanced setup** checked into the repo. GitHub **default** code scanning setup must stay **off** (Settings → Code security → CodeQL → default setup) so the two do not fight. Sprint 5 disabled default setup via API when applying this change.
 
 ## What it covers
@@ -31,4 +33,5 @@ There is no committed `# codeql` ignore list yet — prefer fixing or dismissing
 ## Local / CI
 
 - Findings show on the PR **Code scanning** UI and the **Analyze (…)** jobs.
-- Do not add Semgrep/Snyk SAST unless replacing CodeQL with an ADR.
+- On **public** clones: do not add Semgrep/Snyk SAST unless replacing CodeQL with an ADR.
+- On **private** clones (no GHAS): Semgrep CE in Required CI is the intentional substitute — not an ADR-level replacement of CodeQL for public apps.

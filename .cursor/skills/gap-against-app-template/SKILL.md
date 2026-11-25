@@ -32,9 +32,9 @@ Read from the template (when available): `docs/architecture.md`, `.cursor/rules/
 | **Edge** | App Cloudflare = DNS only; zone rulesets in platform; Cloudflare-only origin |
 | **Observability** | Grafana-first only; Infinity + GitHub plugin in platform; no second APM SaaS; **two** env dashboards per [`docs/grafana-dashboard-template.md`](../../../docs/grafana-dashboard-template.md) |
 | **Regions** | `eu-north-1` default; `us-east-1` only when required (e.g. ACM for CloudFront) |
-| **CI gates** | Tests gate deploy; terraform fmt/validate/plan; Checkov or equivalent; npm audit high+; CodeQL or equivalent SAST |
+| **CI gates** | Tests gate deploy; terraform fmt/validate/plan; Checkov or equivalent; npm audit high+; **public:** CodeQL; **private (no GHAS):** Semgrep CE (+ gitleaks) inside Required CI |
 | **Supply chain** | Dependabot (or Renovate) → staging; Actions + app deps + Terraform providers; **all** workflow Actions SHA-pinned (`docs/github-actions-pinning.md` + Required CI pin check) |
-| **GitHub security floor** | Default branch `main`; Dependabot **alerts** on; secret scanning + push protection on; ruleset on `main`/`staging` (`Required CI` + **`required_signatures`**); Actions `GITHUB_TOKEN` read-only (no PR approve); CodeQL default setup off. **Verify via GitHub API** — do not score from docs alone (`docs/github-branch-protection.md`) |
+| **GitHub security floor** | Default branch `main`; Dependabot **alerts** on; ruleset on `main`/`staging` (`Required CI` + **`required_signatures`**); Actions `GITHUB_TOKEN` read-only (no PR approve); CodeQL default setup off. **Public:** secret scanning + push protection + in-repo CodeQL. **Private (no GHAS):** gitleaks + Semgrep CE in Required CI — Pro alone does **not** unlock native private scanning (`docs/github-branch-protection.md`, `docs/private-repo-github-floor.md`). **Verify via GitHub API** — do not score from docs alone |
 | **Docs / agents** | `AGENTS.md`, architecture doc, ADRs for irreversible choices, `SECURITY.md`, Cursor `app-*` rules |
 | **Maintenance** | Documented weekly/monthly cadence |
 | **Secrets** | No committed tfvars/state/tokens; OIDC for AWS in Actions |
